@@ -6,7 +6,8 @@ import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesRequest;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
  * @author personalc
  */
 public class BinLogFileUtil {
-    private static Logger LOG = Logger.getLogger(BinLogFileUtil.class);
+    private static Logger LOG = LoggerFactory.getLogger(BinLogFileUtil.class);
     private static Properties properties = FileUtil.getProperties();
     private static final int PAGE_SIZE = Integer.valueOf(properties.getProperty("PAGE_SIZE"));
 

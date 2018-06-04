@@ -6,7 +6,8 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -18,7 +19,7 @@ import java.util.Properties;
  * @author personalc
  */
 public class HDFSFileUtil {
-    private static Logger LOG = Logger.getLogger(BinLogFileUtil.class);
+    private static Logger LOG = LoggerFactory.getLogger(BinLogFileUtil.class);
     private static Properties properties = FileUtil.getProperties();
     public static Configuration conf = null;
     public static FileSystem fileSystem = null;

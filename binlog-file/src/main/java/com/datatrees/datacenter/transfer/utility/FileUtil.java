@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.transfer.utility;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
@@ -10,7 +11,7 @@ import java.util.Properties;
  * @author personalc
  */
 public class FileUtil {
-    private static Logger LOG = Logger.getLogger(FileUtil.class);
+    private static Logger LOG = LoggerFactory.getLogger(FileUtil.class);
     private RandomAccessFile file;
     private long startPos;
 

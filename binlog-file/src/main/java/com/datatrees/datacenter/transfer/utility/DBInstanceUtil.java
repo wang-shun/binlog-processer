@@ -6,7 +6,8 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.*;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.Properties;
  * @author personalc
  */
 public class DBInstanceUtil {
-    private static Logger LOG = Logger.getLogger(DBInstance.class);
+    private static Logger LOG = LoggerFactory.getLogger(DBInstance.class);
     private static Properties properties = FileUtil.getProperties();
     private static final int PAGE_SIZE = Integer.valueOf(properties.getProperty("PAGE_SIZE"));
     private static final String REGION_ID = properties.getProperty("REGION_ID");

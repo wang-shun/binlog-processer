@@ -9,9 +9,9 @@ import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
 import com.datatrees.datacenter.transfer.bean.DownLoadTable;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
-import com.com.datatrees.datacenter.transfer.utility.*;
 import com.datatrees.datacenter.transfer.utility.*;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.sql.Timestamp;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * @author personalc
  */
 public class BinLogTransfer {
-    private static Logger LOG = Logger.getLogger(BinLogTransfer.class);
+    private static Logger LOG = LoggerFactory.getLogger(BinLogTransfer.class);
     private static Properties properties = FileUtil.getProperties();
     private static final String REGION_ID = properties.getProperty("REGION_ID");
     private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");
@@ -211,16 +211,14 @@ public class BinLogTransfer {
         Iterator itr = downLoadInfo.iterator();
         while (itr.hasNext()) {
             Map<String, Object> info = (Map<String, Object>) itr.next();
-            String downStart = TimeUtil.dateToStr((Timestamp) info.get(DownLoadTable.DOWN_START_TIME), DownLoadTable.UTC_FORMAT);
-            System.out.println(downStart);
-            String downEnd = TimeUtil.dateToStr((Timestamp) info.get(DownLoadTable.DOWN_END_TIME), DownLoadTable.UTC_FORMAT);
-            System.out.println(downEnd);
+            startTime = TimeUtil.dateToStr((Timestamp) info.get(DownLoadTable.DOWN_START_TIME), DownLoadTable.UTC_FORMAT);
+            endTime= TimeUtil.dateToStr((Timestamp) info.get(DownLoadTable.DOWN_END_TIME), DownLoadTable.UTC_FORMAT);
             String instanceId = (String) info.get(DownLoadTable.DB_INSTANCE);
             DBInstance dbInstance = new DBInstance();
             dbInstance.setDBInstanceId(instanceId);
             DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
-            binlogFilesRequest.setStartTime(downStart);
-            binlogFilesRequest.setEndTime(downEnd);
+            binlogFilesRequest.setStartTime(startTime);
+            binlogFilesRequest.setEndTime(endTime);
             instanceBinlogTrans(profile, client, binlogFilesRequest, dbInstance);
         }
     }

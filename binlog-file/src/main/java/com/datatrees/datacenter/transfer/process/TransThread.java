@@ -10,7 +10,8 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.protocol.RecoveryInProgressException;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,7 @@ import java.util.Map;
  * @author personalc
  */
 public class TransThread implements Serializable, Runnable {
-    private static Logger LOG = Logger.getLogger(TransThread.class);
+    private static Logger LOG = LoggerFactory.getLogger(TransThread.class);
     /**
      * 文件所在src
      */

@@ -3,7 +3,8 @@ package com.datatrees.datacenter.transfer.process;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
 import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +15,7 @@ import java.net.URL;
  * @author personalc
  */
 class TransferProcess {
-    private static Logger LOG = Logger.getLogger(TransferProcess.class);
+    private static Logger LOG = LoggerFactory.getLogger(TransferProcess.class);
     private static final int FILE_SIZE_NOT_KNOWN = -1;
     private static final int FILE_NOT_ACCESSIBLE = -2;
     private static final int HTTP_CONNECTION_RESPONSE_CODE = 400;

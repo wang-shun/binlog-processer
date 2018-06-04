@@ -2,7 +2,8 @@ package com.datatrees.datacenter.transfer.utility;
 
 
 import com.sun.istack.Nullable;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.*;
@@ -14,7 +15,7 @@ import java.util.regex.Pattern;
  * @author personalc
  */
 public class DBUtil {
-    private static Logger LOG = Logger.getLogger(DBUtil.class);
+    private static Logger LOG = LoggerFactory.getLogger(DBUtil.class);
     /**
      * 执行数据库插入操作
      *
