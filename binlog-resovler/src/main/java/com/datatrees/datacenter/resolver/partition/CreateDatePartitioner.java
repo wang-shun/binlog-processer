@@ -10,11 +10,7 @@ import static java.util.Arrays.asList;
 public class CreateDatePartitioner extends TimeBasedPartitioner {
     @Override
     protected List<String> partitionColumns() {
-        try {
-            return asList(Properties.load(PARTITIONER_CONSTANCE).getProperty("Create").split(","));
-        } catch (IOException e) {
-            return null;
-        }
+        return asList(Properties.load(PARTITIONER_CONSTANCE).getProperty("Create").split(","));
     }
 
     @Override

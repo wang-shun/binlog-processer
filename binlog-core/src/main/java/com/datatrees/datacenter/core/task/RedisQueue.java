@@ -8,7 +8,6 @@ import org.redisson.config.Config;
 
 public final class RedisQueue {
     private static RBlockingQueue<String> defaultQueue;
-
     static {
         java.util.Properties properties = Properties.load("redis.properties");
         if (properties == null) {

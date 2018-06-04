@@ -10,11 +10,7 @@ import static java.util.Arrays.asList;
 public class UpdateDatePartitioner extends TimeBasedPartitioner {
     @Override
     protected List<String> partitionColumns() {
-        try {
-            return asList(Properties.load(PARTITIONER_CONSTANCE).getProperty("Update").split(","));
-        } catch (IOException e) {
-            return null;
-        }
+        return asList(Properties.load(PARTITIONER_CONSTANCE).getProperty("Update").split(","));
     }
 
     @Override
