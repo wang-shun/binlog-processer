@@ -17,6 +17,8 @@ public class DownLoadTable {
     public static String DOWN_STATUS = "status";
     public static String UTC_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     public static String COMMON_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public static String PROCESS_START="process_start";
+    public static String PROcess_END="process_end";
 
 
 }

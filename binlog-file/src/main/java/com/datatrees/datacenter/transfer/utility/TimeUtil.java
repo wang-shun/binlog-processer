@@ -23,6 +23,7 @@ public class TimeUtil {
         try {
             Date date = formatter.parse(timeStr);
             timeStamp = date.getTime();
+
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -100,7 +101,7 @@ public class TimeUtil {
      * @param dateFormat
      * @return
      */
-    public static Date strToUtilDate(String strDate, String dateFormat) {
+    public static Date strToDate(String strDate, String dateFormat) {
         SimpleDateFormat sf = new SimpleDateFormat(dateFormat);
         Date date = null;
         try {

@@ -6,6 +6,7 @@ import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesRequest;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
+import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
@@ -73,9 +74,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         LOG.info(endTime);
         List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
         for (DBInstance dbInstance : instances) {
-            if ("rm-bp1p4s8pgekg2di55".equals(dbInstance.getDBInstanceId())) {
-                instanceBinlogTrans(profile, client, binlogFilesRequest, dbInstance);
-            }
+            instanceBinlogTrans(profile, client, binlogFilesRequest, dbInstance);
         }
         getExecutors().shutdown();
         try {
@@ -98,7 +97,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         binlogFilesRequest.setDBInstanceId(dbInstance.getDBInstanceId());
         List<BinLogFile> binLogFiles = BinLogFileUtil.getBinLogFiles(client, binlogFilesRequest, profile);
         String bakInstanceId = DBInstanceUtil.getBackInstanceId(dbInstance);
-
         List<BinLogFile> fileList = binLogFiles.parallelStream()
                 .filter(binLogFile -> binLogFile.getHostInstanceID().equals(bakInstanceId)).collect(Collectors.toList());
         long instanceLogSize = fileList.size();
@@ -120,6 +118,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String logEndTime = binLogFile.getLogEndTime();
                     String logStartTime = binLogFile.getLogBeginTime();
                     Long LogEndTimeStamp = TimeUtil.utc2TimeStamp(logEndTime);
+
                     //getDataBases of an instance
                    /* List<DescribeDatabasesResponse.Database> databases = DBInstanceUtil.getDataBase(dbInstance);
                     String dataBaseNames = DBInstanceUtil.dataBasesToStr(databases);*/
@@ -153,7 +152,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     transferProcess.startTrans();
                     LOG.info("download binlog file :" + binLogFile.getDownloadLink() + " successfully");
                     // TODO: 2018/5/15 此处添加将文件地址发送队列操作
-
+                    TaskDispensor.defaultDispensor().dispense(new Binlog());
 
                 }
 

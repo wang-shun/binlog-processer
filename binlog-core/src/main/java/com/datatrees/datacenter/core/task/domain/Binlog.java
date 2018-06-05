@@ -12,6 +12,10 @@ public class Binlog implements Serializable{
      */
     String identity;
     String path;
+    public Binlog()
+    {
+
+    }
 
     public String getInstanceId() {
         return instanceId;
@@ -22,7 +26,7 @@ public class Binlog implements Serializable{
     }
 
     public String getIdentity() {
-        return identity;
+        return path;
     }
 
     public void setIdentity(String identity) {
