@@ -1,6 +1,6 @@
 package com.datatrees.datacenter.resolver.storage;
 
-import com.datatrees.datacenter.core.Exception.BinlogException;
+import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import com.google.common.io.Files;
 import org.slf4j.Logger;

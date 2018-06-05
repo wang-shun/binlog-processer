@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.core.Exception;
+package com.datatrees.datacenter.core.exception;
 
 public class BinlogException extends RuntimeException {
     public BinlogException(String msg) {

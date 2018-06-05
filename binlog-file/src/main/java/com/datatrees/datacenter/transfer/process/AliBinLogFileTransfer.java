@@ -6,6 +6,7 @@ import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesRequest;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
+import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
@@ -154,6 +155,11 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     LOG.info("download binlog file :" + binLogFile.getDownloadLink() + " successfully");
                     // TODO: 2018/5/15 此处添加将文件地址发送队列操作
 
+                    try {
+//                        TaskDispensor.defaultDispensor().dispense(new Binlog());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
                 }
 
@@ -250,7 +256,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     void send() {
 // TODO: 2018/6/5  build binlog
 
-        Binlog binlog = new Binlog();
+//        Binlog binlog = new Binlog();
 //        TaskProcessor
     }
 }
