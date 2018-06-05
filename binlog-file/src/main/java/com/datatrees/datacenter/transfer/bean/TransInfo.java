@@ -1,7 +1,7 @@
 package com.datatrees.datacenter.transfer.bean;
 
-import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse;
+import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
 
 import java.io.Serializable;
 
@@ -26,10 +26,10 @@ public class TransInfo implements Serializable {
     /**
      * binlog 文件
      */
-    private DescribeDBInstancesResponse.DBInstance dbInstance;
+    private DBInstance dbInstance;
 
 
-    public TransInfo(String srcPath, String destPath, String fileName, DescribeDBInstancesResponse.DBInstance dbInstance) {
+    public TransInfo(String srcPath, String destPath, String fileName, DBInstance dbInstance) {
         this.srcPath = srcPath;
         this.destPath = destPath;
         this.fileName = fileName;
@@ -69,7 +69,7 @@ public class TransInfo implements Serializable {
         return dbInstance;
     }
 
-    public void setDbInstance(DescribeDBInstancesResponse.DBInstance dbInstance) {
+    public void setDbInstance(DBInstance dbInstance) {
         this.dbInstance = dbInstance;
     }
 }

@@ -6,6 +6,9 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.*;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
+import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceAttributeResponse.DBInstanceAttribute;
+import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceHAConfigResponse.NodeInfo;
+import com.aliyuncs.rds.model.v20140815.DescribeDatabasesResponse.Database;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,8 +102,8 @@ public class DBInstanceUtil {
         String backInstanceId = null;
         try {
             DescribeDBInstanceHAConfigResponse haConfigResponse = client.getAcsResponse(haConfigRequest, DBInstanceUtil.getProfile());
-            List<DescribeDBInstanceHAConfigResponse.NodeInfo> hostInstanceInfos = haConfigResponse.getHostInstanceInfos();
-            for (DescribeDBInstanceHAConfigResponse.NodeInfo hostInstanceInfo : hostInstanceInfos) {
+            List<NodeInfo> hostInstanceInfos = haConfigResponse.getHostInstanceInfos();
+            for (NodeInfo hostInstanceInfo : hostInstanceInfos) {
                 if ("Slave".equals(hostInstanceInfo.getNodeType())) {
                     backInstanceId = hostInstanceInfo.getNodeId();
                 }
@@ -119,11 +122,11 @@ public class DBInstanceUtil {
      * @param dbInstance 实例
      * @return 数据库列表
      */
-    public static List<DescribeDatabasesResponse.Database> getDataBase(DBInstance dbInstance) {
+    public static List<Database> getDataBase(DBInstance dbInstance) {
         DescribeDatabasesRequest databasesRequest = new DescribeDatabasesRequest();
         databasesRequest.setActionName("DescribeDatabases");
         databasesRequest.setDBInstanceId(dbInstance.getDBInstanceId());
-        List<DescribeDatabasesResponse.Database> databases = null;
+        List<Database> databases = null;
         try {
             DescribeDatabasesResponse response = client.getAcsResponse(databasesRequest, DEFAULT_PROFILE);
             databases = response.getDatabases();
@@ -139,7 +142,7 @@ public class DBInstanceUtil {
      * @param databases
      * @return
      */
-    public static String dataBasesToStr(List<DescribeDatabasesResponse.Database> databases) {
+    public static String dataBasesToStr(List<Database> databases) {
         StringBuilder dataBaseNames = new StringBuilder();
         for (int i = 0; i < databases.size(); i++) {
             dataBaseNames.append(databases.get(i).getDBName()).append("=");
@@ -157,14 +160,14 @@ public class DBInstanceUtil {
         DescribeDBInstanceAttributeRequest attributeRequest = new DescribeDBInstanceAttributeRequest();
         attributeRequest.setActionName("DescribeDBInstanceAttribute");
         attributeRequest.setDBInstanceId(dbInstance.getDBInstanceId());
-        List<DescribeDBInstanceAttributeResponse.DBInstanceAttribute> databases = null;
+        List<DBInstanceAttribute> databases = null;
         String connectString = null;
         try {
             DescribeDBInstanceAttributeResponse response = client.getAcsResponse(attributeRequest, DEFAULT_PROFILE);
-            List<DescribeDBInstanceAttributeResponse.DBInstanceAttribute> dbInstanceAttributeList = response.getItems();
+            List<DBInstanceAttribute> dbInstanceAttributeList = response.getItems();
 
             for (int i = 0; i < dbInstanceAttributeList.size(); i++) {
-                DescribeDBInstanceAttributeResponse.DBInstanceAttribute attribute = dbInstanceAttributeList.get(i);
+                DBInstanceAttribute attribute = dbInstanceAttributeList.get(i);
                 if (attribute.getDBInstanceId().equals(dbInstance.getDBInstanceId())) {
                     connectString = attribute.getConnectionString();
                 }
