@@ -119,10 +119,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String logStartTime = binLogFile.getLogBeginTime();
                     Long LogEndTimeStamp = TimeUtil.utc2TimeStamp(logEndTime);
 
-                    //getDataBases of an instance
-                   /* List<DescribeDatabasesResponse.Database> databases = DBInstanceUtil.getDataBase(dbInstance);
-                    String dataBaseNames = DBInstanceUtil.dataBasesToStr(databases);*/
-
                     String fileName = LogEndTimeStamp + "-" + BinLogFileUtil.getFileNameFromUrl(binLogFile.getDownloadLink(), REGEX_PATTERN);
                     System.out.println(fileName);
                     Map<String, Object> whereMap = new HashMap<>(4);
@@ -145,15 +141,23 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         e.printStackTrace();
                     }
 
-                    TransInfo transInfo = new TransInfo(binLogFile.getDownloadLink(), HDFS_PATH + File.separator + dbInstanceId
-                            + File.separator + hostInstanceId,
-                            fileName, binLogFile);
+                    StringBuilder filePath = new StringBuilder();
+                    filePath.append(HDFS_PATH)
+                            .append(File.separator)
+                            .append(dbInstanceId)
+                            .append(File.separator)
+                            .append(hostInstanceId);
+                    TransInfo transInfo = new TransInfo(binLogFile.getDownloadLink(), filePath.toString(),
+                            fileName, dbInstance);
                     TransferProcess transferProcess = new TransferProcess(transInfo);
                     transferProcess.startTrans();
                     LOG.info("download binlog file :" + binLogFile.getDownloadLink() + " successfully");
-                    // TODO: 2018/5/15 此处添加将文件地址发送队列操作
                     try {
-//                        TaskDispensor.defaultDispensor().dispense(new Binlog());
+                        TaskDispensor.defaultDispensor().dispense(
+                                new Binlog(DBInstanceUtil.getConnectString(dbInstance),
+                                        dbInstance.getDBInstanceId() + "-"
+                                                + fileName.split(".")[0],
+                                        filePath.toString() + fileName));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -234,6 +238,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static class LazyHolder {
         private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(4, 10, 3, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     }
+
 
     public static final ThreadPoolExecutor getExecutors() {
         return LazyHolder.executor;

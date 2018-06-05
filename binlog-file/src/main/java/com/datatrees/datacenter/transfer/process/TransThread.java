@@ -1,10 +1,14 @@
 package com.datatrees.datacenter.transfer.process;
 
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse;
+import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse;
+import com.datatrees.datacenter.core.task.TaskDispensor;
+import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
 import com.datatrees.datacenter.transfer.bean.DownLoadTable;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
+import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.transfer.utility.FileUtil;
 import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
 import com.datatrees.datacenter.transfer.utility.TimeUtil;
@@ -58,16 +62,16 @@ public class TransThread implements Serializable, Runnable {
      */
     boolean over = false;
 
-    BinLogFile binLogFile;
+    DescribeDBInstancesResponse.DBInstance dbInstance;
 
 
-    public TransThread(String src, String dest, long startPos, long endPos, String fileName, DescribeBinlogFilesResponse.BinLogFile binLogFile) {
+    public TransThread(String src, String dest, long startPos, long endPos, String fileName, DescribeDBInstancesResponse.DBInstance dbInstance) {
         this.src = src;
         this.dest = dest;
         this.fileName = fileName;
         this.startPos = startPos;
         this.endPos = endPos;
-        this.binLogFile = binLogFile;
+        this.dbInstance = dbInstance;
     }
 
     @Override
@@ -119,24 +123,38 @@ public class TransThread implements Serializable, Runnable {
                 e.printStackTrace();
             }
         }
-        Map<String, Object> whereMap = new HashMap<>(2);
+        // insert a record to t_binlog_record
+
+        Map<String, Object> whereMap = new HashMap<>();
         whereMap.put(DownLoadTable.FILE_NAME, fileName);
-        Map<String, Object> valueMap = new HashMap<>(1);
+        Map<String, Object> valueMap = new HashMap<>();
         valueMap.put(DownLoadTable.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
         try {
             DBUtil.update(FileUtil.getProperties().getProperty("binlog.record.table"), valueMap, whereMap);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        // insert a record to t_binlog_process
         long currentTime = System.currentTimeMillis();
         String processStart = TimeUtil.timeStamp2DateStr(currentTime, DownLoadTable.UTC_FORMAT);
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>(5);
         map.put(DownLoadTable.FILE_NAME, fileName);
-        map.put(DownLoadTable.BAK_INSTANCE_ID, binLogFile.getHostInstanceID());
+        map.put(DownLoadTable.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(dbInstance));
         map.put(DownLoadTable.DOWN_START_TIME, TimeUtil.strToDate(processStart, DownLoadTable.COMMON_FORMAT));
         try {
             DBUtil.insert(BINLOG_PROC_TABLE, map);
         } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // send to queue
+        try {
+            TaskDispensor.defaultDispensor().dispense(
+                    new Binlog(dest + File.separator + fileName,
+                            dbInstance.getDBInstanceId() + "-"
+                                    + fileName.split(".")[0],
+                            DBInstanceUtil.getConnectString(dbInstance)));
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -76,7 +76,6 @@ public class DBInstanceUtil {
                 for (DBInstance dbInstance : dbInstanceList) {
                     System.out.println(dbInstance.getDBInstanceId());
                 }
-                System.out.println("****************" + dbInstanceList.size());
                 dbInstances.addAll(dbInstanceList);
             }
         } catch (ClientException e) {
@@ -104,7 +103,6 @@ public class DBInstanceUtil {
             for (DescribeDBInstanceHAConfigResponse.NodeInfo hostInstanceInfo : hostInstanceInfos) {
                 if ("Slave".equals(hostInstanceInfo.getNodeType())) {
                     backInstanceId = hostInstanceInfo.getNodeId();
-                    System.out.println(backInstanceId);
                 }
             }
 
@@ -147,6 +145,34 @@ public class DBInstanceUtil {
             dataBaseNames.append(databases.get(i).getDBName()).append("=");
         }
         return dataBaseNames.toString();
+    }
+
+    /**
+     * 获取实例内网地址
+     *
+     * @param dbInstance
+     * @return
+     */
+    public static String getConnectString(DBInstance dbInstance) {
+        DescribeDBInstanceAttributeRequest attributeRequest = new DescribeDBInstanceAttributeRequest();
+        attributeRequest.setActionName("DescribeDBInstanceAttribute");
+        attributeRequest.setDBInstanceId(dbInstance.getDBInstanceId());
+        List<DescribeDBInstanceAttributeResponse.DBInstanceAttribute> databases = null;
+        String connectString = null;
+        try {
+            DescribeDBInstanceAttributeResponse response = client.getAcsResponse(attributeRequest, DEFAULT_PROFILE);
+            List<DescribeDBInstanceAttributeResponse.DBInstanceAttribute> dbInstanceAttributeList = response.getItems();
+
+            for (int i = 0; i < dbInstanceAttributeList.size(); i++) {
+                DescribeDBInstanceAttributeResponse.DBInstanceAttribute attribute = dbInstanceAttributeList.get(i);
+                if (attribute.getDBInstanceId().equals(dbInstance.getDBInstanceId())) {
+                    connectString = attribute.getConnectionString();
+                }
+            }
+        } catch (ClientException e) {
+            e.printStackTrace();
+        }
+        return connectString;
     }
 
     private static DefaultProfile getProfile() {
