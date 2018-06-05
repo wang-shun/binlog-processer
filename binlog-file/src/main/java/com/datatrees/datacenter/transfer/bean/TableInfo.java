@@ -3,7 +3,7 @@ package com.datatrees.datacenter.transfer.bean;
 /**
  * @author personalc
  */
-public class DownLoadTable {
+public class TableInfo {
     public static String BINLOG_TRANS_TABLE="t_binlog_record";
     public static String BINLOG_PROC_TABLE="t_binlog_process";
     public static String RECORD_ID = "id";

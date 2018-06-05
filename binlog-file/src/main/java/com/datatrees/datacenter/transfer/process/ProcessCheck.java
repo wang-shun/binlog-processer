@@ -1,6 +1,6 @@
 package com.datatrees.datacenter.transfer.process;
 
-import com.datatrees.datacenter.transfer.bean.DownLoadTable;
+import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import java.util.HashMap;
@@ -19,9 +19,9 @@ public class ProcessCheck {
         Runnable runnable = () -> {
             Map<String, Object> whereMap = new HashMap<>(1);
             List<Map<String, Object>> resultList = null;
-            whereMap.put(DownLoadTable.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
+            whereMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
             try {
-                resultList = DBUtil.query(DownLoadTable.BINLOG_PROC_TABLE, whereMap);
+                resultList = DBUtil.query(TableInfo.BINLOG_PROC_TABLE, whereMap);
             } catch (Exception e) {
                 e.printStackTrace();
             }

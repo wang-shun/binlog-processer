@@ -1,6 +1,8 @@
 package com.datatrees.datacenter.transfer.process;
 
+import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
+import com.datatrees.datacenter.transfer.utility.FileUtil;
 import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -8,18 +10,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 /**
  * @author personalc
  */
 class TransferProcess {
     private static Logger LOG = LoggerFactory.getLogger(TransferProcess.class);
-    private static final int FILE_SIZE_NOT_KNOWN = -1;
-    private static final int FILE_NOT_ACCESSIBLE = -2;
-    private static final int HTTP_CONNECTION_RESPONSE_CODE = 400;
-
 
     /**
      * 文件信息
@@ -38,20 +34,22 @@ class TransferProcess {
      */
     private boolean firstDown = true;
 
+    private FileUtil fileUtil=new FileUtil();
 
     TransferProcess(TransInfo transInfo) {
         this.transInfo = transInfo;
+        String filePath=transInfo.getDestPath() + File.separator + transInfo.getFileName();
         try {
-            if (HDFSFileUtil.fileSystem.exists(new Path(transInfo.getDestPath() + File.separator + transInfo.getFileName()))) {
+            if (HDFSFileUtil.fileSystem.exists(new Path(filePath))) {
                 firstDown = false;
-                startPos = HDFSFileUtil.getFileSize(transInfo.getDestPath() + File.separator + transInfo.getFileName());
+                startPos = HDFSFileUtil.getFileSize(filePath);
             } else {
                 startPos = 0;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        endPos = getFileSize();
+        endPos = fileUtil.getFileSize(transInfo.getSrcPath());
     }
 
     /**
@@ -60,11 +58,11 @@ class TransferProcess {
     void startTrans() {
         if (firstDown) {
             //文件长度
-            long fileLen = getFileSize();
-            if (fileLen == FILE_SIZE_NOT_KNOWN) {
+            long fileLen = fileUtil.getFileSize(transInfo.getSrcPath());
+            if (fileLen == HttpAccessStatus.FILE_SIZE_NOT_KNOWN.getValue()) {
                 LOG.info("file size is no known");
                 return;
-            } else if (fileLen == FILE_NOT_ACCESSIBLE) {
+            } else if (fileLen == HttpAccessStatus.FILE_NOT_ACCESSIBLE.getValue()) {
                 LOG.info("file can not access");
                 return;
             } else {
@@ -74,7 +72,7 @@ class TransferProcess {
         }
 
         TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
-                transInfo.getFileName(), transInfo.getBinLogFile());
+                transInfo.getFileName(), transInfo.getDbInstance());
         LOG.info("Thread :" + Thread.currentThread().getName() + ", start= " + startPos + ",  end= " + endPos);
         AliBinLogFileTransfer.getExecutors().execute(transThread);
         //停止标志
@@ -91,47 +89,6 @@ class TransferProcess {
         }
         LOG.info("file transfer over");
     }
-
-    /**
-     * 获取文件的大小
-     *
-     * @return 文件大小
-     */
-    private long getFileSize() {
-        int len = -1;
-        try {
-            URL url = new URL(transInfo.getSrcPath());
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("User-Agent", "custom");
-
-            int respCode = connection.getResponseCode();
-            if (respCode >= HTTP_CONNECTION_RESPONSE_CODE) {
-                LOG.info("Error Code : " + respCode);
-                // 代表文件不可访问
-                return FILE_NOT_ACCESSIBLE;
-            }
-
-            String header;
-            for (int i = 1; ; i++) {
-                header = connection.getHeaderFieldKey(i);
-                if (header != null) {
-                    if ("Content-Length".equals(header)) {
-                        len = Integer.parseInt(connection.getHeaderField(header));
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            LOG.info(e.getMessage());
-            e.printStackTrace();
-        }
-
-        LOG.info("the file length:  " + len);
-        return len;
-    }
-
     /**
      * 休眠时间
      *
