@@ -226,6 +226,7 @@
 
 
     <build>
+        <!--<finalName>binlog-processor</finalName>-->
         <!--<resources>-->
             <!--<resource>-->
                 <!--<directory>src/resources</directory>-->

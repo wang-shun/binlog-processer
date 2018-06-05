@@ -96,7 +96,6 @@ public class TimeUtil {
     }
 
     /**
-     *
      * @param strDate
      * @param dateFormat
      * @return

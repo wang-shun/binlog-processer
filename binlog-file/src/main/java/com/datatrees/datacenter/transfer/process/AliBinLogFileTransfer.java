@@ -6,6 +6,9 @@ import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesRequest;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
+import com.datatrees.datacenter.core.task.TaskRunner;
+import com.datatrees.datacenter.core.task.domain.Binlog;
+import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.transfer.bean.DownLoadTable;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
@@ -26,8 +29,8 @@ import java.util.stream.Collectors;
  *
  * @author personalc
  */
-public class BinLogTransfer {
-    private static Logger LOG = LoggerFactory.getLogger(BinLogTransfer.class);
+public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
+    private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
     private static Properties properties = FileUtil.getProperties();
     private static final String REGION_ID = properties.getProperty("REGION_ID");
     private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");
@@ -150,6 +153,8 @@ public class BinLogTransfer {
                     transferProcess.startTrans();
                     LOG.info("download binlog file :" + binLogFile.getDownloadLink() + " successfully");
                     // TODO: 2018/5/15 此处添加将文件地址发送队列操作
+
+
                 }
 
             } else {
@@ -212,7 +217,7 @@ public class BinLogTransfer {
         while (itr.hasNext()) {
             Map<String, Object> info = (Map<String, Object>) itr.next();
             startTime = TimeUtil.dateToStr((Timestamp) info.get(DownLoadTable.DOWN_START_TIME), DownLoadTable.UTC_FORMAT);
-            endTime= TimeUtil.dateToStr((Timestamp) info.get(DownLoadTable.DOWN_END_TIME), DownLoadTable.UTC_FORMAT);
+            endTime = TimeUtil.dateToStr((Timestamp) info.get(DownLoadTable.DOWN_END_TIME), DownLoadTable.UTC_FORMAT);
             String instanceId = (String) info.get(DownLoadTable.DB_INSTANCE);
             DBInstance dbInstance = new DBInstance();
             dbInstance.setDBInstanceId(instanceId);
@@ -231,4 +236,21 @@ public class BinLogTransfer {
         return LazyHolder.executor;
     }
 
+
+    @Override
+    public void process() {
+
+    }
+
+    @Override
+    public void transfer() {
+
+    }
+
+    void send() {
+// TODO: 2018/6/5  build binlog
+
+        Binlog binlog = new Binlog();
+//        TaskProcessor
+    }
 }

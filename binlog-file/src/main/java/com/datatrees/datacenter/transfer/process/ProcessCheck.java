@@ -2,8 +2,7 @@ package com.datatrees.datacenter.transfer.process;
 
 import com.datatrees.datacenter.transfer.bean.DownLoadTable;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
-import com.datatrees.datacenter.transfer.utility.DBUtil;
-
+import com.datatrees.datacenter.core.utility.DBUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

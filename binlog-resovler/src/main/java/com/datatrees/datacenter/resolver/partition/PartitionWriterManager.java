@@ -1,8 +1,8 @@
 package com.datatrees.datacenter.resolver.partition;
 
 import com.datatrees.datacenter.core.storage.FileStorage;
-import com.datatrees.datacenter.core.utility.Properties;
-import com.datatrees.datacenter.resolver.domain.BufferRecord;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
+//import com.datatrees.datacenter.resolver.domain.BufferRecord;
 import com.datatrees.datacenter.resolver.domain.Operator;
 import com.google.common.collect.ImmutableSet;
 import org.apache.avro.Schema;
@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
@@ -30,7 +31,7 @@ public class PartitionWriterManager {
     private ImmutableSet<Partitioner> partitioners;
 
     static {
-        java.util.Properties value = Properties.load("common.properties");
+        java.util.Properties value = PropertiesUtility.load("common.properties");
         TMP_ROOT_PATH = value.getProperty("hdfs.temp.url");
     }
 
@@ -44,23 +45,25 @@ public class PartitionWriterManager {
                                 replace(tempPath.split("/")[6] + "/", "");
                 fileStorage.commit(tempPath, targetPath);
             } catch (Exception e) {
+
                 logger.error(e.getMessage());
             }
         });
     }
 
-    private String createFullPath(String relativeFilePath, Partitioner partitioner, BufferRecord bufferRecord, String[] fullSchema, Schema envelopSchema) {
+    private String createFullPath(String relativeFilePath, Partitioner partitioner, String identity, String[] fullSchema, Schema envelopSchema) {
         String fullPath = null;
         String database = fullSchema[1];
+        String instance = fullSchema[0];
         if (fullSchema[1].contains("test") || fullSchema[1].contains("ecommerce") || fullSchema[1].contains("operator")) {
             database = database.replaceAll("\\d+", "");
         }
         if (relativeFilePath != null) {
             fullPath = String.
-                    format("%s/%s/%s/%s/%s/%s/%s.avro", TMP_ROOT_PATH, partitioner.getRoot(), bufferRecord.getIdentity(), database, envelopSchema.getName(), relativeFilePath, bufferRecord.getIdentity());
+                    format("%s/%s/%s/%s/%s/%s/%s/%s.avro", TMP_ROOT_PATH, partitioner.getRoot(), identity, instance, database, envelopSchema.getName(), relativeFilePath, identity);
         } else {//没有分区
             fullPath = String.
-                    format("%s/%s/%s/%s/%s/%s.avro", TMP_ROOT_PATH, partitioner.getRoot(), bufferRecord.getIdentity(), database, envelopSchema.getName(), bufferRecord.getIdentity());
+                    format("%s/%s/%s/%s/%s/%s/%s.avro", TMP_ROOT_PATH, partitioner.getRoot(), identity, instance, database, envelopSchema.getName(), identity);
 
         }
         return fullPath;
@@ -82,43 +85,40 @@ public class PartitionWriterManager {
             try {
                 partitionWriter.flush();
             } catch (IOException e) {
+
                 logger.error(e.getMessage());
             }
         }), 5, TimeUnit.MINUTES);
     }
 
-    public void write(BufferRecord bufferRecord) throws IOException {
-        Operator operator =
-                Operator.parse(((GenericData.Record) bufferRecord.getResultValue().getValue()).get("op").toString());
+    public void write(Schema schema, String identity, Operator operator, Serializable before, Serializable after, Object result) throws IOException {
         GenericData.Record record = null;
         switch (operator) {
             case U:
             case C:
-                record = ((GenericData.Record)
-                        ((GenericData.Record) bufferRecord.getResultValue().getValue()).get("After"));
+                record = (GenericData.Record) ((GenericData.Record) result).get("After");
                 break;
             case D:
-                record = ((GenericData.Record)
-                        ((GenericData.Record) bufferRecord.getResultValue().getValue()).get("Before"));
+                record = (GenericData.Record) ((GenericData.Record) result).get("Before");
                 break;
             default:
                 break;
         }
 
-        Schema envelopSchema = bufferRecord.getResultValue().getKey();
+        Schema envelopSchema = schema;
         String[] fullSchema = envelopSchema.getNamespace().split("\\.");
         PartitionWriter writer = null;
         if (record != null) {
             for (Partitioner partitioner : partitioners) {
                 String relativeFilePath = partitioner.encodePartition(record);
-                String fullPath = createFullPath(relativeFilePath, partitioner, bufferRecord, fullSchema, envelopSchema);
+                String fullPath = createFullPath(relativeFilePath, partitioner, identity, fullSchema, envelopSchema);
                 if (partitionWriterHashMap.containsKey(fullPath)) {
                     writer = partitionWriterHashMap.get(fullPath);
                 } else {
                     writer = new InternalPartitionWriter(envelopSchema, fileStorage.openWriter(fullPath), partitioner);
                     partitionWriterHashMap.put(fullPath, writer);
                 }
-                writer.write(bufferRecord.getResultValue().getValue());
+                writer.write(result);
             }
         }
     }

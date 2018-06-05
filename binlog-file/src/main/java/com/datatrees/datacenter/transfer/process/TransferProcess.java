@@ -76,7 +76,7 @@ class TransferProcess {
         TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
                 transInfo.getFileName(), transInfo.getBinLogFile());
         LOG.info("Thread :" + Thread.currentThread().getName() + ", start= " + startPos + ",  end= " + endPos);
-        BinLogTransfer.getExecutors().execute(transThread);
+        AliBinLogFileTransfer.getExecutors().execute(transThread);
         //停止标志
         boolean stop = false;
         while (!stop) {

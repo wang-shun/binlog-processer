@@ -1,9 +1,9 @@
 package com.datatrees.datacenter.transfer.process;
 
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse;
+import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.transfer.bean.DownLoadTable;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
-import com.datatrees.datacenter.transfer.utility.DBUtil;
 import com.datatrees.datacenter.transfer.utility.FileUtil;
 import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
 import org.apache.hadoop.fs.FSDataOutputStream;

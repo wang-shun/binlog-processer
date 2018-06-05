@@ -1,7 +1,7 @@
 package com.datatrees.datacenter.resolver.reader;
 
+import com.datatrees.datacenter.core.storage.EventConsumer;
 import com.datatrees.datacenter.core.utility.StopWatch;
-import com.datatrees.datacenter.resolver.domain.BufferRecord;
 import com.datatrees.datacenter.resolver.domain.Operator;
 import com.datatrees.datacenter.resolver.schema.Schemas;
 import com.github.shyiko.mysql.binlog.BinaryLogFileReader;
@@ -26,15 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class BinlogFileReader implements Runnable {
-
-    @FunctionalInterface
-    interface BinlogEventConsumer<T> {
-        void consume(T bufferRecord);
-    }
-
-    private EnumMap<EventType, BinlogEventConsumer<Event>> binlogEventConsumerHandlerHashMap;
+    private EnumMap<EventType, EventConsumer<Event>> binlogEventConsumerHandlerHashMap;
     private static Logger logger = LoggerFactory.getLogger(BinlogFileReader.class);
-    private EventConsumer<BufferRecord, Map<Operator, AtomicLong>> consumer;
+    private EventListner<Map<Operator, AtomicLong>> consumer;
     private InputStream fileStream;
     private String identity;
     private String instanceId;
@@ -49,8 +43,12 @@ public final class BinlogFileReader implements Runnable {
     private Function<String, String> schemaNameMapper = t -> t;
 
     public BinlogFileReader() {
-        resultMap = new HashMap<>(ImmutableMap.<Operator, AtomicLong>builder().put(Operator.C, new AtomicLong(0L)).
-                put(Operator.U, new AtomicLong(0L)).put(Operator.D, new AtomicLong(0L)).put(Operator.DEFAULT, new AtomicLong(0)).build());
+        resultMap = new HashMap<>(ImmutableMap.<Operator, AtomicLong>builder().
+                put(Operator.C, new AtomicLong(0L)).
+                put(Operator.U, new AtomicLong(0L)).
+                put(Operator.D, new AtomicLong(0L)).
+                put(Operator.DEFAULT, new AtomicLong(0L)).
+                build());
         eventDeserializer = new EventDeserializer();
         tableMapHashMap = new ConcurrentHashMap<>();
         binlogEventConsumerHandlerHashMap = new EnumMap<>(EventType.class);
@@ -59,7 +57,7 @@ public final class BinlogFileReader implements Runnable {
     public BinlogFileReader(String identity,
                             String instanceId,
                             InputStream fileStream,
-                            EventConsumer<BufferRecord, Map<Operator, AtomicLong>> consumer
+                            EventListner<Map<Operator, AtomicLong>> consumer
     ) throws IOException {
         this(identity, instanceId, fileStream, consumer, null);
     }
@@ -67,7 +65,7 @@ public final class BinlogFileReader implements Runnable {
     public BinlogFileReader(String identity,
                             String instanceId,
                             InputStream fileStream,
-                            EventConsumer<BufferRecord, Map<Operator, AtomicLong>> consumer,
+                            EventListner<Map<Operator, AtomicLong>> consumer,
                             Function<String, String> schemaNameMapper
     ) throws IOException {
         this();
@@ -112,25 +110,23 @@ public final class BinlogFileReader implements Runnable {
 
     private void handlerEvent() throws IOException {
         try {
-            final StopWatch stopWatch2 = new StopWatch("Initialize schemas");
             try {
-                stopWatch2.watch(() -> {
-                    try {
-                        for (Event event; (event = reader.readEvent()) != null; ) {
-                            final EventHeader eventHeader = event.getHeader();
-                            final EventType eventType = eventHeader.getEventType();
-                            final Operator simpleEventType = Operator.valueOf(eventType);
-                            BinlogEventConsumer<Event> eventBinlogEventConsumer =
-                                    binlogEventConsumerHandlerHashMap.getOrDefault(eventType, bufferRecord -> {
-                                        resultMap.get(simpleEventType).incrementAndGet();
-                                    });
-                            eventBinlogEventConsumer.consume(event);
-                        }
-                    } catch (IOException e) {
-                        logger.error(e.getMessage(), e);
+                try {
+                    for (Event event; (event = reader.readEvent()) != null; ) {
+                        final EventHeader eventHeader = event.getHeader();
+                        final EventType eventType = eventHeader.getEventType();
+                        final Operator simpleEventType = Operator.valueOf(eventType);
+                        EventConsumer<Event> eventBinlogEventConsumer =
+                                binlogEventConsumerHandlerHashMap.getOrDefault(eventType,
+                                        bufferRecord -> resultMap.get(simpleEventType).incrementAndGet());
+                        eventBinlogEventConsumer.consume(event);
                     }
-                });
+                } catch (IOException e) {
+
+                    logger.error(e.getMessage(), e);
+                }
             } catch (Exception e) {
+
                 logger.error(e.getMessage(), e);
             }
         } finally {
@@ -143,7 +139,9 @@ public final class BinlogFileReader implements Runnable {
         long tableNumber = tableMapEventData.getTableId();
         String databaseName = schemaNameMapper.apply(tableMapEventData.getDatabase());
         String tableName = tableMapEventData.getTable();
-        tableMapHashMap.put(tableNumber, new SimpleEntry<>(databaseName, tableName));
+        if (!databaseName.equalsIgnoreCase("mysql")) {
+            tableMapHashMap.put(tableNumber, new SimpleEntry<>(databaseName, tableName));
+        }
     }
 
     private void consumeBufferRecord(Operator operator, Long tableId, Serializable[] before, Serializable[] after) {
@@ -151,13 +149,10 @@ public final class BinlogFileReader implements Runnable {
         if (simpleEntry != null) {
             Schema schema = schemaUtility.toAvroSchema(this.instanceId, simpleEntry.getKey(), simpleEntry.getValue());
             if (schema != null) {
-                BufferRecord bufferRecord = new BufferRecord(this.identity, this.instanceId, Operator.C, before, after);
-                Object resultValue = schemaUtility.toAvroData(schema, bufferRecord);
+                Object resultValue = schemaUtility.toAvroData(schema, operator, before, after);
                 if (resultValue != null) {
-                    bufferRecord.setResultValue(new SimpleEntry<>(schema, resultValue));
-                    bufferRecord.setTableSchema(simpleEntry);
                     try {
-                        consumer.consume(bufferRecord);
+                        consumer.consume(schema, this.identity, operator, before, after, resultValue);
                     } finally {
                         resultMap.get(operator).incrementAndGet();
                     }
@@ -189,7 +184,7 @@ public final class BinlogFileReader implements Runnable {
         Iterator<Serializable[]> deleteRows = deleteRowsEventData.getRows().iterator();
         do {
             Serializable[] rows = deleteRows.next();
-            consumeBufferRecord(Operator.C, deleteRowsEventData.getTableId(), rows, null);
+            consumeBufferRecord(Operator.D, deleteRowsEventData.getTableId(), rows, null);
         } while (deleteRows.hasNext());
     }
 

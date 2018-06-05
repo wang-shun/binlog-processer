@@ -1,6 +1,6 @@
 package com.datatrees.datacenter.resolver.schema;
 
-import com.datatrees.datacenter.resolver.domain.BufferRecord;
+//import com.datatrees.datacenter.resolver.domain.BufferRecord;
 import com.datatrees.datacenter.resolver.domain.Operator;
 import com.datatrees.datacenter.resolver.schema.converter.LogicalTypeConverter;
 import com.github.shyiko.mysql.binlog.event.EventType;
@@ -28,6 +28,8 @@ public final class Schemas {
             = new HashMap<>();
 
     private static final HashMap<Class<?>, LogicalTypeConverter> TO_CONNECT_CLASS_CONVERTERS = new HashMap<>();
+
+    private static Schema.Parser schemaParser = new Schema.Parser();
 
     static {
         TO_CONNECT_CLASS_CONVERTERS.put(BigDecimal.class, new LogicalTypeConverter() {
@@ -114,19 +116,19 @@ public final class Schemas {
         return null;
     }
 
-    public Object toAvroData(Schema schema, BufferRecord bufferRecord) {
+    public Object toAvroData(Schema schema, Operator operator, Serializable[] beforeValue, Serializable[] afterValue) {
         Schema recordUnionSchema = schema.getField(RESULT_BEFORE_TAG).schema();
         Schema recordSchema = avroSchemaForUnderlyingTypeIfOptional(recordUnionSchema);
 
         GenericRecordBuilder envelopBuilder = new GenericRecordBuilder(schema);
-        if (bufferRecord.getBeforeValue() != null) {
+        if (beforeValue != null) {
             GenericRecordBuilder beforeValueBuilder = new GenericRecordBuilder(recordSchema);
             List<Schema.Field> fields = recordSchema.getFields();
             for (Integer index = 0; index <= fields.size() - 1; index++) {
                 Schema.Field field = indexForColumns(fields, index);
                 Object logicalValue = null;
-                if (index < bufferRecord.getBeforeValue().length) {
-                    Object value = bufferRecord.getBeforeValue()[index];
+                if (index < beforeValue.length) {
+                    Object value = beforeValue[index];
                     logicalValue = fromLogicalValue(field.schema(), value);
                 }
                 if (field != null) {
@@ -136,14 +138,14 @@ public final class Schemas {
             envelopBuilder.set(RESULT_BEFORE_TAG, beforeValueBuilder.build());
         }
 
-        if (bufferRecord.getAfterValue() != null) {
+        if (afterValue != null) {
             GenericRecordBuilder afterValueBuilder = new GenericRecordBuilder(recordSchema);
             List<Schema.Field> fields = recordSchema.getFields();
             for (Integer index = 0; index <= fields.size() - 1; index++) {
                 Schema.Field field = indexForColumns(fields, index);
                 Object logicalValue = null;
-                if (index < bufferRecord.getAfterValue().length) {
-                    Object value = bufferRecord.getAfterValue()[index];
+                if (index < afterValue.length) {
+                    Object value = afterValue[index];
                     logicalValue = fromLogicalValue(field.schema(), value);
                 }
                 if (field != null) {
@@ -152,7 +154,7 @@ public final class Schemas {
             }
             envelopBuilder.set(RESULT_AFTER_TAG, afterValueBuilder.build());
         }
-        GenericData.Record finalRecord = envelopBuilder.set(RESULT_OP_TAG, bufferRecord.getOperator().toString()).build();
+        GenericData.Record finalRecord = envelopBuilder.set(RESULT_OP_TAG, operator.toString()).build();
         return finalRecord;
     }
 
@@ -196,10 +198,6 @@ public final class Schemas {
 
         cachedAvroSchema.put(key, envelopSchema);
         return envelopSchema;
-    }
-
-    public Schema toAvroSchema(String schema, String table) {
-        return toAvroSchema(null, schema, table);
     }
 
     private Schema.Field indexForColumns(List<Schema.Field> fields, int index) {

@@ -18,6 +18,7 @@ public class Main {
                     args[0].equalsIgnoreCase("dispense") ? TaskProcessor.defaultProcessor() : TaskProcessor.defaultProcessor();
             taskRunner.process();
         } catch (Exception e) {
+
             logger.error(e.getMessage(), e);
         }
     }

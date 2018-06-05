@@ -5,12 +5,8 @@ import org.redisson.Redisson;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
-
-import java.io.IOException;
 
 public class Redis {
 
@@ -31,7 +27,7 @@ public class Redis {
 
             public JedisImpl() {
                 java.util.Properties props = null;
-                props = Properties.load("redis.properties");
+                props = PropertiesUtility.load("redis.properties");
                 JedisPoolConfig config = new JedisPoolConfig();
                 String[] arr = props.getProperty("redis.server").split(":");
                 pool = new JedisPool(config, arr[0], Integer.parseInt(arr[1]));
@@ -65,7 +61,7 @@ public class Redis {
 
             public Redission() {
                 Config config = new Config();
-                config.useSingleServer().setAddress(String.format("redis://%s", Properties.load("redis.properties").getProperty("redis.server")));
+                config.useSingleServer().setAddress(String.format("redis://%s", PropertiesUtility.load("redis.properties").getProperty("redis.server")));
                 redisson = Redisson.create(config);
             }
 

@@ -5,10 +5,10 @@ import com.datatrees.datacenter.core.storage.FileStorage;
 import com.datatrees.datacenter.core.task.RedisQueue;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.task.domain.Binlog;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.resolver.reader.BinlogFileReader;
-import com.datatrees.datacenter.resolver.reader.DefaultEventConsumer;
+import com.datatrees.datacenter.resolver.reader.DefaultEventListner;
 import com.datatrees.datacenter.resolver.storage.HdfsStorage;
-import javafx.concurrent.Task;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RBlockingQueue;
 import org.slf4j.Logger;
@@ -21,13 +21,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-public class TaskProcessor implements TaskRunner {
+public class TaskProcessor implements TaskRunner, Runnable {
     private static TaskProcessor __taskProcessor;
     private RBlockingQueue<String> blockingQueue;
     private static Logger logger = LoggerFactory.getLogger(TaskProcessor.class);
 
     private FileStorage fileStorage;
-    private ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactory() {
+    private ExecutorService executorService = Executors.newFixedThreadPool(10, new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
             Thread thread = new Thread(r);
@@ -39,7 +39,7 @@ public class TaskProcessor implements TaskRunner {
     public static TaskProcessor defaultProcessor() {
         synchronized (TaskProcessor.class) {
             if (__taskProcessor == null) {
-                Properties properties = com.datatrees.datacenter.core.utility.Properties.load("common.properties");
+                Properties properties = PropertiesUtility.load("common.properties");
                 String mode = properties.getProperty("queue.mode");
                 switch (mode) {
                     case "default":
@@ -54,6 +54,35 @@ public class TaskProcessor implements TaskRunner {
         }
     }
 
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                if (!blockingQueue.isEmpty()) {
+                    String taskDesc = consumeTask();
+                    logger.info(String.format("start to read log file of %s", taskDesc));
+                    if (StringUtils.isNotBlank(taskDesc)) {
+                        executorService.submit(() -> {
+                            try {
+                                startRead(JSON.parseObject(taskDesc, Binlog.class));
+                            } catch (IOException e) {
+                                logger.error(e.getMessage(), e);
+                            }
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            } finally {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(1000L);
+                } catch (InterruptedException e) {
+                    logger.error(String.format("internal sleep failed."));
+                }
+            }
+        }
+    }
+
     protected TaskProcessor() {
         blockingQueue = RedisQueue.defaultQueue();
         fileStorage = new HdfsStorage();// TODO: 2018/6/1 reflect from config
@@ -64,28 +93,14 @@ public class TaskProcessor implements TaskRunner {
     }
 
     public void process() {
-        executorService.submit(() -> {
-            while (true) {
-                if (!blockingQueue.isEmpty()) {
-                    try {
-                        String taskDesc = consumeTask();
-                        if (StringUtils.isNotBlank(taskDesc)) {
-                            startRead(JSON.parseObject(taskDesc, Binlog.class));
-                        }
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                    } finally {
-                        TimeUnit.MILLISECONDS.sleep(500L);
-                    }
-                }
-            }
-        });
+        Thread runThread = new Thread(this);
+        runThread.start();
     }
 
     private void startRead(Binlog task) throws IOException {
         BinlogFileReader binlogFileReader = new BinlogFileReader(task.getIdentity(), task.getInstanceId(),
                 fileStorage.openReader(task.getPath()),
-                new DefaultEventConsumer(fileStorage));
+                new DefaultEventListner(fileStorage));
         binlogFileReader.read();
     }
 

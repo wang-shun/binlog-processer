@@ -1,9 +1,8 @@
-package com.datatrees.datacenter.resolver;
+package com.datatrees.datacenter.core.task;
 
 import com.alibaba.fastjson.JSON;
-import com.datatrees.datacenter.core.task.KafkaProducer;
-import com.datatrees.datacenter.core.task.RedisQueue;
 import com.datatrees.datacenter.core.task.domain.Binlog;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 
 import java.util.Properties;
 
@@ -18,7 +17,7 @@ public class TaskDispensor {
     public static TaskDispensor defaultDispensor() {
         synchronized (TaskDispensor.class) {
             if (__taskDispensor == null) {
-                Properties properties = com.datatrees.datacenter.core.utility.Properties.load("common.properties");
+                Properties properties = PropertiesUtility.load("common.properties");
                 String mode = properties.getProperty("queue.mode");
                 switch (mode) {
                     case "default":
