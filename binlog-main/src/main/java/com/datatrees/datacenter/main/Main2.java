@@ -28,11 +28,12 @@ public class Main2 {
 //        TaskDispensor.defaultDispensor().dispense(binlog1);
 
 
-        Binlog binlog = new Binlog();
-        binlog.setInstanceId("basisdatabankbill");
-        binlog.setIdentity("004207");
-        binlog.setPath("hdfs://dn0:8020/binlogfile/mysql-bin.004207");
-        TaskDispensor.defaultDispensor().dispense(binlog);
+//        Binlog binlog = new Binlog();
+//        binlog.setInstanceId("basisdatabankbill");
+//        binlog.setIdentity("004207");
+//        binlog.setPath("hdfs://dn0:8020/binlogfile/mysql-bin.004207");
+//        binlog.setPath("hdfs://localhost:9000/binlogfile/mysql-bin.004207");
+//        TaskDispensor.defaultDispensor().dispense(binlog);
 
 //        Binlog binlog = new Binlog();
 //        binlog.setInstanceId("gongfudai");

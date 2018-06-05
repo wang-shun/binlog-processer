@@ -1,6 +1,6 @@
 package com.datatrees.datacenter.resolver.storage;
 
-import com.datatrees.datacenter.core.Exception.BinlogException;
+import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -10,7 +10,6 @@ import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -19,6 +18,7 @@ public class HdfsStorage implements FileStorage {
     private static Logger logger = LoggerFactory.getLogger(HdfsStorage.class);
 
     public HdfsStorage() {
+        conf = new Configuration();
         conf.setBoolean(DFSConfigKeys.DFS_SUPPORT_APPEND_KEY, true);
         conf.setInt(DFSConfigKeys.DFS_NAMENODE_HEARTBEAT_RECHECK_INTERVAL_KEY, 1000);
         conf.setInt(DFSConfigKeys.DFS_HEARTBEAT_INTERVAL_KEY, 1);

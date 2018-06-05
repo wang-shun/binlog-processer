@@ -1,8 +1,7 @@
 package com.datatrees.datacenter.core.storage;
 
-import com.datatrees.datacenter.core.Exception.BinlogException;
+import com.datatrees.datacenter.core.exception.BinlogException;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 

@@ -152,7 +152,11 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     transferProcess.startTrans();
                     LOG.info("download binlog file :" + binLogFile.getDownloadLink() + " successfully");
                     // TODO: 2018/5/15 此处添加将文件地址发送队列操作
-                    TaskDispensor.defaultDispensor().dispense(new Binlog());
+                    try {
+//                        TaskDispensor.defaultDispensor().dispense(new Binlog());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
                 }
 
@@ -249,7 +253,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     void send() {
 // TODO: 2018/6/5  build binlog
 
-        Binlog binlog = new Binlog();
+//        Binlog binlog = new Binlog();
 //        TaskProcessor
     }
 }

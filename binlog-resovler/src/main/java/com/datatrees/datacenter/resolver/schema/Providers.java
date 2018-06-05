@@ -35,52 +35,22 @@ public class Providers {
     private static Redis.SimpleRedis<String, String> redis = Redis.getMgr();
     private static Function<String, String> schemaNameMapper = t -> t.replaceAll("\\d+", "");
 
-    static {
-        try {
-            Iterator<Map.Entry<Object, Object>> value =
-                    PropertiesUtility.load("dbInstance.properties").entrySet().iterator();
-            ImmutableMap.Builder builder = ImmutableMap.<String, Triplet<String, String, String>>builder();
-            while (value.hasNext()) {
-                Map.Entry<Object, Object> entry = value.next();
-                builder.put(entry.getKey().toString(),
-                        Triplet.with(String.format("jdbc:mysql://%s:3306", entry.getValue().toString()),
-                                "debezium", "Debezium_"));
-            }
-            dbInstanceSchema = builder.build();
-
-
-//            caches = CacheBuilder.newBuilder().
-//                    maximumSize(10000).
-//                    expireAfterAccess(12, TimeUnit.HOURS).
-//                    build(new CacheLoader<Triplet<String, String, String>, KeyValue<String, String>>() {
-//                        @Override
-//                        public KeyValue<String, String> load(Triplet<String, String, String> key) throws Exception {
-//                            String redisKey = String.format("%s.%s.%s", key.getValue0(), key.getValue1(), key.getValue2());
-//                            String namespace = String.format("%s.%s", key.getValue0(), schemaNameMapper.apply(key.getValue1()));
-//                            if (redis.exists(redisKey)) return KeyValue.with(namespace, redis.get(redisKey));
-//
-//                            Triplet<String, String, String> connectInfo = dbInstanceSchema.get(key.getValue0());
-//                            dbSchemaExtractor = new DbSchemaExtractor(connectInfo.getValue0(), connectInfo.getValue1(), connectInfo.getValue2());
-//                            AvroConfig config =
-//                                    new AvroConfig(String.format("%s.%s", key.getValue0(), schemaNameMapper.apply(key.getValue1())));
-//                            List<AvroSchema> tableAvroSchema = dbSchemaExtractor.getForSchema(config, key.getValue1());
-//                            String result = null;
-//                            for (AvroSchema avroSchema : tableAvroSchema) {
-//                                String avroSchemaString = SchemaGenerator.generate(avroSchema);
-//                                if (avroSchema.getName().equalsIgnoreCase(key.getValue2())) {
-//                                    result = avroSchemaString;
-//                                }
-//                                redis.set(String.format("%s.%s.%s", key.getValue0(), key.getValue1(), avroSchema.getName()), avroSchemaString);
-//                            }
-//                            return KeyValue.with(namespace, result);
-//                        }
-//                    });
-        } catch (Exception e) {
-
-            logger.error(e.getMessage(), e);
-        }
-    }
-
+//    static {
+//        try {
+//            Iterator<Map.Entry<Object, Object>> value =
+//                    PropertiesUtility.load("dbInstance.properties").entrySet().iterator();
+//            ImmutableMap.Builder builder = ImmutableMap.<String, Triplet<String, String, String>>builder();
+//            while (value.hasNext()) {
+//                Map.Entry<Object, Object> entry = value.next();
+//                builder.put(entry.getKey().toString(),
+//                        Triplet.with(String.format("jdbc:mysql://%s:3306", entry.getValue().toString()),
+//                                "debezium", "Debezium_"));
+//            }
+//            dbInstanceSchema = builder.build();
+//        } catch (Exception e) {
+//            logger.error(e.getMessage(), e);
+//        }
+//    }
     /**
      * v0:connecturl;v1:instanceId;v2:binlog;v3:schema;v4:user;v5:password
      */
