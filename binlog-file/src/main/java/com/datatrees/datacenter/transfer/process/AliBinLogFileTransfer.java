@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -59,6 +60,26 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         // 创建API请求并设置参数
         DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
         binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
+        // 检查下载记录和处理记录是否一致
+        String sql = "select r.id from t_binlog_record as r left join t_binlog_process as p on r.db_instance=p.db_instance and r.file_name=p.file_name where p.id is null";
+        List<Map<String, Object>> sendFailedRecord = new ArrayList<>();
+        try {
+            sendFailedRecord = DBUtil.query(sql);
+            if (sendFailedRecord.size() > 0) {
+                Iterator<Map<String, Object>> iterator = sendFailedRecord.iterator();
+                Map<String, Object> recordMap = null;
+                while (iterator.hasNext()) {
+                    recordMap = iterator.next();
+                    TaskDispensor.defaultDispensor().dispense(
+                            new Binlog(HDFS_PATH + File.separator + recordMap.get(TableInfo.FILE_NAME),
+                                    recordMap.get(TableInfo.DB_INSTANCE) + "_"
+                                            + recordMap.get(TableInfo.FILE_NAME),
+                                    DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE))));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         //重新下载未完成的数据
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
         if (unCompleteList.size() > 0 && unCompleteList != null) {
@@ -93,10 +114,10 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
      * @param dbInstance
      */
     private static void instanceBinlogTrans(DefaultProfile profile, IAcsClient client, DescribeBinlogFilesRequest binlogFilesRequest, DBInstance dbInstance) {
-
-        binlogFilesRequest.setDBInstanceId(dbInstance.getDBInstanceId());
+        String instanceId = dbInstance.getDBInstanceId();
+        binlogFilesRequest.setDBInstanceId(instanceId);
         List<BinLogFile> binLogFiles = BinLogFileUtil.getBinLogFiles(client, binlogFilesRequest, profile);
-        String bakInstanceId = DBInstanceUtil.getBackInstanceId(dbInstance);
+        String bakInstanceId = DBInstanceUtil.getBackInstanceId(instanceId);
         List<BinLogFile> fileList = binLogFiles.parallelStream()
                 .filter(binLogFile -> binLogFile.getHostInstanceID().equals(bakInstanceId)).collect(Collectors.toList());
         long instanceLogSize = fileList.size();
@@ -152,15 +173,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     TransferProcess transferProcess = new TransferProcess(transInfo);
                     transferProcess.startTrans();
                     LOG.info("download binlog file :" + binLogFile.getDownloadLink() + " successfully");
-                    try {
-                        TaskDispensor.defaultDispensor().dispense(
-                                new Binlog(DBInstanceUtil.getConnectString(dbInstance),
-                                        dbInstance.getDBInstanceId() + "-"
-                                                + fileName.split(".")[0],
-                                        filePath.toString() + fileName));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
 
                 }
 

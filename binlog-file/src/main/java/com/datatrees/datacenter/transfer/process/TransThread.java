@@ -59,16 +59,16 @@ public class TransThread implements Serializable, Runnable {
      */
     boolean over = false;
 
-    DescribeDBInstancesResponse.DBInstance dbInstance;
+    String  instanceId;
 
 
-    public TransThread(String src, String dest, long startPos, long endPos, String fileName, DescribeDBInstancesResponse.DBInstance dbInstance) {
+    public TransThread(String src, String dest, long startPos, long endPos, String fileName, String dbInstanceId) {
         this.src = src;
         this.dest = dest;
         this.fileName = fileName;
         this.startPos = startPos;
         this.endPos = endPos;
-        this.dbInstance = dbInstance;
+        this.instanceId = instanceId;
     }
 
     @Override
@@ -136,7 +136,7 @@ public class TransThread implements Serializable, Runnable {
         String processStart = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
         Map<String, Object> map = new HashMap<>(5);
         map.put(TableInfo.FILE_NAME, fileName);
-        map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(dbInstance));
+        map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
         map.put(TableInfo.DOWN_START_TIME, TimeUtil.strToDate(processStart, TableInfo.COMMON_FORMAT));
         try {
             DBUtil.insert(BINLOG_PROC_TABLE, map);
@@ -147,9 +147,9 @@ public class TransThread implements Serializable, Runnable {
         try {
             TaskDispensor.defaultDispensor().dispense(
                     new Binlog(dest + File.separator + fileName,
-                            dbInstance.getDBInstanceId() + "_"
+                            instanceId + "_"
                                     + fileName,
-                            DBInstanceUtil.getConnectString(dbInstance)));
+                            DBInstanceUtil.getConnectString(instanceId)));
         } catch (Exception e) {
             e.printStackTrace();
         }

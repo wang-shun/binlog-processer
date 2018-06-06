@@ -90,13 +90,12 @@ public class DBInstanceUtil {
     /**
      * 获取实例的备份实例编号
      *
-     * @param dbInstance 某个实例
+     * @param instanceId 某个实例
      * @return 备份实例编号
      */
-    public static String getBackInstanceId(DBInstance dbInstance) {
+    public static String getBackInstanceId(String instanceId) {
         IAcsClient client = DBInstanceUtil.createConnection();
         DescribeDBInstanceHAConfigRequest haConfigRequest = new DescribeDBInstanceHAConfigRequest();
-        String instanceId = dbInstance.getDBInstanceId();
         haConfigRequest.setActionName("DescribeDBInstanceHAConfig");
         haConfigRequest.setDBInstanceId(instanceId);
         String backInstanceId = null;
@@ -153,13 +152,13 @@ public class DBInstanceUtil {
     /**
      * 获取实例内网地址
      *
-     * @param dbInstance
+     * @param InstanceId
      * @return
      */
-    public static String getConnectString(DBInstance dbInstance) {
+    public static String getConnectString(String InstanceId) {
         DescribeDBInstanceAttributeRequest attributeRequest = new DescribeDBInstanceAttributeRequest();
         attributeRequest.setActionName("DescribeDBInstanceAttribute");
-        attributeRequest.setDBInstanceId(dbInstance.getDBInstanceId());
+        attributeRequest.setDBInstanceId(InstanceId);
         List<DBInstanceAttribute> databases = null;
         String connectString = null;
         try {
@@ -168,7 +167,7 @@ public class DBInstanceUtil {
 
             for (int i = 0; i < dbInstanceAttributeList.size(); i++) {
                 DBInstanceAttribute attribute = dbInstanceAttributeList.get(i);
-                if (attribute.getDBInstanceId().equals(dbInstance.getDBInstanceId())) {
+                if (attribute.getDBInstanceId().equals(InstanceId)) {
                     connectString = attribute.getConnectionString();
                 }
             }
