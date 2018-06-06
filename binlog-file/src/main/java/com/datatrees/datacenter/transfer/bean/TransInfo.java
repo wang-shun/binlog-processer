@@ -60,7 +60,6 @@ public class TransInfo implements Serializable {
         this.fileName = fileName;
     }
 
-
     public String getSimpleName() {
         return fileName.replace(".tar", "");
     }

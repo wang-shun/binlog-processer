@@ -20,5 +20,4 @@ public class TableInfo {
     public static String PROCESS_START="process_start";
     public static String PROcess_END="process_end";
 
-
 }

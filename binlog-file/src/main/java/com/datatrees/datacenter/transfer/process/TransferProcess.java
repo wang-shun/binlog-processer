@@ -34,11 +34,11 @@ class TransferProcess {
      */
     private boolean firstDown = true;
 
-    private FileUtil fileUtil=new FileUtil();
+    private FileUtil fileUtil = new FileUtil();
 
     TransferProcess(TransInfo transInfo) {
         this.transInfo = transInfo;
-        String filePath=transInfo.getDestPath() + File.separator + transInfo.getFileName();
+        String filePath = transInfo.getDestPath() + File.separator + transInfo.getFileName();
         try {
             if (HDFSFileUtil.fileSystem.exists(new Path(filePath))) {
                 firstDown = false;
@@ -72,7 +72,7 @@ class TransferProcess {
         }
 
         TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
-                transInfo.getFileName(), transInfo.getDbInstance());
+                transInfo.getFileName(), transInfo.getDbInstance().getDBInstanceId());
         LOG.info("Thread :" + Thread.currentThread().getName() + ", start= " + startPos + ",  end= " + endPos);
         AliBinLogFileTransfer.getExecutors().execute(transThread);
         //停止标志
@@ -89,6 +89,7 @@ class TransferProcess {
         }
         LOG.info("file transfer over");
     }
+
     /**
      * 休眠时间
      *

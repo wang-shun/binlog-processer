@@ -62,7 +62,7 @@ public class TransThread implements Serializable, Runnable {
     String  instanceId;
 
 
-    public TransThread(String src, String dest, long startPos, long endPos, String fileName, String dbInstanceId) {
+    public TransThread(String src, String dest, long startPos, long endPos, String fileName, String instanceId) {
         this.src = src;
         this.dest = dest;
         this.fileName = fileName;

@@ -15,6 +15,7 @@ public enum DownloadStatus implements Serializable {
      * 下载未完成
      */
     UNCOMPLETED(0);
+
     private int value;
 
     DownloadStatus(int value) {

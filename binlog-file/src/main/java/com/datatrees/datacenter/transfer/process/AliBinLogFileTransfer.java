@@ -67,7 +67,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             sendFailedRecord = DBUtil.query(sql);
             if (sendFailedRecord.size() > 0) {
                 Iterator<Map<String, Object>> iterator = sendFailedRecord.iterator();
-                Map<String, Object> recordMap = null;
+                Map<String, Object> recordMap;
                 while (iterator.hasNext()) {
                     recordMap = iterator.next();
                     TaskDispensor.defaultDispensor().dispense(
