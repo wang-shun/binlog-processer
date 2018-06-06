@@ -37,6 +37,7 @@ public class DBInstanceUtil {
                 ACCESS_KEY_ID,
                 // 您的AccessKey Secret
                 ACCESS_SECRET);
+        createConnection();
     }
 
     /**
@@ -103,7 +104,7 @@ public class DBInstanceUtil {
             DescribeDBInstanceHAConfigResponse haConfigResponse = client.getAcsResponse(haConfigRequest, DBInstanceUtil.getProfile());
             List<NodeInfo> hostInstanceInfos = haConfigResponse.getHostInstanceInfos();
             for (NodeInfo hostInstanceInfo : hostInstanceInfos) {
-                if ("Slave".equals(hostInstanceInfo.getNodeType())) {
+                if ("Slave" .equals(hostInstanceInfo.getNodeType())) {
                     backInstanceId = hostInstanceInfo.getNodeId();
                 }
             }
@@ -152,22 +153,22 @@ public class DBInstanceUtil {
     /**
      * 获取实例内网地址
      *
-     * @param InstanceId
+     * @param instanceId
      * @return
      */
-    public static String getConnectString(String InstanceId) {
+    public static String getConnectString(String instanceId) {
         DescribeDBInstanceAttributeRequest attributeRequest = new DescribeDBInstanceAttributeRequest();
         attributeRequest.setActionName("DescribeDBInstanceAttribute");
-        attributeRequest.setDBInstanceId(InstanceId);
-        List<DBInstanceAttribute> databases = null;
+        attributeRequest.setDBInstanceId(instanceId);
+        List<DBInstanceAttribute> dbInstanceAttributeList;
         String connectString = null;
         try {
             DescribeDBInstanceAttributeResponse response = client.getAcsResponse(attributeRequest, DEFAULT_PROFILE);
-            List<DBInstanceAttribute> dbInstanceAttributeList = response.getItems();
+            dbInstanceAttributeList = response.getItems();
 
             for (int i = 0; i < dbInstanceAttributeList.size(); i++) {
                 DBInstanceAttribute attribute = dbInstanceAttributeList.get(i);
-                if (attribute.getDBInstanceId().equals(InstanceId)) {
+                if (attribute.getDBInstanceId().equals(instanceId)) {
                     connectString = attribute.getConnectionString();
                 }
             }
