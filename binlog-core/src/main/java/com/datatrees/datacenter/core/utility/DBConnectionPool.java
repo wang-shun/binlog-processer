@@ -24,7 +24,7 @@ public class DBConnectionPool {
     private DBConnectionPool() {
         try {
             //通过属性文件获取数据库连接的参数值
-//            Properties properties = FileUtil.getProperties();
+            //Properties properties = FileUtil.getProperties();
             Properties properties = PropertiesUtility.load("common.properties");
             //获取属性文件中的值
             String driverClassName = properties.getProperty("jdbc.driverClassName");

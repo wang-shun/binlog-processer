@@ -50,7 +50,7 @@ checkpid()
 {
         javaps=`ps -ef | grep ${APP_MAIN_CLASS} | grep -v "grep"`
         if [ -n "$javaps" ]; then
-                psid=`echo $javaps | awk '{print $2}'`
+                psid=`echo ${javaps} | awk '{print $2}'`
         else
                 psid=0
         fi
@@ -86,7 +86,7 @@ status()
 {
         checkpid
 
-        if [ $psid -ne 0 ];  then
+        if [ ${psid} -ne 0 ];  then
                 echo "$APP_MAIN_CLASS is running! (pid=$psid)"
         else
                 echo "$APP_MAIN_CLASS is not running"

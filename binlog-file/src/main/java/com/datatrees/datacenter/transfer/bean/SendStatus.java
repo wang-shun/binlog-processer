@@ -1,24 +1,23 @@
 package com.datatrees.datacenter.transfer.bean;
 
-import java.io.Serializable;
 
 /**
  * @author personalc
  */
 
-public enum DownloadStatus implements Serializable {
+public enum SendStatus {
     /**
-     * 下载完成
+     * 已经同步至t_binlog_process
      */
-    COMPLETE(1),
+    YES(1),
     /**
-     * 下载未完成
+     * 未同步至t_binlog_process
      */
-    UNCOMPLETED(0);
+    NO(0);
 
     private int value;
 
-    DownloadStatus(int value) {
+    SendStatus(int value) {
         this.value = value;
     }
 

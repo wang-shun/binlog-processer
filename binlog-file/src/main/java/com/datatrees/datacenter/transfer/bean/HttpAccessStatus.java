@@ -1,24 +1,26 @@
 package com.datatrees.datacenter.transfer.bean;
 
-import java.io.Serializable;
 
 /**
  * @author personalc
  */
 
-public enum DownloadStatus implements Serializable {
+public enum HttpAccessStatus {
     /**
-     * 下载完成
+     * 文件大小未知道
      */
-    COMPLETE(1),
+    FILE_SIZE_NOT_KNOWN(-1),
     /**
-     * 下载未完成
+     * 文件不可访问
      */
-    UNCOMPLETED(0);
-
+    FILE_NOT_ACCESSIBLE(-2),
+    /**
+     * 连接不可用
+     */
+    HTTP_CONNECTION_RESPONSE_CODE(400);
     private int value;
 
-    DownloadStatus(int value) {
+    HttpAccessStatus(int value) {
         this.value = value;
     }
 

@@ -391,7 +391,6 @@ public class DBUtil {
             //执行sql语句，获取结果集
             resultSet = preparedStatement.executeQuery();
             datas = getDatas(resultSet);
-            System.out.println();
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -417,7 +416,7 @@ public class DBUtil {
      * @return 结果的封装
      * @throws SQLException
      */
-    private static List<Map<String, Object>> getDatas(ResultSet resultSet) throws SQLException {
+    public static List<Map<String, Object>> getDatas(ResultSet resultSet) throws SQLException {
         List<Map<String, Object>> datas = new ArrayList<>();
         //获取结果集的数据结构对象
         ResultSetMetaData metaData = resultSet.getMetaData();

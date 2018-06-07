@@ -6,6 +6,9 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.*;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
+import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceAttributeResponse.DBInstanceAttribute;
+import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceHAConfigResponse.NodeInfo;
+import com.aliyuncs.rds.model.v20140815.DescribeDatabasesResponse.Database;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +37,7 @@ public class DBInstanceUtil {
                 ACCESS_KEY_ID,
                 // 您的AccessKey Secret
                 ACCESS_SECRET);
+        createConnection();
     }
 
     /**
@@ -76,7 +80,6 @@ public class DBInstanceUtil {
                 for (DBInstance dbInstance : dbInstanceList) {
                     System.out.println(dbInstance.getDBInstanceId());
                 }
-                System.out.println("****************" + dbInstanceList.size());
                 dbInstances.addAll(dbInstanceList);
             }
         } catch (ClientException e) {
@@ -88,23 +91,21 @@ public class DBInstanceUtil {
     /**
      * 获取实例的备份实例编号
      *
-     * @param dbInstance 某个实例
+     * @param instanceId 某个实例
      * @return 备份实例编号
      */
-    public static String getBackInstanceId(DBInstance dbInstance) {
+    public static String getBackInstanceId(String instanceId) {
         IAcsClient client = DBInstanceUtil.createConnection();
         DescribeDBInstanceHAConfigRequest haConfigRequest = new DescribeDBInstanceHAConfigRequest();
-        String instanceId = dbInstance.getDBInstanceId();
         haConfigRequest.setActionName("DescribeDBInstanceHAConfig");
         haConfigRequest.setDBInstanceId(instanceId);
         String backInstanceId = null;
         try {
             DescribeDBInstanceHAConfigResponse haConfigResponse = client.getAcsResponse(haConfigRequest, DBInstanceUtil.getProfile());
-            List<DescribeDBInstanceHAConfigResponse.NodeInfo> hostInstanceInfos = haConfigResponse.getHostInstanceInfos();
-            for (DescribeDBInstanceHAConfigResponse.NodeInfo hostInstanceInfo : hostInstanceInfos) {
-                if ("Slave".equals(hostInstanceInfo.getNodeType())) {
+            List<NodeInfo> hostInstanceInfos = haConfigResponse.getHostInstanceInfos();
+            for (NodeInfo hostInstanceInfo : hostInstanceInfos) {
+                if ("Slave" .equals(hostInstanceInfo.getNodeType())) {
                     backInstanceId = hostInstanceInfo.getNodeId();
-                    System.out.println(backInstanceId);
                 }
             }
 
@@ -121,11 +122,11 @@ public class DBInstanceUtil {
      * @param dbInstance 实例
      * @return 数据库列表
      */
-    public static List<DescribeDatabasesResponse.Database> getDataBase(DBInstance dbInstance) {
+    public static List<Database> getDataBase(DBInstance dbInstance) {
         DescribeDatabasesRequest databasesRequest = new DescribeDatabasesRequest();
         databasesRequest.setActionName("DescribeDatabases");
         databasesRequest.setDBInstanceId(dbInstance.getDBInstanceId());
-        List<DescribeDatabasesResponse.Database> databases = null;
+        List<Database> databases = null;
         try {
             DescribeDatabasesResponse response = client.getAcsResponse(databasesRequest, DEFAULT_PROFILE);
             databases = response.getDatabases();
@@ -141,12 +142,40 @@ public class DBInstanceUtil {
      * @param databases
      * @return
      */
-    public static String dataBasesToStr(List<DescribeDatabasesResponse.Database> databases) {
+    public static String dataBasesToStr(List<Database> databases) {
         StringBuilder dataBaseNames = new StringBuilder();
         for (int i = 0; i < databases.size(); i++) {
             dataBaseNames.append(databases.get(i).getDBName()).append("=");
         }
         return dataBaseNames.toString();
+    }
+
+    /**
+     * 获取实例内网地址
+     *
+     * @param instanceId
+     * @return
+     */
+    public static String getConnectString(String instanceId) {
+        DescribeDBInstanceAttributeRequest attributeRequest = new DescribeDBInstanceAttributeRequest();
+        attributeRequest.setActionName("DescribeDBInstanceAttribute");
+        attributeRequest.setDBInstanceId(instanceId);
+        List<DBInstanceAttribute> dbInstanceAttributeList;
+        String connectString = null;
+        try {
+            DescribeDBInstanceAttributeResponse response = client.getAcsResponse(attributeRequest, DEFAULT_PROFILE);
+            dbInstanceAttributeList = response.getItems();
+
+            for (int i = 0; i < dbInstanceAttributeList.size(); i++) {
+                DBInstanceAttribute attribute = dbInstanceAttributeList.get(i);
+                if (attribute.getDBInstanceId().equals(instanceId)) {
+                    connectString = attribute.getConnectionString();
+                }
+            }
+        } catch (ClientException e) {
+            e.printStackTrace();
+        }
+        return connectString;
     }
 
     private static DefaultProfile getProfile() {
