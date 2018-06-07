@@ -70,24 +70,25 @@ public class TransferProcess {
                 endPos = fileLen;
             }
         }
+        if (startPos != endPos) {
+            TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
+                    transInfo.getFileName(), transInfo.getDbInstance().getDBInstanceId());
+            LOG.info("Thread :" + Thread.currentThread().getName() + ", start= " + startPos + ",  end= " + endPos);
+            ThreadPoolInstance.getExecutors().execute(transThread);
+            //停止标志
+            boolean stop = false;
+            while (!stop) {
+                sleep(checkInterval);
+                if (!transThread.over) {
+                    // 还存在未下载完成的线程
+                    break;
+                } else {
+                    stop = true;
 
-        TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
-                transInfo.getFileName(), transInfo.getDbInstance().getDBInstanceId());
-        LOG.info("Thread :" + Thread.currentThread().getName() + ", start= " + startPos + ",  end= " + endPos);
-        ThreadPoolInstance.getExecutors().execute(transThread);
-        //停止标志
-        boolean stop = false;
-        while (!stop) {
-            sleep(checkInterval);
-            if (!transThread.over) {
-                // 还存在未下载完成的线程
-                break;
-            } else {
-                stop = true;
-
+                }
             }
+            LOG.info("file transfer over");
         }
-        LOG.info("file transfer over");
     }
 
     /**
