@@ -1,9 +1,13 @@
 package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.core.task.TaskRunner;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.resolver.TaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.datatrees.datacenter.core.utility.ReflectUtility;
+
+import java.util.Properties;
 
 public class Main {
 
@@ -12,10 +16,13 @@ public class Main {
     private static Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        if (args.length == 0) return;
         try {
-            taskRunner =
-                    args[0].equalsIgnoreCase("dispense") ? TaskProcessor.defaultProcessor() : TaskProcessor.defaultProcessor();
+            Properties value = PropertiesUtility.load("common.properties");
+            if (value.getProperty("server.class") == null) {
+                taskRunner = TaskProcessor.defaultProcessor();
+            } else {
+                taskRunner = ReflectUtility.<TaskRunner>reflect(value.getProperty("server.class"));
+            }
             taskRunner.process();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

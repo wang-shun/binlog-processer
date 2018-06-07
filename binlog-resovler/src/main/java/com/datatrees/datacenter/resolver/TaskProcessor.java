@@ -89,7 +89,7 @@ public class TaskProcessor implements TaskRunner, Runnable {
         }
     }
 
-    protected TaskProcessor() {
+    public TaskProcessor() {
         blockingQueue = RedisQueue.defaultQueue();
         fileStorage = new HdfsStorage();// TODO: 2018/6/1 reflect from config
     }

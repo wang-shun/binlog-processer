@@ -94,7 +94,7 @@ public class Redis {
         if (manager == null) {
             synchronized (Redis.class) {
                 if (manager == null) {
-                    manager = new SimpleRedis.JedisImpl();
+                    manager = new SimpleRedis.Redission();
                 }
             }
         }

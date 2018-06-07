@@ -21,7 +21,7 @@ public class Binlog implements Serializable {
     public Binlog(String path, String identity, String jdbcUrl) {
         this.path = path;
         this.jdbcUrl = jdbcUrl;
-        this.path = path;
+        this.identity = identity;
     }
 
     public void setJdbcUrl(String jdbcUrl) {
@@ -41,7 +41,7 @@ public class Binlog implements Serializable {
     }
 
     public String getIdentity() {
-        return path;
+        return identity;
     }
 
     public String getIdentity1() {
