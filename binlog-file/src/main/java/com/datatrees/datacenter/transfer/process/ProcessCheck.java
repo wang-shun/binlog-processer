@@ -60,11 +60,12 @@ public class ProcessCheck {
                         oneRecord = iterator.next();
                         String instanceId = String.valueOf(oneRecord.get(TableInfo.DB_INSTANCE));
                         String fileName = String.valueOf(oneRecord.get(TableInfo.FILE_NAME));
+                        String bakInstanceId = String.valueOf(oneRecord.get(TableInfo.BAK_INSTANCE_ID));
                         int retryTimes = (Integer) oneRecord.get(TableInfo.RETRY_TIMES);
 
                         // send to kafka
                         TaskDispensor.defaultDispensor().dispense(
-                                new Binlog(DEST + File.separator + fileName,
+                                new Binlog(DEST + File.separator + bakInstanceId + File.separator + fileName,
                                         instanceId + "_"
                                                 + fileName,
                                         DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE))));

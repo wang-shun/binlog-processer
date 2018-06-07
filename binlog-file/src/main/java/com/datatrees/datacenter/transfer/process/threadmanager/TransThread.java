@@ -5,6 +5,8 @@ import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
+import com.datatrees.datacenter.transfer.bean.TransInfo;
+import com.datatrees.datacenter.transfer.process.TransferTimerTask;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
 import com.datatrees.datacenter.transfer.utility.TimeUtil;
@@ -137,8 +139,9 @@ public class TransThread implements Serializable, Runnable {
         String processStart = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
         Map<String, Object> map = new HashMap<>(5);
         map.put(TableInfo.FILE_NAME, fileName);
+        map.put(TableInfo.DB_INSTANCE, instanceId);
         map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
-        map.put(TableInfo.DOWN_START_TIME, TimeUtil.strToDate(processStart, TableInfo.COMMON_FORMAT));
+        map.put(TableInfo.PROCESS_START, TimeUtil.strToDate(processStart, TableInfo.COMMON_FORMAT));
         try {
             DBUtil.insert(BINLOG_PROC_TABLE, map);
         } catch (SQLException e) {
@@ -146,11 +149,9 @@ public class TransThread implements Serializable, Runnable {
         }
         // send to queue
         try {
+            String path = dest + File.separator + instanceId + File.separator + DBInstanceUtil.getBackInstanceId(instanceId) + File.separator + fileName;
             TaskDispensor.defaultDispensor().dispense(
-                    new Binlog(dest + File.separator + fileName,
-                            instanceId + "_"
-                                    + fileName,
-                            DBInstanceUtil.getConnectString(instanceId)));
+                    new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -212,7 +212,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
         binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
         // 检查下载记录和处理记录是否一致
-        String sql = "select r.id,r.db_instance,r.file_name from t_binlog_record as r left join t_binlog_process as p on r.db_instance=p.db_instance and r.file_name=p.file_name where p.id is null";
+        String sql = "select r.id,r.db_instance,r.file_name r.bak_instance_id from t_binlog_record as r left join t_binlog_process as p on r.db_instance=p.db_instance and r.file_name=p.file_name and r.status=1 where p.id is null";
         List<Map<String, Object>> sendFailedRecord;
         try {
             sendFailedRecord = DBUtil.query(sql);
@@ -221,7 +221,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 Map<String, Object> recordMap;
                 while (iterator.hasNext()) {
                     recordMap = iterator.next();
-                    String path = HDFS_PATH + File.separator + recordMap.get(TableInfo.FILE_NAME);
+                    String path = HDFS_PATH + File.separator + recordMap.get(TableInfo.BAK_INSTANCE_ID) + File.separator + recordMap.get(TableInfo.FILE_NAME);
                     String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
                             + recordMap.get(TableInfo.FILE_NAME);
                     String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
