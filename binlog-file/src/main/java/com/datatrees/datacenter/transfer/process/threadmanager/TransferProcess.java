@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.transfer.process;
+package com.datatrees.datacenter.transfer.process.threadmanager;
 
 import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
@@ -14,7 +14,7 @@ import java.io.IOException;
 /**
  * @author personalc
  */
-class TransferProcess {
+public class TransferProcess {
     private static Logger LOG = LoggerFactory.getLogger(TransferProcess.class);
 
     /**
@@ -36,7 +36,7 @@ class TransferProcess {
 
     private FileUtil fileUtil = new FileUtil();
 
-    TransferProcess(TransInfo transInfo) {
+    public TransferProcess(TransInfo transInfo) {
         this.transInfo = transInfo;
         String filePath = transInfo.getDestPath() + File.separator + transInfo.getFileName();
         try {
@@ -55,7 +55,7 @@ class TransferProcess {
     /**
      * 设置传输相关信息，并开启传输线程
      */
-    void startTrans() {
+    public void startTrans() {
         if (firstDown) {
             //文件长度
             long fileLen = fileUtil.getFileSize(transInfo.getSrcPath());
@@ -74,7 +74,7 @@ class TransferProcess {
         TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
                 transInfo.getFileName(), transInfo.getDbInstance().getDBInstanceId());
         LOG.info("Thread :" + Thread.currentThread().getName() + ", start= " + startPos + ",  end= " + endPos);
-        AliBinLogFileTransfer.getExecutors().execute(transThread);
+        ThreadPoolInstance.getExecutors().execute(transThread);
         //停止标志
         boolean stop = false;
         while (!stop) {

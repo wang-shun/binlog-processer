@@ -77,7 +77,6 @@ public class BinLogFileUtil {
         try {
             binlogFilesResponse = client.getAcsResponse(binlogFilesRequest, profile);
         } catch (ClientException e) {
-            System.out.println(binlogFilesRequest.getDBInstanceId());
             LOG.info("The type of the specified instance does not support this operation");
             e.printStackTrace();
         }

@@ -1,6 +1,5 @@
-package com.datatrees.datacenter.transfer.process;
+package com.datatrees.datacenter.transfer.process.threadmanager;
 
-import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
