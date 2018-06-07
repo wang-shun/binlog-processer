@@ -45,8 +45,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static final String BINLOG_TRANS_TABLE = TableInfo.BINLOG_TRANS_TABLE;
     private static final DefaultProfile profile;
     private static final IAcsClient client;
-    private static String startTime;
-    private static String endTime;
+    private String startTime;
+    private String endTime;
 
     static {
         profile = DefaultProfile.getProfile(
@@ -56,65 +56,14 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         client = new DefaultAcsClient(profile);
     }
 
-    public static void main(String[] args) {
-        // 创建API请求并设置参数
-        DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
-        binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
-        // 检查下载记录和处理记录是否一致
-        String sql = "select r.id,r.db_instance,r.file_name from t_binlog_record as r left join t_binlog_process as p on r.db_instance=p.db_instance and r.file_name=p.file_name where p.id is null";
-        List<Map<String, Object>> sendFailedRecord;
-        try {
-            sendFailedRecord = DBUtil.query(sql);
-            if (sendFailedRecord.size() > 0) {
-                Iterator<Map<String, Object>> iterator = sendFailedRecord.iterator();
-                Map<String, Object> recordMap;
-                while (iterator.hasNext()) {
-                    recordMap = iterator.next();
-                    String path = HDFS_PATH + File.separator + recordMap.get(TableInfo.FILE_NAME);
-                    String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
-                            + recordMap.get(TableInfo.FILE_NAME);
-                    String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
-                    TaskDispensor.defaultDispensor().dispense(
-                            new Binlog(path,
-                                    identity,
-                                    mysqlURL));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        //重新下载未完成的数据
-        List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
-        if (unCompleteList.size() > 0) {
-            processUnComplete(distinctUnCompleteTrans(unCompleteList));
-        }
-        //开始正常下载
-        long currentTime = System.currentTimeMillis();
-        startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 6000, TableInfo.UTC_FORMAT);
-        binlogFilesRequest.setStartTime(startTime);
-        LOG.info(startTime);
-        endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
-        binlogFilesRequest.setEndTime(endTime);
-        LOG.info(endTime);
-        List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
-        for (DBInstance dbInstance : instances) {
-            instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
-        }
-        ThreadPoolInstance.getExecutors().shutdown();
-        try {
-            ThreadPoolInstance.getExecutors().awaitTermination(1, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * 下载单个实例binlog文件
-     *  @param client 请求客户端
+     *
+     * @param client             请求客户端
      * @param binlogFilesRequest 服务请求
-     * @param dbInstance 实例
+     * @param dbInstance         实例
      */
-    private static void instanceBinlogTrans(IAcsClient client, DescribeBinlogFilesRequest binlogFilesRequest, DBInstance dbInstance) {
+    private void instanceBinlogTrans(IAcsClient client, DescribeBinlogFilesRequest binlogFilesRequest, DBInstance dbInstance) {
         String instanceId = dbInstance.getDBInstanceId();
         binlogFilesRequest.setDBInstanceId(instanceId);
         List<BinLogFile> binLogFiles = BinLogFileUtil.getBinLogFiles(client, binlogFilesRequest, AliBinLogFileTransfer.profile);
@@ -189,7 +138,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     /**
      * 返回为传输未完成的binlog文件信息
      */
-    private static List<Map<String, Object>> getUnCompleteTrans() {
+    private List<Map<String, Object>> getUnCompleteTrans() {
         Map<String, Object> whereMap = new HashMap<>(1);
         List<Map<String, Object>> resultList = null;
         whereMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
@@ -207,7 +156,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
      * @param resultList
      * @return 传输未结束的记录
      */
-     private static List<Map<String, Object>> distinctUnCompleteTrans(List<Map<String, Object>> resultList) {
+    private List<Map<String, Object>> distinctUnCompleteTrans(List<Map<String, Object>> resultList) {
         List<String> instanceTimeList = new ArrayList<>();
         Iterator<Map<String, Object>> itr = resultList.iterator();
         while (itr.hasNext()) {
@@ -235,7 +184,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     /**
      * 处理未下载完成的的binlog文件
      */
-    private static void processUnComplete(List<Map<String, Object>> downLoadInfo) {
+    private void processUnComplete(List<Map<String, Object>> downLoadInfo) {
         Iterator itr = downLoadInfo.iterator();
         while (itr.hasNext()) {
             Map<String, Object> info = (Map<String, Object>) itr.next();
@@ -259,6 +208,52 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
 
     @Override
     public void transfer() {
-
+        // 创建API请求并设置参数
+        DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
+        binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
+        // 检查下载记录和处理记录是否一致
+        String sql = "select r.id,r.db_instance,r.file_name from t_binlog_record as r left join t_binlog_process as p on r.db_instance=p.db_instance and r.file_name=p.file_name where p.id is null";
+        List<Map<String, Object>> sendFailedRecord;
+        try {
+            sendFailedRecord = DBUtil.query(sql);
+            if (sendFailedRecord.size() > 0) {
+                Iterator<Map<String, Object>> iterator = sendFailedRecord.iterator();
+                Map<String, Object> recordMap;
+                while (iterator.hasNext()) {
+                    recordMap = iterator.next();
+                    String path = HDFS_PATH + File.separator + recordMap.get(TableInfo.FILE_NAME);
+                    String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
+                            + recordMap.get(TableInfo.FILE_NAME);
+                    String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
+                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        //重新下载未完成的数据
+        List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
+        if (unCompleteList.size() > 0) {
+            processUnComplete(distinctUnCompleteTrans(unCompleteList));
+        }
+        //开始正常下载
+        long currentTime = System.currentTimeMillis();
+        startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 6000, TableInfo.UTC_FORMAT);
+        binlogFilesRequest.setStartTime(startTime);
+        LOG.info(startTime);
+        endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
+        binlogFilesRequest.setEndTime(endTime);
+        LOG.info(endTime);
+        List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
+        for (DBInstance dbInstance : instances) {
+            instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
+        }
+        ThreadPoolInstance.getExecutors().shutdown();
+        try {
+            ThreadPoolInstance.getExecutors().awaitTermination(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
+
 }
