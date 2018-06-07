@@ -26,22 +26,23 @@ public class HdfsStorage implements FileStorage {
     }
 
     public Boolean commit(String source, String target) throws BinlogException {
+        Path src = new Path(source);
+        Path dst = new Path(target);
         try {
-            Path src = new Path(source);
-            Path dst = new Path(target);
             FileSystem srcFileSystem = FileSystem.get(src.toUri(), conf);
             FileSystem dstFileSystem = FileSystem.get(dst.toUri(), conf);
             FileUtil.copy(srcFileSystem, src, dstFileSystem, dst, true, conf);
             return Boolean.TRUE;
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            return Boolean.FALSE;
+            throw new BinlogException(String.format("error to commit temp file of %s", source));
+//            return Boolean.FALSE;
         }
     }
 
     public OutputStream openWriter(String file) throws BinlogException {
+        Path path = new Path(file);
         try {
-            Path path = new Path(file);
             FileSystem fs = path.getFileSystem(conf);
             return fs.create(path, true);
         } catch (Exception e) {
@@ -51,8 +52,8 @@ public class HdfsStorage implements FileStorage {
     }
 
     public InputStream openReader(String file) throws BinlogException {
+        Path path = new Path(file);
         try {
-            Path path = new Path(file);
             FileSystem fs = path.getFileSystem(conf);
             return fs.open(path);
         } catch (Exception e) {

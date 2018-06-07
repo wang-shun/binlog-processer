@@ -3,19 +3,19 @@ package com.datatrees.datacenter.resolver.domain;
 import com.github.shyiko.mysql.binlog.event.EventType;
 
 public enum Operator {
-    C() {
+    Create() {
         @Override
         public String toString() {
             return "Create";
         }
     },
-    U() {
+    Update() {
         @Override
         public String toString() {
             return "Update";
         }
     },
-    D() {
+    Delete() {
         @Override
         public String toString() {
             return "Delete";
@@ -31,11 +31,11 @@ public enum Operator {
     public static Operator parse(String operator) {
         switch (operator) {
             case "Create":
-                return Operator.C;
+                return Operator.Create;
             case "Update":
-                return Operator.U;
+                return Operator.Update;
             case "Delete":
-                return Operator.D;
+                return Operator.Delete;
             default:
                 return Operator.DEFAULT;
         }
@@ -45,13 +45,13 @@ public enum Operator {
         switch (eventType) {
             case WRITE_ROWS:
             case EXT_WRITE_ROWS:
-                return Operator.C;
+                return Operator.Create;
             case UPDATE_ROWS:
             case EXT_UPDATE_ROWS:
-                return Operator.U;
+                return Operator.Update;
             case DELETE_ROWS:
             case EXT_DELETE_ROWS:
-                return Operator.D;
+                return Operator.Delete;
             default:
                 return Operator.DEFAULT;
         }

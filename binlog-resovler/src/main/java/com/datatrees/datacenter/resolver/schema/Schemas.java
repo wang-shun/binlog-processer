@@ -1,6 +1,8 @@
 package com.datatrees.datacenter.resolver.schema;
 
 //import com.datatrees.datacenter.resolver.domain.BufferRecord;
+
+import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.resolver.domain.Operator;
 import com.datatrees.datacenter.resolver.schema.converter.LogicalTypeConverter;
 import com.github.shyiko.mysql.binlog.event.EventType;
@@ -130,9 +132,12 @@ public final class Schemas {
                 if (index < beforeValue.length) {
                     Object value = beforeValue[index];
                     logicalValue = fromLogicalValue(field.schema(), value);
+                } else {
+                    logicalValue = field.defaultVal();
                 }
                 if (field != null) {
                     beforeValueBuilder.set(field.name(), logicalValue);
+//                    fixNullValue(beforeValueBuilder, field, logicalValue);
                 }
             }
             envelopBuilder.set(RESULT_BEFORE_TAG, beforeValueBuilder.build());
@@ -147,9 +152,12 @@ public final class Schemas {
                 if (index < afterValue.length) {
                     Object value = afterValue[index];
                     logicalValue = fromLogicalValue(field.schema(), value);
+                } else {
+                    logicalValue = field.defaultVal();
                 }
                 if (field != null) {
                     afterValueBuilder.set(field.name(), logicalValue);
+//                    fixNullValue(afterValueBuilder, field, logicalValue);
                 }
             }
             envelopBuilder.set(RESULT_AFTER_TAG, afterValueBuilder.build());
@@ -158,7 +166,44 @@ public final class Schemas {
         return finalRecord;
     }
 
-    public Schema toAvroSchema(String instanceId, String schema, String table) {
+    void fixNullValue(GenericRecordBuilder builder, Schema.Field field, Object value) {
+        if (field.defaultVal() != null && (!isValidValue(field, value))) {
+            if (value instanceof Integer) {
+                builder.set(field.name(), 0);
+            } else if (value instanceof String) {
+                builder.set(field.name(), "");
+            } else {
+                // TODO: 2018/6/7 just handle Integer and Varchar
+            }
+        } else {
+            builder.set(field.name(), value);
+        }
+    }
+
+    protected static boolean isValidValue(Schema.Field f, Object value) {
+        if (value != null) {
+            return true;
+        }
+
+        Schema schema = f.schema();
+        Schema.Type type = schema.getType();
+
+        if (type == Schema.Type.NULL) {
+            return true;
+        }
+
+        if (type == Schema.Type.UNION) {
+            for (Schema s : schema.getTypes()) {
+                if (s.getType() == Schema.Type.NULL) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public Schema toAvroSchema(Binlog binlog, String schema, String table) {
         requireNonNull(schema, "No schema provided");
         requireNonNull(table, "No table provided");
 
@@ -168,7 +213,7 @@ public final class Schemas {
             return cached;
         }
 
-        KeyValue<String, String> avroSchema = Providers.schema(instanceId, schema, table);
+        KeyValue<String, String> avroSchema = Providers.schema(binlog, schema, table);
         if (avroSchema == null || avroSchema.getValue() == null) {
             return null;
         }
@@ -177,7 +222,7 @@ public final class Schemas {
 
         for (Schema.Field field :
                 new Schema.Parser().parse(avroSchema.getValue()).getFields()) {
-            originalFieldList.add(new Schema.Field(field.name(), field.schema(), null, null));
+            originalFieldList.add(new Schema.Field(field.name(), field.schema(), null, field.defaultVal()));
         }
 
         requireNonNull(originalFieldList, "fields is null");

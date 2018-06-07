@@ -21,7 +21,7 @@ start()
         fi
 
         if [ ! -e ${CONF_DIR}/instance.properties ]; then
-              #  echo "${CONF_DIR}/instance.properties does not exist "
+                echo "${CONF_DIR}/instance.properties does not exist "
               #  exit 0
         fi
 
@@ -34,7 +34,7 @@ start()
         else
                 echo "binlog process is starting ..."
               #  nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} > ${LOG_FILE} 2>&1 &
-java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS}
+java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} dispense
                 checkpid
 
                 if [ ${psid} -ne 0 ]; then

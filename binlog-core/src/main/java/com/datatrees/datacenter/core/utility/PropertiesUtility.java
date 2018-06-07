@@ -3,11 +3,13 @@ package com.datatrees.datacenter.core.utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Properties;
+
 public class PropertiesUtility {
 
     private static Logger logger = LoggerFactory.getLogger(PropertiesUtility.class);
 
-    public static java.util.Properties load(String properties) {
+    public static Properties load(String properties) {
         java.util.Properties props = new java.util.Properties();
         try {
             props.load(ClassLoader.getSystemClassLoader().getResourceAsStream(properties));

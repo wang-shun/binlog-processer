@@ -25,16 +25,22 @@ public class TaskProcessor implements TaskRunner, Runnable {
     private static TaskProcessor __taskProcessor;
     private RBlockingQueue<String> blockingQueue;
     private static Logger logger = LoggerFactory.getLogger(TaskProcessor.class);
-
+    private static Properties properties;
     private FileStorage fileStorage;
-    private ExecutorService executorService = Executors.newFixedThreadPool(10, new ThreadFactory() {
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread thread = new Thread(r);
-            thread.setDaemon(true);
-            return thread;
-        }
-    });
+
+    static {
+        properties = PropertiesUtility.load("common.properties");
+    }
+
+    /**
+     * 最大单机跑n个binlogreader
+     */
+    private ExecutorService executorService =
+            Executors.newFixedThreadPool(Integer.valueOf(properties.getProperty("max.thread.binlog.thread")), r -> {
+                Thread thread = new Thread(r);
+                thread.setDaemon(true);
+                return thread;
+            });
 
     public static TaskProcessor defaultProcessor() {
         synchronized (TaskProcessor.class) {
@@ -65,7 +71,7 @@ public class TaskProcessor implements TaskRunner, Runnable {
                         executorService.submit(() -> {
                             try {
                                 startRead(JSON.parseObject(taskDesc, Binlog.class));
-                            } catch (IOException e) {
+                            } catch (Exception e) {
                                 logger.error(e.getMessage(), e);
                             }
                         });
@@ -98,9 +104,8 @@ public class TaskProcessor implements TaskRunner, Runnable {
     }
 
     private void startRead(Binlog task) throws IOException {
-        BinlogFileReader binlogFileReader = new BinlogFileReader(task.getIdentity(), task.getInstanceId(),
-                fileStorage.openReader(task.getPath()),
-                new DefaultEventListner(fileStorage));
+        BinlogFileReader binlogFileReader = new BinlogFileReader(task, fileStorage.openReader(task.getPath()),
+                new DefaultEventListner.InnerEventListner(fileStorage));
         binlogFileReader.read();
     }
 

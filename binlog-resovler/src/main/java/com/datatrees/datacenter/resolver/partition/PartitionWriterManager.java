@@ -1,9 +1,13 @@
 package com.datatrees.datacenter.resolver.partition;
 
+import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 //import com.datatrees.datacenter.resolver.domain.BufferRecord;
 import com.datatrees.datacenter.resolver.domain.Operator;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -23,20 +27,31 @@ import java.util.concurrent.TimeUnit;
 
 public class PartitionWriterManager {
     private FileStorage fileStorage;
-    private HashMap<String, PartitionWriter> partitionWriterHashMap = new HashMap<>();
+    private HashMap<String, PartitionWriter> writerCache = new HashMap<>();
     private static String ROOT_PATH = "hdfs://dn0:8020/data/warehouse";
     private static String TMP_ROOT_PATH = "hdfs://dn0:8020/data/temp";
 
     private static Logger logger = LoggerFactory.getLogger(PartitionWriterManager.class);
     private ImmutableSet<Partitioner> partitioners;
+    private static LoadingCache<CacheKey, PartitionWriter> caches;
 
     static {
         java.util.Properties value = PropertiesUtility.load("common.properties");
         TMP_ROOT_PATH = value.getProperty("hdfs.temp.url");
+
+        caches = CacheBuilder.newBuilder().
+                maximumSize(10000).
+                expireAfterAccess(12, TimeUnit.HOURS).
+                build(new CacheLoader<CacheKey, PartitionWriter>() {
+                    @Override
+                    public PartitionWriter load(CacheKey key) throws Exception {
+                        return new InternalPartitionWriter(key.envelopSchema, key.storage.openWriter(key.path), key.partitioner);
+                    }
+                });
     }
 
     public void close() {
-        partitionWriterHashMap.forEach((path, partitionWriter) -> {
+        writerCache.forEach((path, partitionWriter) -> {
             try {
                 partitionWriter.close();
                 String tempPath = path;
@@ -45,7 +60,6 @@ public class PartitionWriterManager {
                                 replace(tempPath.split("/")[6] + "/", "");
                 fileStorage.commit(tempPath, targetPath);
             } catch (Exception e) {
-
                 logger.error(e.getMessage());
             }
         });
@@ -81,24 +95,23 @@ public class PartitionWriterManager {
                 thread.setDaemon(true);
                 return thread;
             }
-        }).schedule(() -> partitionWriterHashMap.forEach((schemaStringSimpleEntry, partitionWriter) -> {
+        }).schedule(() -> writerCache.forEach((schemaStringSimpleEntry, partitionWriter) -> {
             try {
                 partitionWriter.flush();
             } catch (IOException e) {
-
                 logger.error(e.getMessage());
             }
         }), 5, TimeUnit.MINUTES);
     }
 
-    public void write(Schema schema, String identity, Operator operator, Serializable before, Serializable after, Object result) throws IOException {
+    public void write(Schema schema, String identity, Operator operator, Object result) throws IOException {
         GenericData.Record record = null;
         switch (operator) {
-            case U:
-            case C:
+            case Update:
+            case Create:
                 record = (GenericData.Record) ((GenericData.Record) result).get("After");
                 break;
-            case D:
+            case Delete:
                 record = (GenericData.Record) ((GenericData.Record) result).get("Before");
                 break;
             default:
@@ -112,18 +125,18 @@ public class PartitionWriterManager {
             for (Partitioner partitioner : partitioners) {
                 String relativeFilePath = partitioner.encodePartition(record);
                 String fullPath = createFullPath(relativeFilePath, partitioner, identity, fullSchema, envelopSchema);
-                if (partitionWriterHashMap.containsKey(fullPath)) {
-                    writer = partitionWriterHashMap.get(fullPath);
+                if (writerCache.containsKey(fullPath)) {
+                    writer = writerCache.get(fullPath);
                 } else {
                     writer = new InternalPartitionWriter(envelopSchema, fileStorage.openWriter(fullPath), partitioner);
-                    partitionWriterHashMap.put(fullPath, writer);
+                    writerCache.put(fullPath, writer);
                 }
                 writer.write(result);
             }
         }
     }
 
-    class InternalPartitionWriter implements PartitionWriter {
+    static class InternalPartitionWriter implements PartitionWriter {
         private DataFileWriter<Object> dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<>());
         private Partitioner partitioner;
 
@@ -149,6 +162,18 @@ public class PartitionWriterManager {
         @Override
         public Partitioner partitioner() {
             return partitioner;
+        }
+    }
+
+    static class CacheKey implements Serializable {
+        public String path;
+        public Schema envelopSchema;
+        public Partitioner partitioner;
+        public FileStorage storage;
+
+        @Override
+        public String toString() {
+            return this.path;
         }
     }
 }
