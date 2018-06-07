@@ -4,7 +4,7 @@ import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.transfer.bean.DownloadStatus;
+import com.datatrees.datacenter.transfer.bean.SendStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 
@@ -28,9 +28,7 @@ public class ProcessCheck {
 
     public static void main(String[] args) {
         Runnable runnable = () -> {
-            Map<String, Object> whereMap = new HashMap<>();
             List<Map<String, Object>> resultList;
-            whereMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
             Map<String, Object> oneRecord;
             try {
                 StringBuilder sql = new StringBuilder();
@@ -46,10 +44,15 @@ public class ProcessCheck {
                         .append(" ")
                         .append(interval)
                         .append(" ")
-                        .append("hour");
+                        .append("hour")
+                        .append(" ")
+                        .append("and")
+                        .append(" ")
+                        .append(TableInfo.PROCESS_STATUS)
+                        .append(" ")
+                        .append("=")
+                        .append(SendStatus.NO.getValue());
                 resultList = DBUtil.query(sql.toString());
-
-                //resultList = DBUtil.query(TableInfo.BINLOG_PROC_TABLE, whereMap);
 
                 if (resultList.size() > 0) {
                     Iterator<Map<String, Object>> iterator = resultList.iterator();
@@ -58,17 +61,19 @@ public class ProcessCheck {
                         String instanceId = String.valueOf(oneRecord.get(TableInfo.DB_INSTANCE));
                         String fileName = String.valueOf(oneRecord.get(TableInfo.FILE_NAME));
                         int retryTimes = (Integer) oneRecord.get(TableInfo.RETRY_TIMES);
+
                         // send to kafka
                         TaskDispensor.defaultDispensor().dispense(
                                 new Binlog(DEST + File.separator + fileName,
                                         instanceId + "_"
                                                 + fileName,
                                         DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE))));
+
                         //update t_binlog_process table
-                        whereMap = new HashMap<>();
+                        Map<String, Object> whereMap = new HashMap<>(2);
                         whereMap.put(TableInfo.DB_INSTANCE, instanceId);
                         whereMap.put(TableInfo.FILE_NAME, fileName);
-                        Map<String, Object> valueMap = new HashMap<>();
+                        Map<String, Object> valueMap = new HashMap<>(1);
                         valueMap.put(TableInfo.RETRY_TIMES, retryTimes + 1);
                         DBUtil.update(TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
                     }

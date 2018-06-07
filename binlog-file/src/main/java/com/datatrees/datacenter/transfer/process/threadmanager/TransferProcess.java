@@ -16,7 +16,7 @@ import java.io.IOException;
  */
 public class TransferProcess {
     private static Logger LOG = LoggerFactory.getLogger(TransferProcess.class);
-
+    private int checkInterval = 3000;
     /**
      * 文件信息
      */
@@ -78,7 +78,7 @@ public class TransferProcess {
         //停止标志
         boolean stop = false;
         while (!stop) {
-            sleep(3000);
+            sleep(checkInterval);
             if (!transThread.over) {
                 // 还存在未下载完成的线程
                 break;

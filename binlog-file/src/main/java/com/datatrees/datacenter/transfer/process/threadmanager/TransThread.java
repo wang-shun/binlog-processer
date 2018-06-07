@@ -57,11 +57,13 @@ public class TransThread implements Serializable, Runnable {
      * 下载完成标志
      */
     boolean over = false;
+    /**
+     * 实例id
+     */
+    private String instanceId;
 
-    String  instanceId;
 
-
-    public TransThread(String src, String dest, long startPos, long endPos, String fileName, String instanceId) {
+    TransThread(String src, String dest, long startPos, long endPos, String fileName, String instanceId) {
         this.src = src;
         this.dest = dest;
         this.fileName = fileName;

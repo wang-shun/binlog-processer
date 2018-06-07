@@ -8,12 +8,25 @@ import java.util.concurrent.TimeUnit;
  * @author personalc
  */
 public class ThreadPoolInstance {
+    private static int corePoolSize = 5;
+    private static int maximumPoolSize = 20;
+    private static long keepAliveTime = 100L;
+
     private static class LazyHolder {
-        private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(4, 10, 3, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+        private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(corePoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                TimeUnit.SECONDS,
+                new LinkedBlockingDeque<>(),
+                r -> {
+                    Thread t = new Thread(r);
+                    System.out.println("create thread " + t);
+                    return t;
+                });
     }
 
 
-    public static final ThreadPoolExecutor getExecutors() {
-        return LazyHolder.executor;
+    public static ThreadPoolExecutor getExecutors() {
+        return LazyHolder.THREAD_POOL_EXECUTOR;
     }
 }
