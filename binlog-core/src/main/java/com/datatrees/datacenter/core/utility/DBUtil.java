@@ -346,7 +346,7 @@ public class DBUtil {
      * @param having        筛选
      * @param orderBy       排序
      * @param limit         分页
-     * @return List<Map   <   String   ,       Object>>
+     * @return List<Map<String,Object>>
      * @throws SQLException
      */
     public static List<Map<String, Object>> query(String tableName,
@@ -368,11 +368,11 @@ public class DBUtil {
      *
      * @param sql      要执行的sql语句
      * @param bindArgs 绑定的参数
-     * @return List<Map   <   String   ,       Object>>结果集对象
+     * @return List<Map<String,Object>>结果集对象
      * @throws SQLException SQL执行异常
      */
     private static List<Map<String, Object>> executeQuery(String sql, Object[] bindArgs) throws SQLException {
-        List<Map<String, Object>> datas = new ArrayList<>();
+        List<Map<String, Object>> datas;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -384,7 +384,7 @@ public class DBUtil {
             if (bindArgs != null) {
                 //设置sql占位符中的值
                 for (int i = 0; i < bindArgs.length; i++) {
-                    preparedStatement.setObject(i + 1, bindArgs[i]);
+                    preparedStatement.setObject(i+1, bindArgs[i]);
                 }
             }
             System.out.println(getExecSQL(sql, bindArgs));

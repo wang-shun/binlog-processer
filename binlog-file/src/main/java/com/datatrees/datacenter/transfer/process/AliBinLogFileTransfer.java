@@ -11,12 +11,14 @@ import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
+import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
 import com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance;
 import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
-import com.datatrees.datacenter.transfer.utility.*;
+import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
+import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
+import com.datatrees.datacenter.transfer.utility.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +47,10 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static final String BINLOG_TRANS_TABLE = TableInfo.BINLOG_TRANS_TABLE;
     private static final DefaultProfile profile;
     private static final IAcsClient client;
-    private String startTime;
+    private long currentTime = System.currentTimeMillis();
+    private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 6000, TableInfo.UTC_FORMAT);
     private String endTime;
+    List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
 
     static {
         profile = DefaultProfile.getProfile(
@@ -92,11 +96,11 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         Long logEndTimeStamp = TimeUtil.utc2TimeStamp(logEndTime);
 
                         String fileName = logEndTimeStamp + "-" + BinLogFileUtil.getFileNameFromUrl(binLogFile.getDownloadLink(), REGEX_PATTERN);
-                        System.out.println(fileName);
                         Map<String, Object> whereMap = new HashMap<>(4);
                         whereMap.put(TableInfo.DB_INSTANCE, dbInstanceId);
                         whereMap.put(TableInfo.FILE_NAME, fileName);
                         try {
+                            //判断这个binlog文件是否下载过
                             int recordCount = DBUtil.query(BINLOG_TRANS_TABLE, whereMap).size();
                             if (recordCount == 0) {
                                 Map<String, Object> map = new HashMap<>(7);
@@ -143,7 +147,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         List<Map<String, Object>> resultList = null;
         whereMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
         try {
-            resultList = DBUtil.query(BINLOG_TRANS_TABLE, whereMap);
+            //resultList = DBUtil.query(BINLOG_TRANS_TABLE, whereMap);
+            resultList = DBUtil.query(BINLOG_TRANS_TABLE, true, new String[]{TableInfo.DOWN_START_TIME, TableInfo.DOWN_END_TIME}, TableInfo.DOWN_STATUS + "=0", null, null, null, TableInfo.DOWN_START_TIME, null);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -151,52 +156,20 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     }
 
     /**
-     * 过滤掉重复时间段的下载数据
-     *
-     * @param resultList
-     * @return 传输未结束的记录
-     */
-    private List<Map<String, Object>> distinctUnCompleteTrans(List<Map<String, Object>> resultList) {
-        List<String> instanceTimeList = new ArrayList<>();
-        Iterator<Map<String, Object>> itr = resultList.iterator();
-        while (itr.hasNext()) {
-            Map<String, Object> map = itr.next();
-            String instanceTime = map.get(TableInfo.DB_INSTANCE).toString() + map.get(TableInfo.DOWN_START_TIME).toString();
-            if (instanceTimeList.contains(instanceTime)) {
-                itr.remove();
-            } else {
-                instanceTimeList.add(instanceTime);
-            }
-        }
-        return resultList;
-    }
-
-    /**
-     * 返回实例名和下载时间组合后的字符串
-     *
-     * @param binLogRecord 数据库中查询到的一条binlog下载记录
-     * @return
-     */
-    private static String interInstanceAndStartTime(Map<String, Object> binLogRecord) {
-        return new String((String) binLogRecord.get(TableInfo.DB_INSTANCE) + TimeUtil.dateToStr((Timestamp) binLogRecord.get(TableInfo.DOWN_START_TIME), TableInfo.COMMON_FORMAT));
-    }
-
-    /**
      * 处理未下载完成的的binlog文件
      */
-    private void processUnComplete(List<Map<String, Object>> downLoadInfo) {
-        Iterator itr = downLoadInfo.iterator();
+    private void processUnComplete(List<Map<String, Object>> uncompleted) {
+        Iterator itr = uncompleted.iterator();
         while (itr.hasNext()) {
             Map<String, Object> info = (Map<String, Object>) itr.next();
             startTime = TimeUtil.dateToStr((Timestamp) info.get(TableInfo.DOWN_START_TIME), TableInfo.UTC_FORMAT);
             endTime = TimeUtil.dateToStr((Timestamp) info.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
-            String instanceId = (String) info.get(TableInfo.DB_INSTANCE);
-            DBInstance dbInstance = new DBInstance();
-            dbInstance.setDBInstanceId(instanceId);
             DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
             binlogFilesRequest.setStartTime(startTime);
             binlogFilesRequest.setEndTime(endTime);
-            instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
+            for (DBInstance dbInstance : instances) {
+                instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
+            }
         }
     }
 
@@ -234,20 +207,23 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         //重新下载未完成的数据
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
         if (unCompleteList.size() > 0) {
-            processUnComplete(distinctUnCompleteTrans(unCompleteList));
+            processUnComplete(unCompleteList);
+        } else {
+            //开始正常下载
+            currentTime = System.currentTimeMillis();
+            //将上一次的结束时间设置未这一次的开始时间
+            Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
+            startTime = TimeUtil.dateToStr((Timestamp) lastTime.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
+            binlogFilesRequest.setStartTime(startTime);
+            LOG.info(startTime);
+            endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
+            binlogFilesRequest.setEndTime(endTime);
+            LOG.info(endTime);
+            for (DBInstance dbInstance : instances) {
+                instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
+            }
         }
-        //开始正常下载
-        long currentTime = System.currentTimeMillis();
-        startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 6000, TableInfo.UTC_FORMAT);
-        binlogFilesRequest.setStartTime(startTime);
-        LOG.info(startTime);
-        endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
-        binlogFilesRequest.setEndTime(endTime);
-        LOG.info(endTime);
-        List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
-        for (DBInstance dbInstance : instances) {
-            instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
-        }
+
         ThreadPoolInstance.getExecutors().shutdown();
         try {
             ThreadPoolInstance.getExecutors().awaitTermination(1, TimeUnit.MINUTES);

@@ -3,10 +3,8 @@ package com.datatrees.datacenter.transfer.process.threadmanager;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
-import com.datatrees.datacenter.transfer.bean.TransInfo;
-import com.datatrees.datacenter.transfer.process.TransferTimerTask;
+import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
 import com.datatrees.datacenter.transfer.utility.TimeUtil;
@@ -25,6 +23,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_PROC_TABLE;
@@ -124,9 +123,9 @@ public class TransThread implements Serializable, Runnable {
             }
         }
         // update a the record
-        Map<String, Object> whereMap = new HashMap<>();
+        Map<String, Object> whereMap = new HashMap<>(1);
         whereMap.put(TableInfo.FILE_NAME, fileName);
-        Map<String, Object> valueMap = new HashMap<>();
+        Map<String, Object> valueMap = new HashMap<>(1);
         valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
         try {
             DBUtil.update(BINLOG_TRANS_TABLE, valueMap, whereMap);
@@ -135,25 +134,37 @@ public class TransThread implements Serializable, Runnable {
         }
 
         // insert a record to t_binlog_process
-        long currentTime = System.currentTimeMillis();
-        String processStart = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
-        Map<String, Object> map = new HashMap<>(5);
-        map.put(TableInfo.FILE_NAME, fileName);
-        map.put(TableInfo.DB_INSTANCE, instanceId);
-        map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
-        map.put(TableInfo.PROCESS_START, TimeUtil.strToDate(processStart, TableInfo.COMMON_FORMAT));
+        whereMap = new HashMap<>(2);
+        whereMap.put(TableInfo.FILE_NAME, fileName);
+        whereMap.put(TableInfo.DB_INSTANCE, instanceId);
         try {
-            DBUtil.insert(BINLOG_PROC_TABLE, map);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        // send to queue
-        try {
-            String path = dest + File.separator + instanceId + File.separator + DBInstanceUtil.getBackInstanceId(instanceId) + File.separator + fileName;
-            TaskDispensor.defaultDispensor().dispense(
-                    new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
+            List<Map<String, Object>> processRecord = DBUtil.query(TableInfo.BINLOG_PROC_TABLE, whereMap);
+            if (processRecord.size() > 0) {
+                long currentTime = System.currentTimeMillis();
+                String processStart = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
+                Map<String, Object> map = new HashMap<>(5);
+                map.put(TableInfo.FILE_NAME, fileName);
+                map.put(TableInfo.DB_INSTANCE, instanceId);
+                map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
+                map.put(TableInfo.PROCESS_START, TimeUtil.strToDate(processStart, TableInfo.UTC_FORMAT));
+                try {
+                    DBUtil.insert(BINLOG_PROC_TABLE, map);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                // send to queue
+                try {
+                    String path = dest + File.separator + instanceId + File.separator + DBInstanceUtil.getBackInstanceId(instanceId) + File.separator + fileName;
+                    TaskDispensor.defaultDispensor().dispense(
+                            new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 }
