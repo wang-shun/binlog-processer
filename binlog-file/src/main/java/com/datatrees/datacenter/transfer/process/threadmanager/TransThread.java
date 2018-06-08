@@ -139,7 +139,7 @@ public class TransThread implements Serializable, Runnable {
         whereMap.put(TableInfo.DB_INSTANCE, instanceId);
         try {
             List<Map<String, Object>> processRecord = DBUtil.query(TableInfo.BINLOG_PROC_TABLE, whereMap);
-            if (processRecord.size() > 0) {
+            if (processRecord.size() == 0) {
                 long currentTime = System.currentTimeMillis();
                 String processStart = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
                 Map<String, Object> map = new HashMap<>(5);
