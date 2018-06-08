@@ -79,7 +79,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             List<Integer> fileNumList = BinLogFileUtil.getFileNumberFromUrl(fileList, REGEX_PATTERN);
             fileNumList = fileNumList.stream().sorted().collect(Collectors.toList());
 
-            if (fileList.size() > 0) {
+            if (fileList.size() > 0 && fileNumList.size() > 0) {
                 //判断文件编号是否连续
                 int maxDiff = Math.abs(fileNumList.get(0) - fileNumList.get(fileNumList.size() - 1));
                 if (instanceLogSize == (maxDiff + 1)) {
@@ -208,12 +208,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
         if (unCompleteList.size() > 0) {
             processUnComplete(unCompleteList);
+            Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
+            startTime = TimeUtil.dateToStr((Timestamp) lastTime.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
         } else {
             //开始正常下载
             currentTime = System.currentTimeMillis();
             //将上一次的结束时间设置未这一次的开始时间
-            Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
-            startTime = TimeUtil.dateToStr((Timestamp) lastTime.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
             binlogFilesRequest.setStartTime(startTime);
             LOG.info(startTime);
             endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
