@@ -84,10 +84,9 @@ public class TransferProcess {
                     break;
                 } else {
                     stop = true;
-
+                    LOG.info("file transfer over");
                 }
             }
-            LOG.info("file transfer over");
         }
     }
 
