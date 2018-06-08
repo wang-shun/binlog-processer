@@ -185,7 +185,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
         binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
         // 检查下载记录和处理记录是否一致
-        String sql = "select r.id,r.db_instance,r.file_name r.bak_instance_id from t_binlog_record as r left join t_binlog_process as p on r.db_instance=p.db_instance and r.file_name=p.file_name and r.status=1 where p.id is null";
+        String sql = "select r.id,r.db_instance,r.file_name,r.bak_instance_id from t_binlog_record as r left join t_binlog_process as p on r.db_instance=p.db_instance and r.file_name=p.file_name where p.id is null and r.status=1";
         List<Map<String, Object>> sendFailedRecord;
         try {
             sendFailedRecord = DBUtil.query(sql);

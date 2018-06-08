@@ -2375,3 +2375,397 @@ com.mchange.v2.resourcepool.ResourcePoolException: Unexpected Break Stack Trace!
 2018-06-08 00:44:14 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
 2018-06-08 00:44:14 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
 2018-06-08 00:44:14 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hge1619v1osve9z9zzqli|1ef7fe8e, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hge1619v1osve9z9zzqli|1ef7fe8e, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-08 10:08:02 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:08:03 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(75) -pageCount: 1
+2018-06-08 10:08:03 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-08 10:08:04 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-08 10:08:04 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1pd0h57h7d9ss|3f1f7da2, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1pd0h57h7d9ss|3f1f7da2, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master0:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-08 10:09:51 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1851) -com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@45625b5d -- Acquisition Attempt Failed!!! Clearing pending acquires. While trying to acquire a needed new resource, we failed to succeed more than the maximum number of allowed acquisition attempts (30). Last acquisition attempt exception: 
+com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.GeneratedConstructorAccessor14.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:1038)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:339)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2247)
+	at com.mysql.jdbc.ConnectionImpl.connectOneTryOnly(ConnectionImpl.java:2280)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2079)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:794)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:44)
+	at sun.reflect.GeneratedConstructorAccessor11.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:399)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:325)
+	at com.mchange.v2.c3p0.DriverManagerDataSource.getConnection(DriverManagerDataSource.java:146)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:195)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:184)
+	at com.mchange.v2.c3p0.impl.C3P0PooledConnectionPool$1PooledConnectionResourcePoolManager.acquireResource(C3P0PooledConnectionPool.java:200)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquire(BasicResourcePool.java:1086)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquireAndDecrementPendingAcquiresWithinLockOnSuccess(BasicResourcePool.java:1073)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$800(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1810)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+Caused by: java.net.ConnectException: Connection refused (Connection refused)
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:214)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:298)
+	... 20 more
+2018-06-08 10:09:51 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1864) -A RESOURCE POOL IS PERMANENTLY BROKEN! [com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@45625b5d] (because a series of 30 acquisition attempts failed.)
+2018-06-08 10:09:51 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(922) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- Unexpectedly broken!!!
+com.mchange.v2.resourcepool.ResourcePoolException: Unexpected Break Stack Trace!
+	at com.mchange.v2.resourcepool.BasicResourcePool.unexpectedBreak(BasicResourcePool.java:922)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$1100(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1867)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:09:51 [ INFO] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(670) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- an attempt to checkout a resource was interrupted, because the pool is now closed. [Thread: pool-1-thread-1]
+2018-06-08 10:09:52 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1851) -com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@266b4290 -- Acquisition Attempt Failed!!! Clearing pending acquires. While trying to acquire a needed new resource, we failed to succeed more than the maximum number of allowed acquisition attempts (30). Last acquisition attempt exception: 
+com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.GeneratedConstructorAccessor14.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:1038)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:339)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2247)
+	at com.mysql.jdbc.ConnectionImpl.connectOneTryOnly(ConnectionImpl.java:2280)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2079)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:794)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:44)
+	at sun.reflect.GeneratedConstructorAccessor11.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:399)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:325)
+	at com.mchange.v2.c3p0.DriverManagerDataSource.getConnection(DriverManagerDataSource.java:146)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:195)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:184)
+	at com.mchange.v2.c3p0.impl.C3P0PooledConnectionPool$1PooledConnectionResourcePoolManager.acquireResource(C3P0PooledConnectionPool.java:200)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquire(BasicResourcePool.java:1086)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquireAndDecrementPendingAcquiresWithinLockOnSuccess(BasicResourcePool.java:1073)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$800(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1810)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+Caused by: java.net.ConnectException: Connection refused (Connection refused)
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:214)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:298)
+	... 20 more
+2018-06-08 10:09:52 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1864) -A RESOURCE POOL IS PERMANENTLY BROKEN! [com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@266b4290] (because a series of 30 acquisition attempts failed.)
+2018-06-08 10:09:52 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(922) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- Unexpectedly broken!!!
+com.mchange.v2.resourcepool.ResourcePoolException: Unexpected Break Stack Trace!
+	at com.mchange.v2.resourcepool.BasicResourcePool.unexpectedBreak(BasicResourcePool.java:922)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$1100(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1867)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:09:52 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1288) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- close() called multiple times.
+2018-06-08 10:09:52 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1851) -com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@37a5ae4c -- Acquisition Attempt Failed!!! Clearing pending acquires. While trying to acquire a needed new resource, we failed to succeed more than the maximum number of allowed acquisition attempts (30). Last acquisition attempt exception: 
+com.mysql.jdbc.exceptions.jdbc4.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at sun.reflect.GeneratedConstructorAccessor14.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.SQLError.createCommunicationsException(SQLError.java:1038)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:339)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2247)
+	at com.mysql.jdbc.ConnectionImpl.connectOneTryOnly(ConnectionImpl.java:2280)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2079)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:794)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:44)
+	at sun.reflect.GeneratedConstructorAccessor11.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:399)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:325)
+	at com.mchange.v2.c3p0.DriverManagerDataSource.getConnection(DriverManagerDataSource.java:146)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:195)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:184)
+	at com.mchange.v2.c3p0.impl.C3P0PooledConnectionPool$1PooledConnectionResourcePoolManager.acquireResource(C3P0PooledConnectionPool.java:200)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquire(BasicResourcePool.java:1086)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquireAndDecrementPendingAcquiresWithinLockOnSuccess(BasicResourcePool.java:1073)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$800(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1810)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+Caused by: java.net.ConnectException: Connection refused (Connection refused)
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at com.mysql.jdbc.StandardSocketFactory.connect(StandardSocketFactory.java:214)
+	at com.mysql.jdbc.MysqlIO.<init>(MysqlIO.java:298)
+	... 20 more
+2018-06-08 10:09:52 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1864) -A RESOURCE POOL IS PERMANENTLY BROKEN! [com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@37a5ae4c] (because a series of 30 acquisition attempts failed.)
+2018-06-08 10:09:52 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(922) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- Unexpectedly broken!!!
+com.mchange.v2.resourcepool.ResourcePoolException: Unexpected Break Stack Trace!
+	at com.mchange.v2.resourcepool.BasicResourcePool.unexpectedBreak(BasicResourcePool.java:922)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$1100(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1867)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:09:52 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1288) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- close() called multiple times.
+2018-06-08 10:10:25 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:10:27 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(75) -pageCount: 1
+2018-06-08 10:10:27 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-08 10:10:27 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-08 10:10:27 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1pd3jrn1wsvss9|e52da47, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1pd3jrn1wsvss9|e52da47, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master0:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-08 10:11:04 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:11:04 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(75) -pageCount: 1
+2018-06-08 10:11:06 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-08 10:11:06 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-08 10:11:06 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1pd4dlwzgirm1|3f1f7da2, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1pd4dlwzgirm1|3f1f7da2, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-08 10:11:44 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1851) -com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@2bc90a6e -- Acquisition Attempt Failed!!! Clearing pending acquires. While trying to acquire a needed new resource, we failed to succeed more than the maximum number of allowed acquisition attempts (30). Last acquisition attempt exception: 
+java.sql.SQLException: Access denied for user 'root'@'vpn.docker-net-vpn' (using password: YES)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:998)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:3847)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:3783)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:871)
+	at com.mysql.jdbc.MysqlIO.secureAuth411(MysqlIO.java:4292)
+	at com.mysql.jdbc.MysqlIO.doHandshake(MysqlIO.java:1259)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2249)
+	at com.mysql.jdbc.ConnectionImpl.connectOneTryOnly(ConnectionImpl.java:2280)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2079)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:794)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:44)
+	at sun.reflect.GeneratedConstructorAccessor11.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:399)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:325)
+	at com.mchange.v2.c3p0.DriverManagerDataSource.getConnection(DriverManagerDataSource.java:146)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:195)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:184)
+	at com.mchange.v2.c3p0.impl.C3P0PooledConnectionPool$1PooledConnectionResourcePoolManager.acquireResource(C3P0PooledConnectionPool.java:200)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquire(BasicResourcePool.java:1086)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquireAndDecrementPendingAcquiresWithinLockOnSuccess(BasicResourcePool.java:1073)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$800(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1810)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:11:44 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1864) -A RESOURCE POOL IS PERMANENTLY BROKEN! [com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@2bc90a6e] (because a series of 30 acquisition attempts failed.)
+2018-06-08 10:11:44 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(922) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- Unexpectedly broken!!!
+com.mchange.v2.resourcepool.ResourcePoolException: Unexpected Break Stack Trace!
+	at com.mchange.v2.resourcepool.BasicResourcePool.unexpectedBreak(BasicResourcePool.java:922)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$1100(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1867)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:11:44 [ INFO] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(670) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- an attempt to checkout a resource was interrupted, because the pool is now closed. [Thread: pool-1-thread-1]
+2018-06-08 10:11:44 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1851) -com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@3759a831 -- Acquisition Attempt Failed!!! Clearing pending acquires. While trying to acquire a needed new resource, we failed to succeed more than the maximum number of allowed acquisition attempts (30). Last acquisition attempt exception: 
+java.sql.SQLException: Access denied for user 'root'@'vpn.docker-net-vpn' (using password: YES)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:998)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:3847)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:3783)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:871)
+	at com.mysql.jdbc.MysqlIO.secureAuth411(MysqlIO.java:4292)
+	at com.mysql.jdbc.MysqlIO.doHandshake(MysqlIO.java:1259)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2249)
+	at com.mysql.jdbc.ConnectionImpl.connectOneTryOnly(ConnectionImpl.java:2280)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2079)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:794)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:44)
+	at sun.reflect.GeneratedConstructorAccessor11.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:399)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:325)
+	at com.mchange.v2.c3p0.DriverManagerDataSource.getConnection(DriverManagerDataSource.java:146)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:195)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:184)
+	at com.mchange.v2.c3p0.impl.C3P0PooledConnectionPool$1PooledConnectionResourcePoolManager.acquireResource(C3P0PooledConnectionPool.java:200)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquire(BasicResourcePool.java:1086)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquireAndDecrementPendingAcquiresWithinLockOnSuccess(BasicResourcePool.java:1073)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$800(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1810)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:11:44 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1851) -com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@30f12190 -- Acquisition Attempt Failed!!! Clearing pending acquires. While trying to acquire a needed new resource, we failed to succeed more than the maximum number of allowed acquisition attempts (30). Last acquisition attempt exception: 
+java.sql.SQLException: Access denied for user 'root'@'vpn.docker-net-vpn' (using password: YES)
+	at com.mysql.jdbc.SQLError.createSQLException(SQLError.java:998)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:3847)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:3783)
+	at com.mysql.jdbc.MysqlIO.checkErrorPacket(MysqlIO.java:871)
+	at com.mysql.jdbc.MysqlIO.secureAuth411(MysqlIO.java:4292)
+	at com.mysql.jdbc.MysqlIO.doHandshake(MysqlIO.java:1259)
+	at com.mysql.jdbc.ConnectionImpl.coreConnect(ConnectionImpl.java:2249)
+	at com.mysql.jdbc.ConnectionImpl.connectOneTryOnly(ConnectionImpl.java:2280)
+	at com.mysql.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:2079)
+	at com.mysql.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:794)
+	at com.mysql.jdbc.JDBC4Connection.<init>(JDBC4Connection.java:44)
+	at sun.reflect.GeneratedConstructorAccessor11.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.mysql.jdbc.Util.handleNewInstance(Util.java:400)
+	at com.mysql.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:399)
+	at com.mysql.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:325)
+	at com.mchange.v2.c3p0.DriverManagerDataSource.getConnection(DriverManagerDataSource.java:146)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:195)
+	at com.mchange.v2.c3p0.WrapperConnectionPoolDataSource.getPooledConnection(WrapperConnectionPoolDataSource.java:184)
+	at com.mchange.v2.c3p0.impl.C3P0PooledConnectionPool$1PooledConnectionResourcePoolManager.acquireResource(C3P0PooledConnectionPool.java:200)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquire(BasicResourcePool.java:1086)
+	at com.mchange.v2.resourcepool.BasicResourcePool.doAcquireAndDecrementPendingAcquiresWithinLockOnSuccess(BasicResourcePool.java:1073)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$800(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1810)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:11:44 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1864) -A RESOURCE POOL IS PERMANENTLY BROKEN! [com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@3759a831] (because a series of 30 acquisition attempts failed.)
+2018-06-08 10:11:44 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1864) -A RESOURCE POOL IS PERMANENTLY BROKEN! [com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask@30f12190] (because a series of 30 acquisition attempts failed.)
+2018-06-08 10:11:44 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(922) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- Unexpectedly broken!!!
+com.mchange.v2.resourcepool.ResourcePoolException: Unexpected Break Stack Trace!
+	at com.mchange.v2.resourcepool.BasicResourcePool.unexpectedBreak(BasicResourcePool.java:922)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$1100(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1867)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:11:44 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1288) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- close() called multiple times.
+2018-06-08 10:11:44 [ERROR] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(922) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- Unexpectedly broken!!!
+com.mchange.v2.resourcepool.ResourcePoolException: Unexpected Break Stack Trace!
+	at com.mchange.v2.resourcepool.BasicResourcePool.unexpectedBreak(BasicResourcePool.java:922)
+	at com.mchange.v2.resourcepool.BasicResourcePool.access$1100(BasicResourcePool.java:44)
+	at com.mchange.v2.resourcepool.BasicResourcePool$ScatteredAcquireTask.run(BasicResourcePool.java:1867)
+	at com.mchange.v2.async.ThreadPoolAsynchronousRunner$PoolThread.run(ThreadPoolAsynchronousRunner.java:648)
+2018-06-08 10:11:44 [ WARN] - com.mchange.v2.resourcepool.BasicResourcePool -BasicResourcePool.java(1288) -com.mchange.v2.resourcepool.BasicResourcePool@317000f6 -- close() called multiple times.
+2018-06-08 10:12:21 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:12:23 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(75) -pageCount: 1
+2018-06-08 10:12:23 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-08 10:12:23 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-08 10:12:23 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1pd61gt3mibzw|2cf8f5e7, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1pd61gt3mibzw|2cf8f5e7, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-08 10:12:38 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:12:39 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(75) -pageCount: 1
+2018-06-08 10:12:39 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-08 10:12:39 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-08 10:12:39 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1pd6dvl1fu20ck|5311c783, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1pd6dvl1fu20ck|5311c783, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-08 10:12:41 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:12:41 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:41 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:41 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1h5j9w2o9335zsn with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:42 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:42 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:42 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1cowwkt73ni6271 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:42 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:42 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:42 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1p4s8pgekg2di55 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1dq0cr4kk7j85ff with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp12z0brmm2d799lm with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1hzldabba9nhm68 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp19wpb29u91pbf6p with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:43 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp159o69998x3xe34 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp155hg16d7t501f6 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1382ojqe4u01d1t with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1d1ac1fa41jzf28 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:44 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp11gox03jgt2ullb with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:45 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:45 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:45 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1xvc22l77p850ja with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:45 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:45 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:45 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp14hbsc7ji8ivy7r with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp13sd5q1x8416p3p with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1py1768bl28z5zs with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:46 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1x3mt0ogici00l5 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1bgyn06wua3s262 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1tcbap8lvphh08x with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1v9i4pwb73467g5 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp15112z7tv876mzl with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp101325tnut8me53 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:47 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp17mz8twp1c71zk2 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp18uypc15s63z5xa with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp19ok2k1h1dcwk6e with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp14007m55u6a9173 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp114u46sxgr719pf with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1htjis5cxoufia6 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:48 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp1k0lx0x43542h47 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 0
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 0
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(138) -no binlog find in the: rm-bp11fjyus6cugmvd2 with time between 2018-05-25T12:04:33Z and 2018-05-25T12:04:33Z
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(87) -totalRecordCount: 53
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(90) -pageCount: 2
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(100) -PageRecordCount: 30
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(100) -PageRecordCount: 23
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -file size: 524298240
+2018-06-08 10:12:49 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(90) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000161.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528510369&Signature=42i2JCH1cxqjzBUh6a%2Bitx6dl6A%3D]
+2018-06-08 10:12:50 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:12:50 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-08 10:15:15 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:15:16 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(75) -pageCount: 1
+2018-06-08 10:15:17 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-08 10:15:17 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-08 10:15:17 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1pd9rjp106gtox|3f1f7da2, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1pd9rjp106gtox|3f1f7da2, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-08 10:15:19 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-08 10:15:20 [ERROR] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(333) -host master0/172.20.20.7:6379 disconnected due to failedAttempts=3 limit reached
+java.nio.channels.ClosedChannelException
+	at io.netty.channel.nio.AbstractNioChannel.doClose()(Unknown Source)
+2018-06-08 10:19:03 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(35) -Load resource file:/Users/personalc/project/binlog-processor/binlog-main/target/classes/instance.properties successful!
+2018-06-08 10:19:05 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(75) -pageCount: 1
+2018-06-08 10:19:05 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-08 10:19:05 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-08 10:19:05 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1pdendaw7ud2e|3f1f7da2, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1pdendaw7ud2e|3f1f7da2, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-08 10:19:10 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-08 10:19:10 [ERROR] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(333) -host master0/172.20.20.7:6379 disconnected due to failedAttempts=3 limit reached
+java.nio.channels.ClosedChannelException
+	at io.netty.channel.nio.AbstractNioChannel.doClose()(Unknown Source)
