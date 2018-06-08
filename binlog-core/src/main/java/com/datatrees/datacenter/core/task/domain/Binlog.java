@@ -44,12 +44,12 @@ public class Binlog implements Serializable {
         return identity;
     }
 
-    public String getIdentity1() {
-        return getIdentity().replace(".tar", "");
-    }
-
     public String getIdentity0() {
         return getIdentity().split("_")[0];
+    }
+
+    public String getIdentity1() {
+        return getIdentity().split("_")[1];
     }
 
     public String getPath() {

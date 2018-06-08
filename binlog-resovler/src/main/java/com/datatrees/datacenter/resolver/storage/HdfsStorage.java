@@ -9,6 +9,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.datatrees.datacenter.core.utility.ArchiveUtility;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,7 +56,9 @@ public class HdfsStorage implements FileStorage {
         Path path = new Path(file);
         try {
             FileSystem fs = path.getFileSystem(conf);
-            return fs.open(path);
+            return ArchiveUtility.unArchive(file, fs.open(path));
+//            return new TarArchiveInputStream(fs.open(path));
+//            return new TarInputStream(fs.open(path));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw new BinlogException(String.format("open reader of file %s failed.", file));

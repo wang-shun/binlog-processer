@@ -25,9 +25,9 @@ public class DefaultEventListner implements EventListner<Map<Operator, AtomicLon
     }
 
     @Override
-    public void consume(Schema schema, String identity, Operator operator, Object result) {
+    public void consume(Schema schema, Binlog binlog, Operator operator, Object result) {
         try {
-            manager.write(schema, identity, operator, result);
+            manager.write(schema, binlog, operator, result);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw new BinlogException(String.format("error to write avro record because of %s", e.getMessage()));
@@ -53,9 +53,9 @@ public class DefaultEventListner implements EventListner<Map<Operator, AtomicLon
         }
 
         @Override
-        public void consume(Schema schema, String identity, Operator operator, Object result) {
+        public void consume(Schema schema, Binlog binlog, Operator operator, Object result) {
             try {
-                manager.write(schema, identity, operator, result);
+                manager.write(schema, binlog, operator, result);
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 throw new BinlogException(String.format("error to write avro record because of %s", e.getMessage()));
@@ -65,7 +65,7 @@ public class DefaultEventListner implements EventListner<Map<Operator, AtomicLon
         @Override
         public void onFinish(AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Binlog, Status>, Map<Operator, AtomicLong>> value) {//
             AbstractMap.SimpleEntry<Binlog, Status> simpleEntry = value.getKey();
-            String identityFile = simpleEntry.getKey().getIdentity();
+            String identityFile = simpleEntry.getKey().getIdentity1();
             try {
                 DBbiz.update(identityFile, value.getValue().toString(), simpleEntry.getValue());
             } catch (Exception e) {
@@ -88,7 +88,7 @@ public class DefaultEventListner implements EventListner<Map<Operator, AtomicLon
         @Override
         public void onStart(Binlog binlog) {
             try {
-                DBbiz.update(binlog.getIdentity(), null);
+                DBbiz.update(binlog.getIdentity1(), null);
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }

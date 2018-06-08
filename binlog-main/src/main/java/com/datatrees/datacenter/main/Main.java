@@ -18,10 +18,10 @@ public class Main {
     public static void main(String[] args) {
         try {
             Properties value = PropertiesUtility.load("common.properties");
-            if (value.getProperty("server.class") == null) {
+            if (value.getProperty("runner.class") == null) {
                 taskRunner = TaskProcessor.defaultProcessor();
             } else {
-                taskRunner = ReflectUtility.<TaskRunner>reflect(value.getProperty("server.class"));
+                taskRunner = ReflectUtility.<TaskRunner>reflect(value.getProperty("runner.class"));
             }
             taskRunner.process();
         } catch (Exception e) {

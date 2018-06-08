@@ -133,7 +133,7 @@ public final class BinlogFileReader implements Runnable {
                 Object resultValue = schemaUtility.toAvroData(schema, operator, before, after);
                 if (resultValue != null) {
                     try {
-                        consumer.consume(schema, this.binlog.getIdentity1(), operator, resultValue);
+                        consumer.consume(schema, this.binlog, operator, resultValue);
                     } catch (Exception e) {
                         logger.error(e.getMessage(), e);
                         throw new BinlogException(String.format("error to consume binlog event of %s", tableId));

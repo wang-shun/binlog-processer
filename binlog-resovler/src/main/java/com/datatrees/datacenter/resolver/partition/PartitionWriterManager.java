@@ -2,6 +2,7 @@ package com.datatrees.datacenter.resolver.partition;
 
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
+import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 //import com.datatrees.datacenter.resolver.domain.BufferRecord;
 import com.datatrees.datacenter.resolver.domain.Operator;
@@ -65,7 +66,7 @@ public class PartitionWriterManager {
         });
     }
 
-    private String createFullPath(String relativeFilePath, Partitioner partitioner, String identity, String[] fullSchema, Schema envelopSchema) {
+    private String createFullPath(String relativeFilePath, Partitioner partitioner, Binlog binlog, String[] fullSchema, Schema envelopSchema) {
         String fullPath = null;
         String database = fullSchema[1];
         String instance = fullSchema[0];
@@ -74,11 +75,12 @@ public class PartitionWriterManager {
         }
         if (relativeFilePath != null) {
             fullPath = String.
-                    format("%s/%s/%s/%s/%s/%s/%s/%s.avro", TMP_ROOT_PATH, partitioner.getRoot(), identity, instance, database, envelopSchema.getName(), relativeFilePath, identity);
+                    format("%s/%s/%s/%s/%s/%s/%s/%s.avro", TMP_ROOT_PATH, partitioner.getRoot(), binlog.getIdentity0(),
+                            instance, database, envelopSchema.getName(), relativeFilePath, binlog.getIdentity1().replace(".tar", ""));
         } else {//没有分区
             fullPath = String.
-                    format("%s/%s/%s/%s/%s/%s/%s.avro", TMP_ROOT_PATH, partitioner.getRoot(), identity, instance, database, envelopSchema.getName(), identity);
-
+                    format("%s/%s/%s/%s/%s/%s/%s.avro", TMP_ROOT_PATH, partitioner.getRoot(), binlog.getIdentity0(),
+                            instance, database, envelopSchema.getName(), binlog.getIdentity1().replace(".tar", ""));
         }
         return fullPath;
     }
@@ -104,7 +106,7 @@ public class PartitionWriterManager {
         }), 5, TimeUnit.MINUTES);
     }
 
-    public void write(Schema schema, String identity, Operator operator, Object result) throws IOException {
+    public void write(Schema schema, Binlog binlog, Operator operator, Object result) throws IOException {
         GenericData.Record record = null;
         switch (operator) {
             case Update:
@@ -124,7 +126,7 @@ public class PartitionWriterManager {
         if (record != null) {
             for (Partitioner partitioner : partitioners) {
                 String relativeFilePath = partitioner.encodePartition(record);
-                String fullPath = createFullPath(relativeFilePath, partitioner, identity, fullSchema, envelopSchema);
+                String fullPath = createFullPath(relativeFilePath, partitioner, binlog, fullSchema, envelopSchema);
                 if (writerCache.containsKey(fullPath)) {
                     writer = writerCache.get(fullPath);
                 } else {
