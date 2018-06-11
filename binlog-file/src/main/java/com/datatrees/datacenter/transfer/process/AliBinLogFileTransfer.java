@@ -109,7 +109,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                                 map.put(TableInfo.BAK_INSTANCE_ID, hostInstanceId);
                                 map.put(TableInfo.LOG_START_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logStartTime), TableInfo.COMMON_FORMAT));
                                 map.put(TableInfo.LOG_END_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logEndTime), TableInfo.COMMON_FORMAT));
-                                map.put(TableInfo.DOWN_LINK,binLogFile.getDownloadLink());
+                                map.put(TableInfo.DOWN_LINK, binLogFile.getDownloadLink());
                                 map.put(TableInfo.DOWN_START_TIME, TimeUtil.utc2Common(startTime));
                                 map.put(TableInfo.DOWN_END_TIME, TimeUtil.utc2Common(endTime));
                                 DBUtil.insert(BINLOG_TRANS_TABLE, map);
@@ -127,8 +127,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                                 fileName, dbInstance);
                         TransferProcess transferProcess = new TransferProcess(transInfo);
                         transferProcess.startTrans();
-                        LOG.info("download binlog file :" + binLogFile.getDownloadLink() + " successfully");
-
                     }
 
                 } else {
@@ -212,7 +210,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             startTime = TimeUtil.dateToStr((Timestamp) lastTime.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
         } else {
             //开始正常下载
-            currentTime = System.currentTimeMillis();
             //将上一次的结束时间设置未这一次的开始时间
             binlogFilesRequest.setStartTime(startTime);
             LOG.info(startTime);
