@@ -79,7 +79,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             List<Integer> fileNumList = BinLogFileUtil.getFileNumberFromUrl(fileList, REGEX_PATTERN);
             fileNumList = fileNumList.stream().sorted().collect(Collectors.toList());
 
-            if (fileList.size() > 0) {
+            if (fileList.size() > 0 && fileNumList.size() > 0) {
                 //判断文件编号是否连续
                 int maxDiff = Math.abs(fileNumList.get(0) - fileNumList.get(fileNumList.size() - 1));
                 if (instanceLogSize == (maxDiff + 1)) {
@@ -109,6 +109,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                                 map.put(TableInfo.BAK_INSTANCE_ID, hostInstanceId);
                                 map.put(TableInfo.LOG_START_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logStartTime), TableInfo.COMMON_FORMAT));
                                 map.put(TableInfo.LOG_END_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logEndTime), TableInfo.COMMON_FORMAT));
+                                map.put(TableInfo.DOWN_LINK,binLogFile.getDownloadLink());
                                 map.put(TableInfo.DOWN_START_TIME, TimeUtil.utc2Common(startTime));
                                 map.put(TableInfo.DOWN_END_TIME, TimeUtil.utc2Common(endTime));
                                 DBUtil.insert(BINLOG_TRANS_TABLE, map);
@@ -147,7 +148,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         List<Map<String, Object>> resultList = null;
         whereMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
         try {
-            //resultList = DBUtil.query(BINLOG_TRANS_TABLE, whereMap);
             resultList = DBUtil.query(BINLOG_TRANS_TABLE, true, new String[]{TableInfo.DOWN_START_TIME, TableInfo.DOWN_END_TIME}, TableInfo.DOWN_STATUS + "=0", null, null, null, TableInfo.DOWN_START_TIME, null);
         } catch (Exception e) {
             e.printStackTrace();
@@ -194,7 +194,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 Map<String, Object> recordMap;
                 while (iterator.hasNext()) {
                     recordMap = iterator.next();
-                    String path = HDFS_PATH + File.separator + recordMap.get(TableInfo.BAK_INSTANCE_ID) + File.separator + recordMap.get(TableInfo.FILE_NAME);
+                    String path = HDFS_PATH + File.separator + recordMap.get(TableInfo.DB_INSTANCE) + File.separator + recordMap.get(TableInfo.BAK_INSTANCE_ID) + File.separator + recordMap.get(TableInfo.FILE_NAME);
                     String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
                             + recordMap.get(TableInfo.FILE_NAME);
                     String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
@@ -208,12 +208,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
         if (unCompleteList.size() > 0) {
             processUnComplete(unCompleteList);
+            Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
+            startTime = TimeUtil.dateToStr((Timestamp) lastTime.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
         } else {
             //开始正常下载
             currentTime = System.currentTimeMillis();
             //将上一次的结束时间设置未这一次的开始时间
-            Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
-            startTime = TimeUtil.dateToStr((Timestamp) lastTime.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
             binlogFilesRequest.setStartTime(startTime);
             LOG.info(startTime);
             endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
