@@ -65,7 +65,7 @@ public class ProcessCheck {
 
                         // send to kafka
                         TaskDispensor.defaultDispensor().dispense(
-                                new Binlog(DEST + File.separator + bakInstanceId + File.separator + fileName,
+                                new Binlog(DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName,
                                         instanceId + "_"
                                                 + fileName,
                                         DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE))));
