@@ -364,7 +364,7 @@
                 <executions>
                     <execution>
                         <id>binlog-file</id>
-                        <!--<phase>package</phase>-->
+                        <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
