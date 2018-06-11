@@ -3,6 +3,7 @@ package com.datatrees.datacenter.transfer.process.threadmanager;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
@@ -25,6 +26,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_PROC_TABLE;
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_TRANS_TABLE;
@@ -33,6 +35,8 @@ import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_TRANS_TABL
  * @author personalc
  */
 public class TransThread implements Serializable, Runnable {
+    private static Properties properties = PropertiesUtility.defaultProperties();
+    private static final int BUFFER_SIZE = Integer.parseInt(properties.getProperty("BUFFER_SIZE"));
     private static Logger LOG = LoggerFactory.getLogger(TransThread.class);
     /**
      * 文件所在src
@@ -85,7 +89,7 @@ public class TransThread implements Serializable, Runnable {
                 httpConnection.setRequestProperty("RANGE", prop);
                 LOG.info(prop);
                 InputStream input = httpConnection.getInputStream();
-                byte[] b = new byte[1024];
+                byte[] b = new byte[BUFFER_SIZE];
                 int bytes;
                 int tries = 60;
                 boolean recovered = false;
