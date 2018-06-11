@@ -155,7 +155,7 @@ public class TransThread implements Serializable, Runnable {
 
                 // send to queue
                 try {
-                    String path = dest + File.separator + instanceId + File.separator + DBInstanceUtil.getBackInstanceId(instanceId) + File.separator + fileName;
+                    String path = dest + File.separator + fileName;
                     TaskDispensor.defaultDispensor().dispense(
                             new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
                 } catch (Exception e) {

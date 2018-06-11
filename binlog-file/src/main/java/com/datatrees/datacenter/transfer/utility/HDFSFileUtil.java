@@ -1,5 +1,6 @@
 package com.datatrees.datacenter.transfer.utility;
 
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -20,7 +21,7 @@ import java.util.Properties;
  */
 public class HDFSFileUtil {
     private static Logger LOG = LoggerFactory.getLogger(BinLogFileUtil.class);
-    private static Properties properties = FileUtil.getProperties();
+    private static Properties properties = PropertiesUtility.defaultProperties();
     public static Configuration conf = null;
     public static FileSystem fileSystem = null;
     public static String hdfsPath = properties.getProperty("HDFS_PATH");
@@ -129,7 +130,6 @@ public class HDFSFileUtil {
     }
 
     /**
-     *
      * @param path
      * @return
      */

@@ -20,8 +20,8 @@ start()
                 mkdir ${LOG_DIR}
         fi
 
-        if [ ! -e ${CONF_DIR}/instance.properties ]; then
-                echo "${CONF_DIR}/instance.properties does not exist "
+        if [ ! -e ${CONF_DIR}/binlog.properties ]; then
+                echo "${CONF_DIR}/binlog.properties does not exist "
               #  exit 0
         fi
 

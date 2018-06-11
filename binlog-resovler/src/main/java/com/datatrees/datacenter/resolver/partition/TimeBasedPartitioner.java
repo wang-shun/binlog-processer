@@ -10,7 +10,7 @@ import java.util.List;
 
 public abstract class TimeBasedPartitioner implements Partitioner {
 
-    protected static final String PARTITIONER_CONSTANCE = "partitioner.properties";
+    protected static final String PARTITIONER_CONSTANCE = "binlog.properties";
 
     @Override
     public String encodePartition(GenericData.Record record) {

@@ -29,7 +29,7 @@ public class TaskProcessor implements TaskRunner, Runnable {
     private FileStorage fileStorage;
 
     static {
-        properties = PropertiesUtility.load("common.properties");
+        properties = PropertiesUtility.defaultProperties();
     }
 
     /**
@@ -45,7 +45,7 @@ public class TaskProcessor implements TaskRunner, Runnable {
     public static TaskProcessor defaultProcessor() {
         synchronized (TaskProcessor.class) {
             if (__taskProcessor == null) {
-                Properties properties = PropertiesUtility.load("common.properties");
+                Properties properties = PropertiesUtility.defaultProperties();
                 String mode = properties.getProperty("queue.mode");
                 switch (mode) {
                     case "default":

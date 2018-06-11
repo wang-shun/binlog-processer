@@ -10,7 +10,7 @@ public final class RedisQueue {
     private static RBlockingQueue<String> defaultQueue;
 
     static {
-        java.util.Properties properties = PropertiesUtility.load("redis.properties");
+        java.util.Properties properties = PropertiesUtility.defaultProperties();
         if (properties == null) {
             throw new IllegalArgumentException("No redis properties file provided.");
         }

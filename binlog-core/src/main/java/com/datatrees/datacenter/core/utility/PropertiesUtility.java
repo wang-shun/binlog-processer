@@ -19,4 +19,14 @@ public class PropertiesUtility {
             return null;
         }
     }
+
+    private static Properties __defaultProperties;
+
+    static {
+        __defaultProperties = load("binlog.properties");
+    }
+
+    public static Properties defaultProperties() {
+        return __defaultProperties;
+    }
 }

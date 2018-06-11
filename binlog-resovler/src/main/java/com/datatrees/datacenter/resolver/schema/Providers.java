@@ -38,7 +38,7 @@ public class Providers {
     private static Properties properties;
 
     static {
-        properties = PropertiesUtility.load("dbInstance.properties");
+        properties = PropertiesUtility.defaultProperties();
     }
 
     /**

@@ -19,7 +19,7 @@ public class KafkaProducer implements Cloneable, Serializable {
     private static String queueTopic;
 
     static {
-        Properties props = PropertiesUtility.load("common.properties");
+        Properties props = PropertiesUtility.defaultProperties();
         queueTopic = props.getProperty("task.queue");
         props.put("bootstrap.servers", props.getProperty("bootstrap.servers"));//该地址是集群的子集，用来探测集群。
         props.put("acks", "all");// 记录完整提交，最慢的但是最大可能的持久化

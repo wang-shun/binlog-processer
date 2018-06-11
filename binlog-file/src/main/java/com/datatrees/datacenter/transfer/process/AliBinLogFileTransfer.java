@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
-    private static Properties properties = PropertiesUtility.load("instance.properties");
+    private static Properties properties = PropertiesUtility.defaultProperties();
     private static final String REGION_ID = properties.getProperty("REGION_ID");
     private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");
     private static final String ACCESS_SECRET = properties.getProperty("ACCESS_SECRET");
@@ -220,6 +220,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             binlogFilesRequest.setEndTime(endTime);
             LOG.info(endTime);
             for (DBInstance dbInstance : instances) {
+//                if (dbInstance.getDBInstanceId().equalsIgnoreCase("rm-bp1cowwkt73ni6271"))
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
         }

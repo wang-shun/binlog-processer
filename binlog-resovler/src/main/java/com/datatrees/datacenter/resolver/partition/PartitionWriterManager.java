@@ -37,7 +37,7 @@ public class PartitionWriterManager {
     private static LoadingCache<CacheKey, PartitionWriter> caches;
 
     static {
-        java.util.Properties value = PropertiesUtility.load("common.properties");
+        java.util.Properties value = PropertiesUtility.defaultProperties();
         TMP_ROOT_PATH = value.getProperty("hdfs.temp.url");
 
         caches = CacheBuilder.newBuilder().

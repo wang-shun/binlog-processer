@@ -27,7 +27,7 @@ public class Redis {
 
             public JedisImpl() {
                 java.util.Properties props = null;
-                props = PropertiesUtility.load("redis.properties");
+                props = PropertiesUtility.defaultProperties();
                 JedisPoolConfig config = new JedisPoolConfig();
                 String[] arr = props.getProperty("redis.server").split(":");
                 pool = new JedisPool(config, arr[0], Integer.parseInt(arr[1]));
@@ -61,7 +61,7 @@ public class Redis {
 
             public Redission() {
                 Config config = new Config();
-                config.useSingleServer().setAddress(String.format("redis://%s", PropertiesUtility.load("redis.properties").getProperty("redis.server")));
+                config.useSingleServer().setAddress(String.format("redis://%s", PropertiesUtility.defaultProperties().getProperty("redis.server")));
                 redisson = Redisson.create(config);
             }
 

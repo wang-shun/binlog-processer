@@ -17,7 +17,7 @@ public class TaskDispensor {
     public static TaskDispensor defaultDispensor() {
         synchronized (TaskDispensor.class) {
             if (__taskDispensor == null) {
-                Properties properties = PropertiesUtility.load("common.properties");
+                Properties properties = PropertiesUtility.defaultProperties();
                 String mode = properties.getProperty("queue.mode");
                 switch (mode) {
                     case "default":

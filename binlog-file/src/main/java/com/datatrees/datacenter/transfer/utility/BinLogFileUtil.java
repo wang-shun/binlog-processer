@@ -6,6 +6,7 @@ import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesRequest;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class BinLogFileUtil {
     private static Logger LOG = LoggerFactory.getLogger(BinLogFileUtil.class);
-    private static Properties properties = FileUtil.getProperties();
+    private static Properties properties = PropertiesUtility.defaultProperties();
     private static final int PAGE_SIZE = Integer.valueOf(properties.getProperty("PAGE_SIZE"));
 
     /**

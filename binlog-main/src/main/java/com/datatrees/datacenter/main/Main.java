@@ -17,7 +17,7 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            Properties value = PropertiesUtility.load("common.properties");
+            Properties value = PropertiesUtility.defaultProperties();
             if (value.getProperty("runner.class") == null) {
                 taskRunner = TaskProcessor.defaultProcessor();
             } else {

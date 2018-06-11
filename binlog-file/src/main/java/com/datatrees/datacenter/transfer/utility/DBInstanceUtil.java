@@ -9,6 +9,7 @@ import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceAttributeResponse.DBInstanceAttribute;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceHAConfigResponse.NodeInfo;
 import com.aliyuncs.rds.model.v20140815.DescribeDatabasesResponse.Database;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ import java.util.Properties;
  */
 public class DBInstanceUtil {
     private static Logger LOG = LoggerFactory.getLogger(DBInstance.class);
-    private static Properties properties = FileUtil.getProperties();
+    private static Properties properties = PropertiesUtility.defaultProperties();
     private static final int PAGE_SIZE = Integer.valueOf(properties.getProperty("PAGE_SIZE"));
     private static final String REGION_ID = properties.getProperty("REGION_ID");
     private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");

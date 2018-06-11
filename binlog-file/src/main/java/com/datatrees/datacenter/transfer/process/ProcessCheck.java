@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ProcessCheck {
 
-    private static Properties properties = PropertiesUtility.load("instance.properties");
+    private static Properties properties = PropertiesUtility.defaultProperties();
     private static String DEST = properties != null ? properties.getProperty("HDFS_PATH") : null;
     private static int interval = 100;
     private static final long INITIALDELAY = 10;
