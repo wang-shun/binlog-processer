@@ -13,9 +13,7 @@ import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author personalc
@@ -27,6 +25,7 @@ public class DBInstanceUtil {
     private static final String REGION_ID = properties.getProperty("REGION_ID");
     private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");
     private static final String ACCESS_SECRET = properties.getProperty("ACCESS_SECRET");
+    private static final String DBINSTANCE_LIST=properties.getProperty("DBINSTANCE_LIST");
     private static final DefaultProfile DEFAULT_PROFILE;
     private static IAcsClient client;
 
@@ -60,6 +59,16 @@ public class DBInstanceUtil {
      * @return 返回所有的实例
      */
     public static List<DBInstance> getAllPrimaryDBInstance() {
+        List<String> instanceIds = null;
+        boolean flag=false;
+        if(DBINSTANCE_LIST!=null&&DBINSTANCE_LIST.length()>0) {
+            if (DBINSTANCE_LIST.contains(",")) {
+                instanceIds = Arrays.asList(DBINSTANCE_LIST.split(","));
+            } else {
+                instanceIds.add(DBINSTANCE_LIST);
+            }
+            flag=true;
+        }
         IAcsClient client = createConnection();
         DescribeDBInstancesRequest dbInstancesRequest = new DescribeDBInstancesRequest();
         DescribeDBInstancesResponse dbInstancesResponse;
@@ -78,8 +87,15 @@ public class DBInstanceUtil {
                 dbInstancesRequest.setPageNumber(i);
                 dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, DEFAULT_PROFILE);
                 List<DBInstance> dbInstanceList = dbInstancesResponse.getItems();
-                for (DBInstance dbInstance : dbInstanceList) {
-                    System.out.println(dbInstance.getDBInstanceId());
+                Iterator<DBInstance> iterator=dbInstanceList.iterator();
+                if (flag)
+                {
+                    while (iterator.hasNext()){
+                        DBInstance dbInstance=iterator.next();
+                        if(!instanceIds.contains(dbInstance.getDBInstanceId())){
+                            iterator.remove();
+                        }
+                    }
                 }
                 dbInstances.addAll(dbInstanceList);
             }

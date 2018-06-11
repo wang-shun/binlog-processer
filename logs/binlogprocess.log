@@ -420,3 +420,5 @@
 2018-06-11 14:05:03 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
 2018-06-11 14:05:04 [ INFO] - org.redisson.connection.pool.MasterPubSubConnectionPool -ConnectionPool.java(144) -1 connections initialized for master0/172.20.24.8:6379
 2018-06-11 14:05:04 [ INFO] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(144) -10 connections initialized for master0/172.20.24.8:6379
+2018-06-11 16:26:17 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(85) -pageCount: 1
+2018-06-11 16:27:06 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(85) -pageCount: 1
