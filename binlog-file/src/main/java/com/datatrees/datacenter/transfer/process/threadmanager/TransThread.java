@@ -94,7 +94,6 @@ public class TransThread implements Serializable, Runnable {
                 int bytes;
                 int tries = 60;
                 boolean recovered = false;
-
                 Path dstPath = new Path(dest + File.separator + fileName);
                 FileSystem fs = HDFSFileUtil.fileSystem;
                 if (!fs.exists(dstPath)) {
@@ -158,7 +157,6 @@ public class TransThread implements Serializable, Runnable {
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
-
                     // send to queue
                     try {
                         String path = dest + File.separator + fileName;

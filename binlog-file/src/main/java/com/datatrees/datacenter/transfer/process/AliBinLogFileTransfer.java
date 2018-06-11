@@ -132,6 +132,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 } else {
                     LOG.info("the downloaded binlog files is not complete");
                 }
+            } else {
+                LOG.info("no binlong backed in the master instance");
             }
         } else {
             LOG.info("no binlog find in the: " + instanceId + " with time between " + binlogFilesRequest.getStartTime() + " and " + binlogFilesRequest.getStartTime());
@@ -168,6 +170,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             for (DBInstance dbInstance : instances) {
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
+            LOG.info("the uncompleted download binlog file last time has completely download");
         }
     }
 
@@ -222,10 +225,9 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
         }
-
         ThreadPoolInstance.getExecutors().shutdown();
         try {
-            ThreadPoolInstance.getExecutors().awaitTermination(1, TimeUnit.MINUTES);
+            ThreadPoolInstance.getExecutors().awaitTermination(10, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             LOG.error(e.getMessage(), e);
         }

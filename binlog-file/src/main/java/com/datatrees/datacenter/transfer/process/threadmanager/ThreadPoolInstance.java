@@ -16,7 +16,7 @@ public class ThreadPoolInstance {
 
     private static int corePoolSize = 5;
     private static int maximumPoolSize = 20;
-    private static long keepAliveTime = 100L;
+    private static long keepAliveTime = 10L;
 
     private static class LazyHolder {
         private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(corePoolSize,
@@ -26,7 +26,7 @@ public class ThreadPoolInstance {
                 new LinkedBlockingDeque<>(),
                 r -> {
                     Thread t = new Thread(r);
-                    LOG.info("create thread " + t);
+                    LOG.info("create thread " + t.getName());
                     return t;
                 });
     }
