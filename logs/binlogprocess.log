@@ -417,3 +417,6 @@
 2018-06-11 10:22:32 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(90) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000213.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528770152&Signature=QLE9%2FpfyovNTz2ynm%2FnxnSdytrw%3D]
 2018-06-11 10:22:32 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
 2018-06-11 10:22:32 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -Thread :pool-1-thread-1, start= 4042752,  end= 524298240
+2018-06-11 14:05:03 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-11 14:05:04 [ INFO] - org.redisson.connection.pool.MasterPubSubConnectionPool -ConnectionPool.java(144) -1 connections initialized for master0/172.20.24.8:6379
+2018-06-11 14:05:04 [ INFO] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(144) -10 connections initialized for master0/172.20.24.8:6379

@@ -202,7 +202,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
+//            e.printStackTrace();
         }
         //重新下载未完成的数据
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
@@ -229,7 +230,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         try {
             ThreadPoolInstance.getExecutors().awaitTermination(1, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
     }
 

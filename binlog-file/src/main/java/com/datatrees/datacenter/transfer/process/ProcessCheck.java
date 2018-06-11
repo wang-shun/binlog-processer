@@ -7,6 +7,8 @@ import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.SendStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
@@ -26,7 +28,9 @@ public class ProcessCheck {
     private static final long INITIALDELAY = 10;
     private static final long THREAD_PERIOD = 10;
 
-    public static void main(String[] args) {
+    private static Logger logger = LoggerFactory.getLogger(ProcessCheck.class);
+
+    public void process() {
         Runnable runnable = () -> {
             List<Map<String, Object>> resultList;
             Map<String, Object> oneRecord;
@@ -85,6 +89,10 @@ public class ProcessCheck {
         };
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
         // 第二个参数为首次执行的延时时间，第三个参数为定时执行的间隔时间
-        service.scheduleAtFixedRate(runnable, INITIALDELAY, THREAD_PERIOD, TimeUnit.SECONDS);
+        service.scheduleAtFixedRate(runnable, INITIALDELAY, THREAD_PERIOD, TimeUnit.MINUTES);
+    }
+
+    public static void main(String[] args) {
+
     }
 }

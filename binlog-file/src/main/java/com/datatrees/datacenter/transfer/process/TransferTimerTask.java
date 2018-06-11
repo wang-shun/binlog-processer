@@ -12,6 +12,12 @@ import java.util.concurrent.TimeUnit;
 public class TransferTimerTask implements TaskRunner {
     private static final long INITIALDELAY = 0;
     private static final long PERIOD = 2;
+    ProcessCheck processCheck;
+
+    public TransferTimerTask() {
+        processCheck = new ProcessCheck();
+        processCheck.process();
+    }
 
     @Override
     public void process() {
@@ -23,7 +29,7 @@ public class TransferTimerTask implements TaskRunner {
         ScheduledExecutorService service = Executors
                 .newSingleThreadScheduledExecutor();
         // 第二个参数为首次执行的延时时间，第三个参数为定时执行的间隔时间
-        service.scheduleAtFixedRate(runnable, 0, 5, TimeUnit.MINUTES);
+        service.scheduleAtFixedRate(runnable, 0, 30, TimeUnit.MINUTES);
     }
 
     public static void main(String[] args) {
