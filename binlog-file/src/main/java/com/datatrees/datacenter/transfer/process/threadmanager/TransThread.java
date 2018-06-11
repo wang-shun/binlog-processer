@@ -79,6 +79,7 @@ public class TransThread implements Serializable, Runnable {
 
     @Override
     public void run() {
+        LOG.info("Thread :" + Thread.currentThread().getName());
         while (startPos < endPos && !over) {
             try {
                 URL ourl = new URL(src);
@@ -120,12 +121,12 @@ public class TransThread implements Serializable, Runnable {
                         }
                     }
                 }
-                LOG.info("Thread " + Thread.currentThread().getName() + " is done");
                 over = true;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        LOG.info("Thread " + Thread.currentThread().getName() + " is done");
         // update a the record
         if (startPos == endPos && over) {
             Map<String, Object> whereMap = new HashMap<>(1);
@@ -171,6 +172,5 @@ public class TransThread implements Serializable, Runnable {
                 e.printStackTrace();
             }
         }
-
     }
 }

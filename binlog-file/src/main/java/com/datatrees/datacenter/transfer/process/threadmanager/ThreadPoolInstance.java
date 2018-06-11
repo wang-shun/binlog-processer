@@ -1,5 +1,9 @@
 package com.datatrees.datacenter.transfer.process.threadmanager;
 
+import com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -8,6 +12,8 @@ import java.util.concurrent.TimeUnit;
  * @author personalc
  */
 public class ThreadPoolInstance {
+    private static Logger LOG = LoggerFactory.getLogger(ThreadPoolInstance.class);
+
     private static int corePoolSize = 5;
     private static int maximumPoolSize = 20;
     private static long keepAliveTime = 100L;
@@ -20,7 +26,7 @@ public class ThreadPoolInstance {
                 new LinkedBlockingDeque<>(),
                 r -> {
                     Thread t = new Thread(r);
-                    System.out.println("create thread " + t);
+                    LOG.info("create thread " + t);
                     return t;
                 });
     }

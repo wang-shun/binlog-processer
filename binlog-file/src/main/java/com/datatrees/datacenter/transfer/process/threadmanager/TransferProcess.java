@@ -73,7 +73,7 @@ public class TransferProcess {
         if (startPos != endPos) {
             TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
                     transInfo.getFileName(), transInfo.getDbInstance().getDBInstanceId());
-            LOG.info("Thread :" + Thread.currentThread().getName() + ", start= " + startPos + ",  end= " + endPos);
+            LOG.info("start= " + startPos + ",  end= " + endPos);
             ThreadPoolInstance.getExecutors().execute(transThread);
             //停止标志
             boolean stop = false;
