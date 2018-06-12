@@ -16,8 +16,8 @@ public class ThreadPoolInstance {
     private static long keepAliveTime = 10L;
 
     private static class LazyHolder {
-        private static final ExecutorService excutors=Executors.newFixedThreadPool(5);
-       /* private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(corePoolSize,
+        //private static final ExecutorService executors=Executors.newFixedThreadPool(5);
+        private static final ThreadPoolExecutor executors = new ThreadPoolExecutor(corePoolSize,
                 maximumPoolSize,
                 keepAliveTime,
                 TimeUnit.SECONDS,
@@ -26,10 +26,10 @@ public class ThreadPoolInstance {
                     Thread t = new Thread(r);
                     LOG.info("create thread " + t.getName());
                     return t;
-                },new ThreadPoolExecutor.AbortPolicy());*/
+                }, new ThreadPoolExecutor.AbortPolicy());
     }
 
-    public static ExecutorService getExecutors() {
-        return LazyHolder.excutors;
+    public static ThreadPoolExecutor getExecutors() {
+        return LazyHolder.executors;
     }
 }

@@ -87,7 +87,7 @@ public class TransThread implements Serializable, Runnable {
                 //设置请求首部字段 RANGE
                 httpConnection.setRequestProperty("RANGE", prop);
                 LOG.info(prop);
-                InputStream input = new BufferedInputStream(httpConnection.getInputStream(),500*BUFFER_SIZE);
+                InputStream input = new BufferedInputStream(httpConnection.getInputStream());
                 byte[] b = new byte[500 * BUFFER_SIZE];
                 int bytes;
                 int tries = 60;
@@ -98,10 +98,10 @@ public class TransThread implements Serializable, Runnable {
                 }
                 FSDataOutputStream out = null;
                 while (!recovered && tries > 0) {
-                    while ((((bytes = input.read(b))) > 0) && (startPos < endPos)) {
+                    while ((((bytes = input.read(b))) != -1) && (startPos < endPos)) {
                         try {
                             out = fs.append(dstPath);
-                            out.write(b, 0, bytes);
+                            out.write(b, 0, (int) Math.min(bytes, (endPos - startPos)));
                             startPos += bytes;
                             recovered = true;
                         } catch (IOException e) {
@@ -121,7 +121,6 @@ public class TransThread implements Serializable, Runnable {
                         }
                     }
                 }
-                //over = true;
             } catch (IOException e) {
                 e.printStackTrace();
             }

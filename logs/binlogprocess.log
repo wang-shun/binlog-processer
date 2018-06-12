@@ -2703,3 +2703,628 @@ java.nio.channels.ClosedChannelException
 2018-06-12 15:05:46 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 385054720
 2018-06-12 15:05:46 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: pool-6-thread-4 begin to download file :1528733465000-mysql-bin.000220.tar
 2018-06-12 15:05:46 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:30:27 [ INFO] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(1467) -Exception in createBlockOutputStream
+org.apache.hadoop.net.ConnectTimeoutException: 5000 millis timeout while waiting for channel to be ready for connect. ch : java.nio.channels.SocketChannel[connection-pending remote=/172.20.20.19:50010]
+	at org.apache.hadoop.net.NetUtils.connect(NetUtils.java:533)
+	at org.apache.hadoop.hdfs.DFSOutputStream.createSocketForPipeline(DFSOutputStream.java:1606)
+	at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.createBlockOutputStream(DFSOutputStream.java:1404)
+	at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.setupPipelineForAppendOrRecovery(DFSOutputStream.java:1277)
+	at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer.run(DFSOutputStream.java:593)
+2018-06-12 15:30:27 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(1207) -Error Recovery for block BP-59105050-172.20.20.13-1521443137020:blk_1073773381_5317478 in pipeline 172.20.20.19:50010, 172.20.20.21:50010, 172.20.20.15:50010: bad datanode 172.20.20.19:50010
+2018-06-12 15:30:40 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(954) -DFSOutputStream ResponseProcessor exception  for block BP-59105050-172.20.20.13-1521443137020:blk_1073773382_5317479
+java.net.SocketTimeoutException: 20000 millis timeout while waiting for channel to be ready for read. ch : java.nio.channels.SocketChannel[connected local=/192.168.255.22:60864 remote=/172.20.20.21:50010]
+	at org.apache.hadoop.net.SocketIOWithTimeout.doIO(SocketIOWithTimeout.java:164)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:161)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:131)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:118)
+	at java.io.FilterInputStream.read(FilterInputStream.java:83)
+	at java.io.FilterInputStream.read(FilterInputStream.java:83)
+	at org.apache.hadoop.hdfs.protocolPB.PBHelper.vintPrefixed(PBHelper.java:2205)
+	at org.apache.hadoop.hdfs.protocol.datatransfer.PipelineAck.readFields(PipelineAck.java:176)
+	at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer$ResponseProcessor.run(DFSOutputStream.java:866)
+2018-06-12 15:30:42 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(954) -DFSOutputStream ResponseProcessor exception  for block BP-59105050-172.20.20.13-1521443137020:blk_1073773380_5317480
+java.net.SocketTimeoutException: 20000 millis timeout while waiting for channel to be ready for read. ch : java.nio.channels.SocketChannel[connected local=/192.168.255.22:60866 remote=/172.20.20.15:50010]
+	at org.apache.hadoop.net.SocketIOWithTimeout.doIO(SocketIOWithTimeout.java:164)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:161)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:131)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:118)
+	at java.io.FilterInputStream.read(FilterInputStream.java:83)
+	at java.io.FilterInputStream.read(FilterInputStream.java:83)
+	at org.apache.hadoop.hdfs.protocolPB.PBHelper.vintPrefixed(PBHelper.java:2205)
+	at org.apache.hadoop.hdfs.protocol.datatransfer.PipelineAck.readFields(PipelineAck.java:176)
+	at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer$ResponseProcessor.run(DFSOutputStream.java:866)
+2018-06-12 15:30:42 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(954) -DFSOutputStream ResponseProcessor exception  for block BP-59105050-172.20.20.13-1521443137020:blk_1073773383_5317481
+java.net.SocketTimeoutException: 20000 millis timeout while waiting for channel to be ready for read. ch : java.nio.channels.SocketChannel[connected local=/192.168.255.22:60867 remote=/172.20.20.21:50010]
+	at org.apache.hadoop.net.SocketIOWithTimeout.doIO(SocketIOWithTimeout.java:164)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:161)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:131)
+	at org.apache.hadoop.net.SocketInputStream.read(SocketInputStream.java:118)
+	at java.io.FilterInputStream.read(FilterInputStream.java:83)
+	at java.io.FilterInputStream.read(FilterInputStream.java:83)
+	at org.apache.hadoop.hdfs.protocolPB.PBHelper.vintPrefixed(PBHelper.java:2205)
+	at org.apache.hadoop.hdfs.protocol.datatransfer.PipelineAck.readFields(PipelineAck.java:176)
+	at org.apache.hadoop.hdfs.DFSOutputStream$DataStreamer$ResponseProcessor.run(DFSOutputStream.java:866)
+2018-06-12 15:30:42 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(1207) -Error Recovery for block BP-59105050-172.20.20.13-1521443137020:blk_1073773380_5317480 in pipeline 172.20.20.15:50010, 172.20.20.19:50010, 172.20.20.21:50010: bad datanode 172.20.20.15:50010
+2018-06-12 15:30:53 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(1207) -Error Recovery for block BP-59105050-172.20.20.13-1521443137020:blk_1073773383_5317481 in pipeline 172.20.20.21:50010, 172.20.20.19:50010, 172.20.20.15:50010: bad datanode 172.20.20.21:50010
+2018-06-12 15:31:01 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(1207) -Error Recovery for block BP-59105050-172.20.20.13-1521443137020:blk_1073773382_5317479 in pipeline 172.20.20.21:50010, 172.20.20.19:50010, 172.20.20.15:50010: bad datanode 172.20.20.21:50010
+2018-06-12 15:31:11 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(2157) -Slow waitForAckedSeqno took 51578ms (threshold=30000ms)
+2018-06-12 15:31:14 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(2157) -Slow waitForAckedSeqno took 54088ms (threshold=30000ms)
+2018-06-12 15:31:18 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(2157) -Slow waitForAckedSeqno took 58158ms (threshold=30000ms)
+2018-06-12 15:31:18 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(2157) -Slow waitForAckedSeqno took 56316ms (threshold=30000ms)
+2018-06-12 15:31:30 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=313458674-
+2018-06-12 15:31:30 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=303792882-
+2018-06-12 15:31:30 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=309638837-
+2018-06-12 15:31:31 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=301852433-
+2018-06-12 15:38:12 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(2157) -Slow waitForAckedSeqno took 34629ms (threshold=30000ms)
+2018-06-12 15:38:16 [ WARN] - org.apache.hadoop.hdfs.DFSClient -DFSOutputStream.java(2157) -Slow waitForAckedSeqno took 33254ms (threshold=30000ms)
+2018-06-12 15:38:33 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=346834813-
+2018-06-12 15:38:39 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=360366408-
+2018-06-12 15:42:01 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(130) -Thread pool-6-thread-4 is done
+2018-06-12 15:42:08 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-12 15:42:09 [ERROR] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(333) -host master0/172.20.20.7:6379 disconnected due to failedAttempts=3 limit reached
+io.netty.channel.AbstractChannel$AnnotatedConnectException: Connection refused: master0/172.20.20.7:6379
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:717)
+	at io.netty.channel.socket.nio.NioSocketChannel.doFinishConnect(NioSocketChannel.java:325)
+	at io.netty.channel.nio.AbstractNioChannel$AbstractNioUnsafe.finishConnect(AbstractNioChannel.java:340)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:633)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:580)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:497)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:459)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:886)
+	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: java.net.ConnectException: Connection refused
+	... 11 more
+2018-06-12 15:46:54 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 15:46:55 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 15:46:55 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 15:46:55 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vevnho10ihbfd|5351c5c4, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vevnho10ihbfd|5351c5c4, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 15:46:56 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(216) -2018-06-11T23:06:53Z
+2018-06-12 15:46:56 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(219) -2018-06-12T15:46:53Z
+2018-06-12 15:46:56 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 7
+2018-06-12 15:46:56 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:46:57 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 7
+2018-06-12 15:46:58 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:46:58 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876017&Signature=wTWrjXwq4FTSbdM%2B5nhXoJtxixo%3D]
+2018-06-12 15:46:58 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 15:46:59 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:46:59 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:46:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 524298240
+2018-06-12 15:46:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 15:46:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 15:46:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:47:02 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:47:02 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876017&Signature=%2B1W8f%2FHlsXIgyFD5l8RIEhjdq1w%3D]
+2018-06-12 15:47:03 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:47:03 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:47:03 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 524298240
+2018-06-12 15:47:03 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-17
+2018-06-12 15:47:03 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-17 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 15:47:03 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:47:06 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:47:06 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876017&Signature=aNbboM4dMq1S0WqJi5%2BsvnHJqIk%3D]
+2018-06-12 15:47:07 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:47:07 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:47:07 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 524298240
+2018-06-12 15:47:07 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-31
+2018-06-12 15:47:07 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-31 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 15:47:07 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:47:10 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 385054720
+2018-06-12 15:47:10 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000220.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876017&Signature=JgheGKybZ%2Bkwhreu82yBoWhnAZQ%3D]
+2018-06-12 15:47:11 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  385054720
+2018-06-12 15:47:11 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  385054720
+2018-06-12 15:47:11 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 385054720
+2018-06-12 15:47:11 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-49
+2018-06-12 15:47:11 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-49 begin to download file :1528733465000-mysql-bin.000220.tar
+2018-06-12 15:47:11 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:47:14 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 15:47:14 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:47:14 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 15:47:15 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 15:47:15 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876034&Signature=WKyG9mFV0bWkY%2BpfKXj%2FPn3MTWo%3D]
+2018-06-12 15:47:17 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 15:47:17 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 15:47:17 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 42434560
+2018-06-12 15:47:17 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-74
+2018-06-12 15:47:17 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-74 begin to download file :1528759470000-mysql-bin.001053.tar
+2018-06-12 15:47:17 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:47:20 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 15:47:20 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876034&Signature=2VIF%2BMbtFiYSI1fILtytuiF%2Felo%3D]
+2018-06-12 15:47:22 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:47:22 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:47:22 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 13731840
+2018-06-12 15:50:52 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 15:50:52 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 15:50:52 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 15:50:52 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vf0qil66ev7r|17a419dc, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vf0qil66ev7r|17a419dc, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 15:50:53 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(216) -2018-06-11T23:10:51Z
+2018-06-12 15:50:53 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(219) -2018-06-12T15:50:51Z
+2018-06-12 15:50:53 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 7
+2018-06-12 15:50:53 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:50:53 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 7
+2018-06-12 15:50:54 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:50:54 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876253&Signature=dG6GBU1xp6eIsMCq8lNMFU7nO%2Bk%3D]
+2018-06-12 15:50:54 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 15:50:55 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:50:55 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:50:55 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 524298240
+2018-06-12 15:50:55 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 15:50:55 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 15:50:55 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:50:58 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:50:58 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876253&Signature=V4dSnCMjZOxipSa3SQZDuczwlbs%3D]
+2018-06-12 15:50:59 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:50:59 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:50:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 524298240
+2018-06-12 15:50:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-17
+2018-06-12 15:50:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-17 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 15:50:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:51:02 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:51:02 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876253&Signature=%2FpcjMWNAemLaCvAGIQVvPv6a5cs%3D]
+2018-06-12 15:51:03 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:51:03 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:51:03 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 524298240
+2018-06-12 15:51:03 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-31
+2018-06-12 15:51:03 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-31 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 15:51:03 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:51:06 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 385054720
+2018-06-12 15:51:06 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000220.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876253&Signature=y7gX1pOhXmv8LC7ftHZPTRw3jRg%3D]
+2018-06-12 15:51:07 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  385054720
+2018-06-12 15:51:07 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  385054720
+2018-06-12 15:51:07 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 385054720
+2018-06-12 15:51:07 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-47
+2018-06-12 15:51:07 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-47 begin to download file :1528733465000-mysql-bin.000220.tar
+2018-06-12 15:51:07 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:51:10 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 15:51:10 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:51:11 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 15:51:11 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 15:51:11 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876271&Signature=3l2mI5TpRXyOFVy1z1s23phSgg8%3D]
+2018-06-12 15:51:12 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 15:51:12 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 15:51:12 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 42434560
+2018-06-12 15:51:12 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-68
+2018-06-12 15:51:12 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-68 begin to download file :1528759470000-mysql-bin.001053.tar
+2018-06-12 15:51:12 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 15:51:15 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 15:51:15 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876271&Signature=3xCqJRbCVMU26h%2BV8c89Mas14%2FU%3D]
+2018-06-12 15:51:16 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:51:17 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:51:17 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 13731840
+2018-06-12 15:51:30 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 15:51:30 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 15:51:30 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 15:51:30 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vf1jsx16dayci|4083d154, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vf1jsx16dayci|4083d154, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 15:51:31 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 8
+2018-06-12 15:51:31 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:51:31 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 8
+2018-06-12 15:51:31 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:51:31 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876291&Signature=RImhVozuqP4CUnZuH56foX6RG%2FU%3D]
+2018-06-12 15:51:32 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 15:51:33 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:51:33 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 6902270,  end= 524298240
+2018-06-12 15:51:33 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 15:51:33 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 15:51:33 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=6902270-
+2018-06-12 15:51:36 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:51:36 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876291&Signature=1HkCGfX%2F54t4im%2Byad12EcZYNHE%3D]
+2018-06-12 15:51:36 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:51:36 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 4359694,  end= 524298240
+2018-06-12 15:51:36 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-9
+2018-06-12 15:51:36 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-9 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 15:51:36 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=4359694-
+2018-06-12 15:51:39 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:51:39 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876291&Signature=nHTeGCng78%2BU88ttHaiWx0Y5n64%3D]
+2018-06-12 15:51:40 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:51:40 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 4608000,  end= 524298240
+2018-06-12 15:51:40 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-10
+2018-06-12 15:51:40 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-10 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 15:51:40 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=4608000-
+2018-06-12 15:51:43 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 385054720
+2018-06-12 15:51:43 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000220.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876291&Signature=pQRzlBdOHgCr2ZKOSJuS4g39foo%3D]
+2018-06-12 15:51:44 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  385054720
+2018-06-12 15:51:44 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 2739477,  end= 385054720
+2018-06-12 15:51:44 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-11
+2018-06-12 15:51:44 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-11 begin to download file :1528733465000-mysql-bin.000220.tar
+2018-06-12 15:51:44 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=2739477-
+2018-06-12 15:51:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 15:51:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:51:50 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 15:51:50 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 15:51:50 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876307&Signature=Env2LHP7Z%2FmrDW5gc%2Btfw7AmrXg%3D]
+2018-06-12 15:51:52 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 15:51:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 1943446,  end= 42434560
+2018-06-12 15:51:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-12
+2018-06-12 15:51:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-12 begin to download file :1528759470000-mysql-bin.001053.tar
+2018-06-12 15:51:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=1943446-
+2018-06-12 15:51:55 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 15:51:55 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876307&Signature=c%2F82jTFzyBnurYpzYHmfG5qOQUI%3D]
+2018-06-12 15:51:55 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:51:56 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:51:56 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 13731840
+2018-06-12 15:52:29 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 15:52:30 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 15:52:30 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 15:52:30 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vf2twajo9q79|54abec45, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vf2twajo9q79|54abec45, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 15:52:31 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 8
+2018-06-12 15:52:31 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:52:31 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 8
+2018-06-12 15:52:31 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:52:31 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876351&Signature=aapd3LASfyb4RgTfhsEmr6VTcaY%3D]
+2018-06-12 15:52:31 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 15:52:32 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:52:32 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 6902270,  end= 524298240
+2018-06-12 15:52:32 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 15:52:32 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 15:52:32 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=6902270-
+2018-06-12 15:52:35 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:52:35 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876351&Signature=eut%2BPtFkd6Dd3k0mFDyCxbU1T%2FA%3D]
+2018-06-12 15:52:35 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:52:35 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 4359694,  end= 524298240
+2018-06-12 15:52:35 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-11
+2018-06-12 15:52:35 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-11 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 15:52:35 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=4359694-
+2018-06-12 15:52:38 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:52:38 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876351&Signature=hhzE8oO0JEUAFWMiMMG6kuI7a7I%3D]
+2018-06-12 15:52:39 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:52:39 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 4608000,  end= 524298240
+2018-06-12 15:52:39 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-17
+2018-06-12 15:52:39 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-17 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 15:52:39 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=4608000-
+2018-06-12 15:52:42 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 385054720
+2018-06-12 15:52:42 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000220.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876351&Signature=LY%2B659U2hU%2FxrRqgF6HmmnRcMr0%3D]
+2018-06-12 15:52:43 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  385054720
+2018-06-12 15:52:43 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 2739477,  end= 385054720
+2018-06-12 15:52:43 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-20
+2018-06-12 15:52:43 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-20 begin to download file :1528733465000-mysql-bin.000220.tar
+2018-06-12 15:52:43 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=2739477-
+2018-06-12 15:52:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 15:52:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:52:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 15:52:46 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 15:52:46 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876366&Signature=S5hrARlpGYEfZJp4550fGFjxwZw%3D]
+2018-06-12 15:52:47 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 15:52:47 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 1943446,  end= 42434560
+2018-06-12 15:52:47 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-25
+2018-06-12 15:52:47 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-25 begin to download file :1528759470000-mysql-bin.001053.tar
+2018-06-12 15:52:47 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=1943446-
+2018-06-12 15:52:50 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 15:52:50 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876366&Signature=wSfqO7Owzxc6LA87RcW9XJ3A9%2B4%3D]
+2018-06-12 15:52:52 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:52:53 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:52:53 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 13731840
+2018-06-12 15:54:12 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 15:54:12 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 15:54:12 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 15:54:12 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vf50vx1r6hyd7|54abec45, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vf50vx1r6hyd7|54abec45, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 15:54:13 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 8
+2018-06-12 15:54:13 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:54:13 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 8
+2018-06-12 15:54:14 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:54:14 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876453&Signature=HKtV3X24qgcoamIyYX9MKp2UBVU%3D]
+2018-06-12 15:54:14 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 15:54:15 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:54:15 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 26358270,  end= 524298240
+2018-06-12 15:54:15 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 15:54:15 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 15:54:15 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=26358270-
+2018-06-12 15:54:18 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:54:18 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876453&Signature=btwmmWLIAXkDMbQaBodUov45%2Bzk%3D]
+2018-06-12 15:54:19 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:54:19 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 12402576,  end= 524298240
+2018-06-12 15:54:19 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-9
+2018-06-12 15:54:19 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-9 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 15:54:19 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=12402576-
+2018-06-12 15:54:22 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 15:54:22 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876453&Signature=VITJHATR%2BglY1iYm2IwGrOX6tqI%3D]
+2018-06-12 15:54:22 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 15:54:22 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 4608000,  end= 524298240
+2018-06-12 15:54:22 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-10
+2018-06-12 15:54:22 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-10 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 15:54:22 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=4608000-
+2018-06-12 15:54:25 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 385054720
+2018-06-12 15:54:25 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000220.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876453&Signature=FQG9wBFggFnVmJ3RC6hosWlElFY%3D]
+2018-06-12 15:54:26 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  385054720
+2018-06-12 15:54:26 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 2739477,  end= 385054720
+2018-06-12 15:54:26 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-11
+2018-06-12 15:54:26 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-11 begin to download file :1528733465000-mysql-bin.000220.tar
+2018-06-12 15:54:26 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=2739477-
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876469&Signature=DyGPWaFDOXCpxojN5EfzGeGOC%2Fk%3D]
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 1943446,  end= 42434560
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-12
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-12 begin to download file :1528759470000-mysql-bin.001053.tar
+2018-06-12 15:54:29 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=1943446-
+2018-06-12 15:54:32 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 15:54:32 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528876469&Signature=ovkum0ZEv%2FuZBrr5U6QAMZiJXeM%3D]
+2018-06-12 15:54:33 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:54:33 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 15:54:33 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 13731840
+2018-06-12 15:57:29 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=21430500-
+2018-06-12 16:02:38 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(130) -Thread Thread-12 is done
+2018-06-12 16:02:41 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-12 16:02:42 [ERROR] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(333) -host master0/172.20.20.7:6379 disconnected due to failedAttempts=3 limit reached
+io.netty.channel.AbstractChannel$AnnotatedConnectException: Connection refused: master0/172.20.20.7:6379
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:717)
+	at io.netty.channel.socket.nio.NioSocketChannel.doFinishConnect(NioSocketChannel.java:325)
+	at io.netty.channel.nio.AbstractNioChannel$AbstractNioUnsafe.finishConnect(AbstractNioChannel.java:340)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:633)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:580)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:497)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:459)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:886)
+	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: java.net.ConnectException: Connection refused
+	... 11 more
+2018-06-12 16:02:44 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-874
+2018-06-12 16:02:44 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-874 begin to download file :1528737867000-mysql-bin.001052.tar
+2018-06-12 16:02:44 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 16:04:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(130) -Thread Thread-874 is done
+2018-06-12 16:06:42 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 16:06:42 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 16:06:42 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 16:06:42 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vfl3fw7dbkn0|e4ecbab, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vfl3fw7dbkn0|e4ecbab, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 16:06:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 8
+2018-06-12 16:06:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:06:43 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 8
+2018-06-12 16:06:44 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:06:44 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528877203&Signature=2bmr6DPF4uSIbJVf1S%2BSs5ETNo4%3D]
+2018-06-12 16:06:44 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 16:06:45 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:06:45 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 94682556,  end= 524298240
+2018-06-12 16:06:45 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 16:06:45 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 16:06:45 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=94682556-
+2018-06-12 16:06:48 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:06:48 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528877203&Signature=XCrSvGEDqvZtZZPFAto7SqbhT0k%3D]
+2018-06-12 16:06:48 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:06:48 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 89748472,  end= 524298240
+2018-06-12 16:06:48 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-9
+2018-06-12 16:06:48 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-9 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 16:06:48 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=89748472-
+2018-06-12 16:06:51 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:06:51 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528877203&Signature=4tnEkw3ejQ1OKAqyUOQQt1rQdmc%3D]
+2018-06-12 16:06:52 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:06:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 69332812,  end= 524298240
+2018-06-12 16:06:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-10
+2018-06-12 16:06:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-10 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 16:06:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=69332812-
+2018-06-12 16:06:55 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 385054720
+2018-06-12 16:06:55 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000220.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528877203&Signature=0oRQNyrn6q4jllkkYJykt14ugb0%3D]
+2018-06-12 16:06:55 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  385054720
+2018-06-12 16:06:55 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 92734528,  end= 385054720
+2018-06-12 16:06:55 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-11
+2018-06-12 16:06:55 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-11 begin to download file :1528733465000-mysql-bin.000220.tar
+2018-06-12 16:06:55 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=92734528-
+2018-06-12 16:06:58 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 16:06:58 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:06:59 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 16:06:59 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 16:06:59 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528877219&Signature=T5ensLMcE9I07OZCpLAEPScVLdo%3D]
+2018-06-12 16:07:00 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 16:07:00 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 16:07:00 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528877219&Signature=0wz8iCcP3wQeCFORDPVG4XK%2FAHA%3D]
+2018-06-12 16:07:01 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 16:22:25 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=222832984-
+2018-06-12 16:23:00 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=284377644-
+2018-06-12 16:29:52 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=319979563-
+2018-06-12 16:36:05 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-11 is done
+2018-06-12 16:36:09 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-12 16:36:09 [ERROR] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(333) -host master0/172.20.20.7:6379 disconnected due to failedAttempts=3 limit reached
+io.netty.channel.AbstractChannel$AnnotatedConnectException: Connection refused: master0/172.20.20.7:6379
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:717)
+	at io.netty.channel.socket.nio.NioSocketChannel.doFinishConnect(NioSocketChannel.java:325)
+	at io.netty.channel.nio.AbstractNioChannel$AbstractNioUnsafe.finishConnect(AbstractNioChannel.java:340)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:633)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:580)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:497)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:459)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExecutor.java:886)
+	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: java.net.ConnectException: Connection refused
+	... 11 more
+2018-06-12 16:40:56 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-8 is done
+2018-06-12 16:41:20 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=499349102-
+2018-06-12 16:42:54 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-10 is done
+2018-06-12 16:43:27 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-9 is done
+2018-06-12 16:43:29 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(227) -all the child thread has finished！
+2018-06-12 16:51:12 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 16:51:12 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 16:51:12 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 16:51:12 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vh6bqyrads2|42075015, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vh6bqyrads2|42075015, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 16:51:13 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(216) -2018-06-12T00:11:11Z
+2018-06-12 16:51:13 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(219) -2018-06-12T16:51:11Z
+2018-06-12 16:51:14 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 7
+2018-06-12 16:51:14 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:51:14 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 7
+2018-06-12 16:51:14 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:51:14 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879874&Signature=Hg2OQjueo1W4xn3nKknJajWDjw4%3D]
+2018-06-12 16:51:14 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 16:51:16 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:51:16 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524810240,  end= 524298240
+2018-06-12 16:51:16 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 16:51:16 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 16:51:16 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-8 is done
+2018-06-12 16:51:19 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:51:19 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:51:19 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879874&Signature=x6tlDyKo4L6BchatLd45yIxPLws%3D]
+2018-06-12 16:51:20 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:51:20 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524558344,  end= 524298240
+2018-06-12 16:51:20 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-9
+2018-06-12 16:51:20 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-9 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 16:51:20 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-9 is done
+2018-06-12 16:51:23 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:51:23 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:51:23 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879874&Signature=aS0grTPiR28loNwmBNKt1AWM1a8%3D]
+2018-06-12 16:51:23 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:51:23 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524623540,  end= 524298240
+2018-06-12 16:51:23 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-10
+2018-06-12 16:51:23 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-10 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 16:51:23 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-10 is done
+2018-06-12 16:51:26 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:51:26 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 16:51:26 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:51:26 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 16:51:26 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 16:51:26 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879886&Signature=xYpW8%2BOEeJupRAn4BEgvc6Itylo%3D]
+2018-06-12 16:51:27 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 16:51:27 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 16:51:27 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879886&Signature=Efqtz2K6YJQgkaTMh1WV2K87fpY%3D]
+2018-06-12 16:51:28 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 16:51:29 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(227) -all the child thread has finished！
+2018-06-12 16:52:24 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 16:52:24 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 16:52:24 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 16:52:24 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vh7vfqyuf964|e4ecbab, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vh7vfqyuf964|e4ecbab, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 16:52:25 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(216) -2018-06-12T00:12:23Z
+2018-06-12 16:52:25 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(219) -2018-06-12T16:52:23Z
+2018-06-12 16:52:26 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 7
+2018-06-12 16:52:26 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:52:26 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 7
+2018-06-12 16:52:26 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:52:26 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879946&Signature=wBxQkYmBkhdnl2Dq3%2F1FbgjrY4I%3D]
+2018-06-12 16:52:26 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 16:52:27 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:52:27 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524810240,  end= 524298240
+2018-06-12 16:52:27 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 16:52:27 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 16:52:27 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-8 is done
+2018-06-12 16:52:30 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:52:30 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:52:30 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879946&Signature=EugXX26H9UsubSfipHlVnPk69J4%3D]
+2018-06-12 16:52:31 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:52:31 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:52:31 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 0,  end= 524298240
+2018-06-12 16:52:31 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-9
+2018-06-12 16:52:31 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-9 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 16:52:31 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=0-
+2018-06-12 16:52:34 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:52:34 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879946&Signature=O7d901skB9zgh85pnumE%2FzWU9A8%3D]
+2018-06-12 16:52:34 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:52:34 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524623540,  end= 524298240
+2018-06-12 16:52:34 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-16
+2018-06-12 16:52:34 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-16 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 16:52:34 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-16 is done
+2018-06-12 16:52:37 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:52:37 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 16:52:37 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:52:38 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 16:52:38 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 16:52:38 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879958&Signature=EfsanzERAL1b%2F7QxofAzW%2B%2BnFfs%3D]
+2018-06-12 16:52:38 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 16:52:38 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 16:52:38 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528879958&Signature=Tjzunqi%2BE16vXor4Y7U0HPsQhjY%3D]
+2018-06-12 16:52:38 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 16:55:26 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=466944-
+2018-06-12 16:55:40 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 16:55:40 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 16:55:40 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 16:55:40 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vhc2jn1gkx0hh|4083d154, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vhc2jn1gkx0hh|4083d154, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 16:55:41 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 7
+2018-06-12 16:55:41 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:55:41 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 7
+2018-06-12 16:55:42 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:55:42 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880141&Signature=Y13gTJEL4o%2BDoNusmkILQ%2Fx0jkU%3D]
+2018-06-12 16:55:42 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 16:55:43 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:55:43 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524810240,  end= 524298240
+2018-06-12 16:55:43 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 16:55:43 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 16:55:43 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-8 is done
+2018-06-12 16:55:46 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:55:46 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:55:46 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880141&Signature=aVDKSw%2FEHWl3e4O%2BFSMMV2ZytCg%3D]
+2018-06-12 16:55:47 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:55:47 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 466944,  end= 524298240
+2018-06-12 16:55:47 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-9
+2018-06-12 16:55:47 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-9 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 16:55:47 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=466944-
+2018-06-12 16:55:50 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:55:50 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880141&Signature=%2BLaxlFs1gxJh3GPlCJ0ePL6sUk0%3D]
+2018-06-12 16:55:50 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:55:50 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524623540,  end= 524298240
+2018-06-12 16:55:50 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-10
+2018-06-12 16:55:50 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-10 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 16:55:50 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-10 is done
+2018-06-12 16:55:53 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:55:53 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 16:55:53 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:55:53 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 16:55:53 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 16:55:53 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880153&Signature=69YBWExGePZLwqOWlCPWb5MDJTY%3D]
+2018-06-12 16:55:54 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 16:55:54 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 16:55:54 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880153&Signature=AtHwmANTYZDPL%2Fdw9d7RpaKPi68%3D]
+2018-06-12 16:55:55 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 16:58:45 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 16:58:45 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 16:58:45 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 16:58:45 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vhg1bei0l5r9|4083d154, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vhg1bei0l5r9|4083d154, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 16:58:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 7
+2018-06-12 16:58:46 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:58:47 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 7
+2018-06-12 16:58:47 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:58:47 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000223.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880327&Signature=y03Hgn3KkQUNpxFqdyTf1HGrXm8%3D]
+2018-06-12 16:58:47 [ WARN] - org.apache.hadoop.util.NativeCodeLoader -NativeCodeLoader.java(62) -Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2018-06-12 16:58:48 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:58:48 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524810240,  end= 524298240
+2018-06-12 16:58:48 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-8
+2018-06-12 16:58:48 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-8 begin to download file :1528757430000-mysql-bin.000223.tar
+2018-06-12 16:58:48 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-8 is done
+2018-06-12 16:58:51 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:58:51 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:58:51 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000222.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880327&Signature=BwZ%2FCB%2F1IEqqOln5dQJDOU5s%2Bss%3D]
+2018-06-12 16:58:51 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:58:51 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 18395548,  end= 524298240
+2018-06-12 16:58:51 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-9
+2018-06-12 16:58:51 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-9 begin to download file :1528749554000-mysql-bin.000222.tar
+2018-06-12 16:58:51 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=18395548-
+2018-06-12 16:58:54 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 524298240
+2018-06-12 16:58:54 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins5473421/hostins4604515/mysql-bin.000221.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880327&Signature=Sk7%2Ffe%2Bn4oT%2BQcfDzBUgim1cSfY%3D]
+2018-06-12 16:58:56 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  524298240
+2018-06-12 16:58:56 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(76) -start= 524623540,  end= 524298240
+2018-06-12 16:58:56 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance -ThreadPoolInstance.java(27) -create thread Thread-17
+2018-06-12 16:58:56 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(80) -the current thread is: Thread-17 begin to download file :1528741879000-mysql-bin.000221.tar
+2018-06-12 16:58:56 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-17 is done
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess -TransferProcess.java(87) -file transfer over
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(88) -totalRecordCount: 4
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(91) -pageCount: 1
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.utility.BinLogFileUtil -BinLogFileUtil.java(101) -PageRecordCount: 4
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 42434560
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001053.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880339&Signature=YR3%2F7FaYo7wimNdesMadtQCGo7g%3D]
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  42434560
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(88) -file size: 13731840
+2018-06-12 16:58:59 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(89) -begin download binlog file :[http://rdslog-hangzhou-finance.oss-cn-hzfinance.aliyuncs.com/custins4872427/hostins3691563/mysql-bin.001052.tar?OSSAccessKeyId=LTAITfQ7krsrEwRn&Expires=1528880339&Signature=3UkV%2BUUOyfU0GhbUem%2FKaiXG6fg%3D]
+2018-06-12 16:59:00 [ INFO] - com.datatrees.datacenter.transfer.utility.FileUtil -FileUtil.java(138) -the file length:  13731840
+2018-06-12 17:14:31 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(89) -bytes=520606359-
+2018-06-12 17:14:38 [ INFO] - com.datatrees.datacenter.transfer.process.threadmanager.TransThread -TransThread.java(129) -Thread Thread-9 is done
+2018-06-12 17:14:40 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-12 17:14:40 [ERROR] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(333) -host master0/172.20.20.7:6379 disconnected due to failedAttempts=3 limit reached
+java.nio.channels.ClosedChannelException
+	at io.netty.channel.nio.AbstractNioChannel.doClose()(Unknown Source)
+2018-06-12 17:14:43 [ INFO] - com.datatrees.datacenter.transfer.process.AliBinLogFileTransfer -AliBinLogFileTransfer.java(227) -all the child thread has finished！
+2018-06-12 17:16:10 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 17:16:13 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 17:16:13 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 17:16:13 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vi2i0w1xyjbf1|5351c5c4, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vi2i0w1xyjbf1|5351c5c4, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 17:16:14 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-12 17:16:15 [ERROR] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(333) -host master0/172.20.20.7:6379 disconnected due to failedAttempts=3 limit reached
+java.nio.channels.ClosedChannelException
+	at io.netty.channel.nio.AbstractNioChannel.doClose()(Unknown Source)
+2018-06-12 17:17:47 [ INFO] - com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse$DBInstance -DBInstanceUtil.java(86) -pageCount: 1
+2018-06-12 17:17:47 [ INFO] - com.mchange.v2.log.MLog -MLog.java(92) -MLog clients using log4j logging.
+2018-06-12 17:17:47 [ INFO] - com.mchange.v2.c3p0.C3P0Registry -C3P0Registry.java(216) -Initializing c3p0-0.9.2.1 [built 20-March-2013 10:47:27 +0000; debug? true; trace: 10]
+2018-06-12 17:17:47 [ INFO] - com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource -AbstractPoolBackedDataSource.java(522) -Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> true, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, dataSourceName -> 1hgf4p79v1vi4i90u69wtb|e4ecbab, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, identityToken -> 1hgf4p79v1vi4i90u69wtb|e4ecbab, idleConnectionTestPeriod -> 60, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://master1:3306/my_test?characterEncoding=utf8, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 3000, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 10, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 3, numHelperThreads -> 3, preferredTestQuery -> null, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> true, testConnectionOnCheckout -> true, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+2018-06-12 17:17:48 [ INFO] - org.redisson.Version -Version.java(41) -Redisson 3.6.0
+2018-06-12 17:17:49 [ERROR] - org.redisson.connection.pool.MasterConnectionPool -ConnectionPool.java(333) -host master0/172.20.20.7:6379 disconnected due to failedAttempts=3 limit reached
+java.nio.channels.ClosedChannelException
+	at io.netty.channel.nio.AbstractNioChannel.doClose()(Unknown Source)

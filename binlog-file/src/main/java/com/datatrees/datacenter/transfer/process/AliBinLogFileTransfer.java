@@ -26,7 +26,6 @@ import java.io.File;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -203,7 +202,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             }
         } catch (SQLException e) {
             LOG.error(e.getMessage(), e);
-//            e.printStackTrace();
         }
         //重新下载未完成的数据
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
@@ -220,11 +218,10 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             binlogFilesRequest.setEndTime(endTime);
             LOG.info(endTime);
             for (DBInstance dbInstance : instances) {
-//                if (dbInstance.getDBInstanceId().equalsIgnoreCase("rm-bp1cowwkt73ni6271"))
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
         }
-        /*ThreadPoolInstance.getExecutors().shutdown();
+        ThreadPoolInstance.getExecutors().shutdown();
         while (true) {
             if (ThreadPoolInstance.getExecutors().isTerminated()) {
                 LOG.info("all the child thread has finished！");
@@ -235,7 +232,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }*/
+        }
     }
 
 }
