@@ -91,8 +91,4 @@ public class ProcessCheck {
         // 第二个参数为首次执行的延时时间，第三个参数为定时执行的间隔时间
         service.scheduleAtFixedRate(runnable, INITIALDELAY, THREAD_PERIOD, TimeUnit.MINUTES);
     }
-
-    public static void main(String[] args) {
-
-    }
 }

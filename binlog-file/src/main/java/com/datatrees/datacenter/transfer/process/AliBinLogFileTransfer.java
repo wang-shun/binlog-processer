@@ -170,7 +170,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             for (DBInstance dbInstance : instances) {
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
-            LOG.info("the uncompleted download binlog file last time has completely download");
         }
     }
 
@@ -225,12 +224,18 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
         }
-        ThreadPoolInstance.getExecutors().shutdown();
-        try {
-            ThreadPoolInstance.getExecutors().awaitTermination(10, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            LOG.error(e.getMessage(), e);
-        }
+        /*ThreadPoolInstance.getExecutors().shutdown();
+        while (true) {
+            if (ThreadPoolInstance.getExecutors().isTerminated()) {
+                LOG.info("all the child thread has finished！");
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }*/
     }
 
 }

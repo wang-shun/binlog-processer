@@ -16,10 +16,7 @@ import org.apache.hadoop.hdfs.protocol.RecoveryInProgressException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
@@ -38,6 +35,7 @@ public class TransThread implements Serializable, Runnable {
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static final int BUFFER_SIZE = Integer.parseInt(properties.getProperty("BUFFER_SIZE"));
     private static Logger LOG = LoggerFactory.getLogger(TransThread.class);
+    FileSystem fs = HDFSFileUtil.fileSystem;
     /**
      * 文件所在src
      */
@@ -79,34 +77,33 @@ public class TransThread implements Serializable, Runnable {
 
     @Override
     public void run() {
-        LOG.info("Thread :" + Thread.currentThread().getName());
+        LOG.info("the current thread is: " + Thread.currentThread().getName() + " begin to download file :" + fileName);
         while (startPos < endPos && !over) {
             try {
-                URL ourl = new URL(src);
-                HttpURLConnection httpConnection = (HttpURLConnection) ourl.openConnection();
+                URL surl = new URL(src);
+                HttpURLConnection httpConnection = (HttpURLConnection) surl.openConnection();
                 //下载starPos以后的数据
                 String prop = "bytes=" + startPos + "-";
                 //设置请求首部字段 RANGE
                 httpConnection.setRequestProperty("RANGE", prop);
                 LOG.info(prop);
-                InputStream input = httpConnection.getInputStream();
-                byte[] b = new byte[BUFFER_SIZE];
+                InputStream input = new BufferedInputStream(httpConnection.getInputStream(),500*BUFFER_SIZE);
+                byte[] b = new byte[500 * BUFFER_SIZE];
                 int bytes;
                 int tries = 60;
                 boolean recovered = false;
                 Path dstPath = new Path(dest + File.separator + fileName);
-                FileSystem fs = HDFSFileUtil.fileSystem;
                 if (!fs.exists(dstPath)) {
                     fs.create(dstPath).close();
                 }
+                FSDataOutputStream out = null;
                 while (!recovered && tries > 0) {
-                    while ((((bytes = input.read(b))) > 0) && (startPos < endPos) && !over) {
+                    while ((((bytes = input.read(b))) > 0) && (startPos < endPos)) {
                         try {
-                            FSDataOutputStream out = fs.append(dstPath);
+                            out = fs.append(dstPath);
                             out.write(b, 0, bytes);
                             startPos += bytes;
                             recovered = true;
-                            out.close();
                         } catch (IOException e) {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
                                 try {
@@ -117,14 +114,19 @@ public class TransThread implements Serializable, Runnable {
                                     e1.printStackTrace();
                                 }
                             }
+                        } finally {
+                            if (out != null) {
+                                out.close();
+                            }
                         }
                     }
                 }
-                over = true;
+                //over = true;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        over = true;
         LOG.info("Thread " + Thread.currentThread().getName() + " is done");
         // update a the record
         if (startPos == endPos && over) {
