@@ -101,7 +101,7 @@ public class TransThread implements Serializable, Runnable {
                     while ((((bytes = input.read(b))) != -1) && (startPos < endPos)) {
                         try {
                             out = fs.append(dstPath);
-                            int minByte=(int) Math.min(bytes, (endPos - startPos));
+                            int minByte = (int) Math.min(bytes, (endPos - startPos));
                             out.write(b, 0, minByte);
                             startPos += minByte;
                             recovered = true;
