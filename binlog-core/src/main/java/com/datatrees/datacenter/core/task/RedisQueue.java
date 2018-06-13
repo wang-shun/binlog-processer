@@ -7,20 +7,22 @@ import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
 public final class RedisQueue {
-    private static RBlockingQueue<String> defaultQueue;
 
-    static {
-        java.util.Properties properties = PropertiesUtility.defaultProperties();
-        if (properties == null) {
-            throw new IllegalArgumentException("No redis properties file provided.");
-        }
-        Config config = new Config();
-        config.useSingleServer().setAddress(String.format("redis://%s", properties.getProperty("redis.server")));
-        RedissonClient redisson = Redisson.create(config);
-        defaultQueue = redisson.getBlockingQueue(properties.getProperty("task.queue"));
-    }
+  private static RBlockingQueue<String> defaultQueue;
 
-    public static RBlockingQueue<String> defaultQueue() {
-        return defaultQueue;
+  static {
+    java.util.Properties properties = PropertiesUtility.defaultProperties();
+    if (properties == null) {
+      throw new IllegalArgumentException("No redis properties file provided.");
     }
+    Config config = new Config();
+    config.useSingleServer()
+      .setAddress(String.format("redis://%s", properties.getProperty("redis.server")));
+    RedissonClient redisson = Redisson.create(config);
+    defaultQueue = redisson.getBlockingQueue(properties.getProperty("queue.topic"));
+  }
+
+  public static RBlockingQueue<String> defaultQueue() {
+    return defaultQueue;
+  }
 }

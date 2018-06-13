@@ -53,5 +53,10 @@
             <artifactId>commons-compress</artifactId>
             <version>${common.compress}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+        </dependency>
     </dependencies>
 </project>
