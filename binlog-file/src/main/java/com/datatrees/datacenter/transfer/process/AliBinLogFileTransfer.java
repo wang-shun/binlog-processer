@@ -10,6 +10,7 @@ import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.core.utility.IPUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 /**
@@ -47,7 +49,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static final DefaultProfile profile;
     private static final IAcsClient client;
     private long currentTime = System.currentTimeMillis();
-    private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 6000, TableInfo.UTC_FORMAT);
+    private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60000, TableInfo.UTC_FORMAT);
     private String endTime;
     List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
 
@@ -109,6 +111,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                                 map.put(TableInfo.LOG_START_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logStartTime), TableInfo.COMMON_FORMAT));
                                 map.put(TableInfo.LOG_END_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logEndTime), TableInfo.COMMON_FORMAT));
                                 map.put(TableInfo.DOWN_LINK, binLogFile.getDownloadLink());
+                                map.put(TableInfo.HOST,IPUtility.ipAddress());
                                 map.put(TableInfo.DOWN_START_TIME, TimeUtil.utc2Common(startTime));
                                 map.put(TableInfo.DOWN_END_TIME, TimeUtil.utc2Common(endTime));
                                 DBUtil.insert(BINLOG_TRANS_TABLE, map);
@@ -135,7 +138,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 LOG.info("no binlong backed in the master instance");
             }
         } else {
-            LOG.info("no binlog find in the: " + instanceId + " with time between " + binlogFilesRequest.getStartTime() + " and " + binlogFilesRequest.getStartTime());
+            LOG.info("no binlog find in the: " + instanceId + " with time between " + binlogFilesRequest.getStartTime() + " and " + binlogFilesRequest.getEndTime());
         }
     }
 
@@ -210,8 +213,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
             startTime = TimeUtil.dateToStr((Timestamp) lastTime.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
         } else {
-            //开始正常下载
-            //将上一次的结束时间设置未这一次的开始时间
+            //开始正常下载,将上一次的结束时间设置未这一次的开始时间
             binlogFilesRequest.setStartTime(startTime);
             LOG.info(startTime);
             endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
@@ -221,9 +223,10 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
         }
-        ThreadPoolInstance.getExecutors().shutdown();
+        ThreadPoolExecutor executors=ThreadPoolInstance.getExecutors();
+        executors.shutdown();
         while (true) {
-            if (ThreadPoolInstance.getExecutors().isTerminated()) {
+            if (executors.isTerminated()) {
                 LOG.info("all the child thread has finished！");
                 break;
             }
