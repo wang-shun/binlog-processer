@@ -4,12 +4,11 @@ import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.resolver.domain.Operator;
 import org.apache.avro.Schema;
 
-import java.io.Serializable;
-
 public interface EventListner<Result> {
-    void consume(Schema schema, Binlog binlog, Operator operator,Object result);
 
-    void onFinish(Result result);
+  void consume(Schema schema, Binlog binlog, Operator operator, Object result);
 
-    void onStart(Binlog binlog);
+  void onFinish(Result result);
+
+  void onStart(Binlog binlog);
 }
