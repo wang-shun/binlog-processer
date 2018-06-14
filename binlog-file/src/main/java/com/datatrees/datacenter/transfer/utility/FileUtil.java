@@ -134,8 +134,7 @@ public class FileUtil {
             LOG.info(e.getMessage());
             e.printStackTrace();
         }
-
-        LOG.info("the file length:  " + len);
+        LOG.info("the length of file is :  " + len);
         return len;
     }
 }

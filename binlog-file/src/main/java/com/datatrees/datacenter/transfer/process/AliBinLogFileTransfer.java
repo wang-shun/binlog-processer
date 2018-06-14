@@ -215,16 +215,16 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         } else {
             //开始正常下载,将上一次的结束时间设置未这一次的开始时间
             binlogFilesRequest.setStartTime(startTime);
-            LOG.info(startTime);
+            LOG.info("the start time of download: "+startTime);
             endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
             binlogFilesRequest.setEndTime(endTime);
-            LOG.info(endTime);
+            LOG.info("the end time of download: "+endTime);
             for (DBInstance dbInstance : instances) {
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
         }
-        ThreadPoolExecutor executors=ThreadPoolInstance.getExecutors();
-        executors.shutdown();
+        //ThreadPoolExecutor executors=ThreadPoolInstance.getExecutors();
+        /*executors.shutdown();
         while (true) {
             if (executors.isTerminated()) {
                 LOG.info("all the child thread has finished！");
@@ -235,7 +235,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     }
 
 }

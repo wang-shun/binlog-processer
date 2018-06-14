@@ -90,7 +90,7 @@ public class TransThread implements Serializable, Runnable {
                 InputStream input = new BufferedInputStream(httpConnection.getInputStream(), 1000 * BUFFER_SIZE);
                 byte[] b = new byte[500 * BUFFER_SIZE];
                 int bytes;
-                int tries = 60;
+                int tries = 5;
                 boolean recovered = false;
                 Path dstPath = new Path(dest + File.separator + fileName);
                 if (!fs.exists(dstPath)) {

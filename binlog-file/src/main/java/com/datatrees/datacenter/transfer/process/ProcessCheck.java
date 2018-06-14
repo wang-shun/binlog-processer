@@ -87,7 +87,7 @@ public class ProcessCheck {
                     }
                 }
             } catch (Exception e) {
-                logger.info("can't get the timeout task, please check you sql string");
+                logger.info("can't get the timer task, please check you sql string");
                 e.printStackTrace();
             }
         };
