@@ -74,7 +74,7 @@ public class ProcessCheck {
                         String filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                         String identity = instanceId + "_" + fileName;
                         String mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
-                        //TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
+                        TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
                         logger.info("send " + identity + " to massage queue");
 
                         //update t_binlog_process table
