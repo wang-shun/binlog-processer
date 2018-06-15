@@ -16,6 +16,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.apache.commons.lang3.StringUtils;
 import org.javatuples.KeyValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SchemaProviders {
 
+  public static String NULL = "null";
   /**
    * Triple<instanceId,database,table>
    */
@@ -48,6 +50,10 @@ public class SchemaProviders {
           return getSchema(cacheKey.binlog, cacheKey.schema, cacheKey.table);
         }
       });
+  }
+
+  public static LoadingCache cache() {
+    return secondaryCache;
   }
 
   /**
@@ -92,6 +98,10 @@ public class SchemaProviders {
         redis.set(String.format("%s.%s.%s", patternInstance, patternSchema, avroSchema.getName()),
           avroSchemaString);
       }
+      if (StringUtils.isBlank(result)) {
+        redis.set(redisKey, NULL);
+      }
+
       return KeyValue.with(namespace, result);
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
@@ -129,6 +139,39 @@ public class SchemaProviders {
 
     public static CacheKeyBuilder builder() {
       return new CacheKeyBuilder();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof SecondaryCacheKey) {
+        SecondaryCacheKey other = (SecondaryCacheKey) obj;
+        return other.binlog.getInstanceId().equalsIgnoreCase(this.binlog.getInstanceId()) &&
+          other.schema.equalsIgnoreCase(this.schema) && other.table.equalsIgnoreCase(this.table);
+      } else {
+        return false;
+      }
+    }
+
+//    @Override
+//    public int hashCode() {
+//      final int prime = 31;
+//      int result = 1;
+//      result = prime * result + this.binlog.getInstanceId().length();
+//      result = prime * result + this.table.length(); // <= **this one shouldn't evaluated**
+//      result = prime * result + this.schema.length();
+//      return result;
+//    }
+
+
+    @Override
+    public int hashCode() {
+      return this.binlog.getInstanceId().hashCode() + this.schema.hashCode() + this.table
+        .hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s.%s.%s", this.binlog.getInstanceId(), this.schema, this.table);
     }
 
     static class CacheKeyBuilder {

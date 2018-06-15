@@ -24,10 +24,14 @@ import org.javatuples.KeyValue;
 public final class SchemaData {
 
   private static final HashMap<String, LogicalTypeConverter> TO_CONNECT_LOGICAL_CONVERTERS
-      = new HashMap<>();
+    = new HashMap<>();
 
   private static final HashMap<Class<?>, LogicalTypeConverter> TO_CONNECT_CLASS_CONVERTERS = new HashMap<>();
-
+  private static final String RESULT_VALUE_TAG = "Value";
+  private static final String RESULT_BEFORE_TAG = "Before";
+  private static final String RESULT_AFTER_TAG = "After";
+  private static final String RESULT_ENVELOP_TAG = "Envelop";
+  private static final String RESULT_OP_TAG = "op";
   private static Schema.Parser schemaParser = new Schema.Parser();
 
   static {
@@ -75,21 +79,38 @@ public final class SchemaData {
         return null;
       }
       ByteBuffer bytesValue = value instanceof byte[] ? ByteBuffer.wrap((byte[]) value) :
-          (ByteBuffer) value;
+        (ByteBuffer) value;
       return bytesValue;
     });
   }
 
   private ConcurrentHashMap<String, Schema> cachedAvroSchema;
 
-  private static final String RESULT_VALUE_TAG = "Value";
-  private static final String RESULT_BEFORE_TAG = "Before";
-  private static final String RESULT_AFTER_TAG = "After";
-  private static final String RESULT_ENVELOP_TAG = "Envelop";
-  private static final String RESULT_OP_TAG = "op";
-
   public SchemaData() {
     cachedAvroSchema = new ConcurrentHashMap<>();
+  }
+
+  protected static boolean isValidValue(Schema.Field f, Object value) {
+    if (value != null) {
+      return true;
+    }
+
+    Schema schema = f.schema();
+    Schema.Type type = schema.getType();
+
+    if (type == Schema.Type.NULL) {
+      return true;
+    }
+
+    if (type == Schema.Type.UNION) {
+      for (Schema s : schema.getTypes()) {
+        if (s.getType() == Schema.Type.NULL) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private Object fromLogicalValue(Schema schema, Object logicalValue) {
@@ -103,7 +124,7 @@ public final class SchemaData {
     } else {
       if (logicalValue != null) {
         LogicalTypeConverter classConverter = TO_CONNECT_CLASS_CONVERTERS
-            .get(logicalValue.getClass());
+          .get(logicalValue.getClass());
         if (classConverter != null) {
           value = classConverter.convert(schema, logicalValue);
         }
@@ -124,7 +145,7 @@ public final class SchemaData {
   }
 
   public Object toAvroData(Schema schema, Operator operator, Serializable[] beforeValue,
-      Serializable[] afterValue) {
+    Serializable[] afterValue) {
     Schema recordUnionSchema = schema.getField(RESULT_BEFORE_TAG).schema();
     Schema recordSchema = avroSchemaForUnderlyingTypeIfOptional(recordUnionSchema);
 
@@ -137,7 +158,7 @@ public final class SchemaData {
   }
 
   private void buildGenericData(Serializable[] recordValue, Schema recordSchema,
-      GenericRecordBuilder envelopBuilder, String operator) {
+    GenericRecordBuilder envelopBuilder, String operator) {
     if (recordValue != null) {
       GenericRecordBuilder recordBuilder = new GenericRecordBuilder(recordSchema);
       List<Field> fields = recordSchema.getFields();
@@ -172,29 +193,6 @@ public final class SchemaData {
     }
   }
 
-  protected static boolean isValidValue(Schema.Field f, Object value) {
-    if (value != null) {
-      return true;
-    }
-
-    Schema schema = f.schema();
-    Schema.Type type = schema.getType();
-
-    if (type == Schema.Type.NULL) {
-      return true;
-    }
-
-    if (type == Schema.Type.UNION) {
-      for (Schema s : schema.getTypes()) {
-        if (s.getType() == Schema.Type.NULL) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public Schema toAvroSchema(Binlog binlog, String schema, String table) {
     requireNonNull(schema, "No schema provided");
     requireNonNull(table, "No table provided");
@@ -206,33 +204,34 @@ public final class SchemaData {
     }
 
     KeyValue<String, String> avroSchema = SchemaProviders.schema(binlog, schema, table);
-    if (avroSchema == null || avroSchema.getValue() == null) {
+    if (avroSchema == null || avroSchema.getValue() == null || avroSchema.getValue()
+      .equalsIgnoreCase(SchemaProviders.NULL)) {
       return null;
     }
 
     List<Schema.Field> originalFieldList = new ArrayList<>();
 
     for (Schema.Field field :
-        new Schema.Parser().parse(avroSchema.getValue()).getFields()) {
+      new Schema.Parser().parse(avroSchema.getValue()).getFields()) {
       originalFieldList
-          .add(new Schema.Field(field.name(), field.schema(), null, field.defaultVal()));
+        .add(new Schema.Field(field.name(), field.schema(), null, field.defaultVal()));
     }
 
     requireNonNull(originalFieldList, "fields is null");
 
     List<Schema> unionSchemas = new ArrayList<>();
     Schema fieldSchema = Schema.
-        createRecord(RESULT_VALUE_TAG, null, null, false, originalFieldList);
+      createRecord(RESULT_VALUE_TAG, null, null, false, originalFieldList);
 
     unionSchemas.add(SchemaBuilder.builder().nullType());
     unionSchemas.add(fieldSchema);
 
     Schema unionSchema = Schema.createUnion(unionSchemas);
     Schema envelopSchema = SchemaBuilder.record(avroSchema.getKey() + "." + table).fields().
-        name(RESULT_BEFORE_TAG).type(unionSchema).withDefault(null).
-        name(RESULT_AFTER_TAG).type(unionSchema).withDefault(null).
-        name(RESULT_OP_TAG).type(SchemaBuilder.builder().stringType()).noDefault().
-        endRecord();
+      name(RESULT_BEFORE_TAG).type(unionSchema).withDefault(null).
+      name(RESULT_AFTER_TAG).type(unionSchema).withDefault(null).
+      name(RESULT_OP_TAG).type(SchemaBuilder.builder().stringType()).noDefault().
+      endRecord();
 
     cachedAvroSchema.put(key, envelopSchema);
     return envelopSchema;
@@ -245,9 +244,9 @@ public final class SchemaData {
   private Schema avroSchemaForUnderlyingTypeIfOptional(Schema avroSchema) {
     if (avroSchema.getType() == Schema.Type.UNION) {
       for (Schema typeSchema : avroSchema
-          .getTypes()) {
+        .getTypes()) {
         if (!typeSchema.getType().equals(
-            Schema.Type.NULL)) {
+          Schema.Type.NULL)) {
           return typeSchema;
         }
       }

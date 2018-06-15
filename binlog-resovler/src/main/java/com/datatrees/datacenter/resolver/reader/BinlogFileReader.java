@@ -18,6 +18,7 @@ import com.github.shyiko.mysql.binlog.event.WriteRowsEventData;
 import com.github.shyiko.mysql.binlog.event.deserialization.ChecksumType;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import com.google.common.base.Function;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +27,7 @@ import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 public final class BinlogFileReader implements Runnable {
 
   private static Logger logger = LoggerFactory.getLogger(BinlogFileReader.class);
+  Stopwatch stopwatch = new Stopwatch();
   private ThreadLocal<AtomicInteger> readEventError = new ThreadLocal<>();
   private EnumMap<EventType, EventConsumer<Event>> consumerCache;
   /**
@@ -163,31 +165,30 @@ public final class BinlogFileReader implements Runnable {
 
   private void handleWriteRow(Event event) {
     WriteRowsEventData writeRowsEventData = unwrapData(event);
-    Iterator<Serializable[]> writeRows = writeRowsEventData.getRows().iterator();
-    do {
-      Serializable[] rows = writeRows.next();
+    List<Serializable[]> writeRows = writeRowsEventData.getRows();
+    for (Serializable[] rows : writeRows) {
+//      resultMap.get(Operator.Create).incrementAndGet();
       consumeBufferRecord(Operator.Create, writeRowsEventData.getTableId(), null, rows);
-    } while (writeRows.hasNext());
+    }
   }
 
   private void handleUpdateRow(Event event) {
     UpdateRowsEventData updateRowsEventData = unwrapData(event);
-    Iterator<Map.Entry<Serializable[], Serializable[]>> updateRows = updateRowsEventData.getRows()
-      .iterator();
-    do {
-      Map.Entry<Serializable[], Serializable[]> rows = updateRows.next();
+    List<Map.Entry<Serializable[], Serializable[]>> updateRows = updateRowsEventData.getRows();
+    for (Map.Entry<Serializable[], Serializable[]> rows : updateRows) {
+//      resultMap.get(Operator.Update).incrementAndGet();
       consumeBufferRecord(Operator.Update, updateRowsEventData.getTableId(), rows.getKey(),
         rows.getValue());
-    } while (updateRows.hasNext());
+    }
   }
 
   private void handleDeleteRow(Event event) {
     DeleteRowsEventData deleteRowsEventData = unwrapData(event);
-    Iterator<Serializable[]> deleteRows = deleteRowsEventData.getRows().iterator();
-    do {
-      Serializable[] rows = deleteRows.next();
+    List<Serializable[]> deleteRows = deleteRowsEventData.getRows();
+    for (Serializable[] rows : deleteRows) {
+//      resultMap.get(Operator.Create).incrementAndGet();
       consumeBufferRecord(Operator.Delete, deleteRowsEventData.getTableId(), rows, null);
-    } while (deleteRows.hasNext());
+    }
   }
 
   @Override
@@ -213,13 +214,7 @@ public final class BinlogFileReader implements Runnable {
           }
         }
 //        for (Event event; (event = reader.readEvent()) != null; ) {
-//          final EventHeader eventHeader = event.getHeader();
-//          final EventType eventType = eventHeader.getEventType();
-//          final Operator simpleEventType = Operator.valueOf(eventType);
-//          EventConsumer<Event> eventBinlogEventConsumer =
-//            consumerCache.getOrDefault(eventType,
-//              bufferRecord -> resultMap.get(simpleEventType).incrementAndGet());
-//          eventBinlogEventConsumer.consume(event);
+//          consume(event);
 //        }
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
