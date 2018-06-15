@@ -20,8 +20,8 @@ public class SchemaRepository {
 
     private static Logger logger = LoggerFactory.getLogger(SchemaRepository.class);
 
-    public SchemaRepository(Configuration configuration) {
-        this.builder = new SchemaBuilder(configuration);
+    public SchemaRepository() {
+        this.builder = new SchemaBuilder(Configuration.create().build());
     }
 
     public void addSchema(com.datatrees.datacenter.schema.service.loader.HistoryRecord record) {

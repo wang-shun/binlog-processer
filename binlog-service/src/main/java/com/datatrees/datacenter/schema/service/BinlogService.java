@@ -11,10 +11,8 @@ public class BinlogService implements TaskRunner {
     @Override
     public void process() {
         try {
-            Configuration configuration = Configuration.create().build();
 
-            SchemaRepository schemaRepository = new SchemaRepository(configuration);
-
+            SchemaRepository schemaRepository = new SchemaRepository();
             HistoryLoader loader = new HistoryLoader(schemaRepository);
             loader.init();
             loader.start();
@@ -29,4 +27,5 @@ public class BinlogService implements TaskRunner {
             System.exit(-1);
         }
     }
+
 }

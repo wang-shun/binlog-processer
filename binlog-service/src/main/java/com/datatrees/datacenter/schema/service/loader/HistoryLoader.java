@@ -1,5 +1,7 @@
 package com.datatrees.datacenter.schema.service.loader;
 
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.schema.service.repository.Constants;
 import com.datatrees.datacenter.schema.service.repository.SchemaRepository;
 import com.datatrees.datacenter.schema.service.utils.StringUtils;
 import io.debezium.document.DocumentReader;
@@ -22,8 +24,8 @@ import static com.datatrees.datacenter.schema.service.repository.Constants.*;
 
 public class HistoryLoader {
 
-    private final Properties kafkaProperties = new Properties();
-    private final Properties programProperties = new Properties();
+    private Properties kafkaProperties = new Properties();
+    private Properties programProperties = new Properties();
     private KafkaConsumer<String, String> consumer;
     private final DocumentReader reader = DocumentReader.defaultReader();
 
@@ -42,8 +44,6 @@ public class HistoryLoader {
     }
 
     public void init() throws IOException {
-
-        //init consumer config
         configure();
 
         consumer = new KafkaConsumer(kafkaProperties);
@@ -56,7 +56,11 @@ public class HistoryLoader {
 
     private void configure() throws IOException {
 
-        if (StringUtils.isEmpty(CONF_DIR)) {
+        Properties defaultProperties = PropertiesUtility.defaultProperties();
+        kafkaProperties = filterWithoutPrefix(Constants.KAFKA_PROP_PREFIX, defaultProperties);
+        programProperties = defaultProperties;
+
+        /*if (StringUtils.isEmpty(CONF_DIR)) {
             logger.info("app.conf.dir is not set use configuration from classpath");
             InputStream inputStream = this.getClass().getResourceAsStream(SEP + KAFKA_PROP);
             kafkaProperties.load(inputStream);
@@ -76,7 +80,7 @@ public class HistoryLoader {
             InputStream inputStream = new FileInputStream(new File(CONF_DIR + SEP + PROGRAM_PROP));
             programProperties.load(inputStream);
             inputStream.close();
-        }
+        }*/
     }
 
     private Set<String> getSubscribeTopic() {
@@ -126,6 +130,19 @@ public class HistoryLoader {
             throw new RuntimeException(e);
         }
         return true;
+    }
+
+    public Properties filterWithoutPrefix(String prefix, Properties __defaultProperties){
+        if (null == prefix || prefix.isEmpty()){
+            return __defaultProperties;
+        }
+        Properties prefixProp = new Properties();
+        for (String name : __defaultProperties.stringPropertyNames()){
+            if (name.startsWith(prefix)){
+                prefixProp.put(name.replaceAll(prefix, ""), __defaultProperties.get(name));
+            }
+        }
+        return prefixProp;
     }
 
 
