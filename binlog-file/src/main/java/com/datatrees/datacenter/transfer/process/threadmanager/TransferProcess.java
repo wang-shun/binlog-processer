@@ -47,7 +47,7 @@ public class TransferProcess {
                 startPos = 0;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         }
         endPos = fileUtil.getFileSize(transInfo.getSrcPath());
     }
@@ -99,7 +99,7 @@ public class TransferProcess {
         try {
             Thread.sleep(mills);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(),e);
         }
     }
 

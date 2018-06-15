@@ -1,14 +1,29 @@
 package com.datatrees.datacenter.core.utility;
 
 
+import java.util.Properties;
 import org.redisson.Redisson;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.redisson.config.ReadMode;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 public class Redis {
+
+  private volatile static SimpleRedis<String, String> manager;
+
+  public static SimpleRedis<String, String> getMgr() {
+    if (manager == null) {
+      synchronized (Redis.class) {
+        if (manager == null) {
+          manager = new SimpleRedis.Redission();
+        }
+      }
+    }
+    return manager;
+  }
 
   public interface SimpleRedis<K, V> {
 
@@ -63,9 +78,17 @@ public class Redis {
       private RedissonClient redisson;
 
       public Redission() {
+        Properties p = PropertiesUtility.defaultProperties();
         Config config = new Config();
-        config.useSingleServer().setAddress(String.format("redis://%s",
-          PropertiesUtility.defaultProperties().getProperty("redis.server")));
+        String[] sentinelAddress = p.getProperty("redis.sentinel.address").split(",");
+        config.useSentinelServers().setMasterName(p.getProperty("redis.master.name"))
+          .addSentinelAddress(new String(sentinelAddress[0]), new String(sentinelAddress[1]))
+          .setReadMode(ReadMode.MASTER_SLAVE);
+//        config.useMasterSlaveServers()
+//          .addSlaveAddress(String.format("redis://%s", p.getProperty("slave.redis.server")))
+//          .setMasterAddress(String.format("redis://%s", p.getProperty("master.redis.server")));
+//        config.useSingleServer().setAddress(String.format("redis://%s",
+//          PropertiesUtility.defaultProperties().getProperty("redis.server")));
         redisson = Redisson.create(config);
       }
 
@@ -90,18 +113,5 @@ public class Redis {
         return bucket.isExists();
       }
     }
-  }
-
-  private volatile static SimpleRedis<String, String> manager;
-
-  public static SimpleRedis<String, String> getMgr() {
-    if (manager == null) {
-      synchronized (Redis.class) {
-        if (manager == null) {
-          manager = new SimpleRedis.Redission();
-        }
-      }
-    }
-    return manager;
   }
 }

@@ -88,7 +88,7 @@ public class ProcessCheck {
                 }
             } catch (Exception e) {
                 logger.info("can't get the timeout task, please check you sql string");
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         };
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();

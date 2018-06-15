@@ -60,9 +60,12 @@ public class DefaultEventListner implements EventListner<Map<Operator, AtomicLon
       try {
         manager.write(schema, binlog, operator, result);
       } catch (Exception e) {
-        logger.error(e.getMessage(), e);
+        String msg = String
+          .format("error to write avro record because of %s for table %s", e.getMessage(),
+            schema.getFullName());
+        logger.error(msg, e);
         throw new BinlogException(
-          String.format("error to write avro record because of %s", e.getMessage()));
+          msg, e);
       }
     }
 

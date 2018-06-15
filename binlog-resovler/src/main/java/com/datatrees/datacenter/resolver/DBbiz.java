@@ -4,11 +4,9 @@ import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.IPUtility;
 import com.datatrees.datacenter.resolver.domain.Status;
-
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

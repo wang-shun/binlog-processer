@@ -80,6 +80,8 @@ public class SchemaProviders {
 
       dbSchemaExtractor = new DbSchemaExtractor(jdbcPort(binlog.getJdbcUrl()), user(), password());
       AvroConfig config = new AvroConfig(String.format("%s.%s", patternInstance, patternSchema));
+      config.setFieldNameMapper(r -> r.replaceAll("`", ""));
+      config.setSchemaNameMapper(r -> r.replaceAll("`", ""));
       List<AvroSchema> tableAvroSchema = dbSchemaExtractor.getForSchema(config, schema);
       String result = null;
       for (AvroSchema avroSchema : tableAvroSchema) {
@@ -93,9 +95,10 @@ public class SchemaProviders {
       return KeyValue.with(namespace, result);
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("error to get schema of [%s-%s-%s] because of %s",
-        binlog.getInstanceId(), patternSchema, patternTable, e.getMessage(),
-        e)
+      throw new BinlogException(
+        String.format("error to get schema of [%s-%s-%s] from %s because of %s",
+          binlog.getInstanceId(), schema, table, binlog.getJdbcUrl(), e.getMessage(),
+          e)
       );
     }
   }

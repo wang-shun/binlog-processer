@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.avro.Schema;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 public final class BinlogFileReader implements Runnable {
 
   private static Logger logger = LoggerFactory.getLogger(BinlogFileReader.class);
+  private ThreadLocal<AtomicInteger> readEventError = new ThreadLocal<>();
   private EnumMap<EventType, EventConsumer<Event>> consumerCache;
   /**
    * Map<SimpleEntry<Binlog, Status>  binlog 和最终处理状态 Map<Operator, AtomicLong> 处理文件个数
@@ -49,7 +51,6 @@ public final class BinlogFileReader implements Runnable {
   private BinaryLogFileReader reader = null;
   private ConcurrentHashMap<Long, SimpleEntry> tableMapCache;
   private SchemaData schemaUtility;
-
   private Status currentStatus;
   /**
    * 分库
@@ -100,7 +101,8 @@ public final class BinlogFileReader implements Runnable {
   }
 
   public void read() {
-    logger.info("Begin to analysis binlog file {} of instance", this.binlog);
+    logger.
+      info("Begin to analysis binlog file {} of instance", this.binlog);
     Thread thread = new Thread(this);
     thread.start();
   }
@@ -194,15 +196,31 @@ public final class BinlogFileReader implements Runnable {
     try {
       onStart();
       try {
-        for (Event event; (event = reader.readEvent()) != null; ) {
-          final EventHeader eventHeader = event.getHeader();
-          final EventType eventType = eventHeader.getEventType();
-          final Operator simpleEventType = Operator.valueOf(eventType);
-          EventConsumer<Event> eventBinlogEventConsumer =
-            consumerCache.getOrDefault(eventType,
-              bufferRecord -> resultMap.get(simpleEventType).incrementAndGet());
-          eventBinlogEventConsumer.consume(event);
+        Event event = null;
+        while (true) {
+          try {
+            event = reader.readEvent();
+          } catch (IOException e) {
+            //如果是readevent 错误则继续读取下一个
+            logger.error("failed to read event because of "
+              + e.getMessage(), e);
+//            readEventError.set(readEventError.get().getAndIncrement());
+          } finally {
+            if (event == null) {
+              break;
+            }
+            consume(event);
+          }
         }
+//        for (Event event; (event = reader.readEvent()) != null; ) {
+//          final EventHeader eventHeader = event.getHeader();
+//          final EventType eventType = eventHeader.getEventType();
+//          final Operator simpleEventType = Operator.valueOf(eventType);
+//          EventConsumer<Event> eventBinlogEventConsumer =
+//            consumerCache.getOrDefault(eventType,
+//              bufferRecord -> resultMap.get(simpleEventType).incrementAndGet());
+//          eventBinlogEventConsumer.consume(event);
+//        }
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
         currentStatus = Status.FAIL;
@@ -211,5 +229,15 @@ public final class BinlogFileReader implements Runnable {
       onFinished();
     }
     logger.info("end to read binlog file {} of instance.", this.binlog);
+  }
+
+  private void consume(Event event) {
+    final EventHeader eventHeader = event.getHeader();
+    final EventType eventType = eventHeader.getEventType();
+    final Operator simpleEventType = Operator.valueOf(eventType);
+    EventConsumer<Event> eventBinlogEventConsumer =
+      consumerCache.getOrDefault(eventType,
+        bufferRecord -> resultMap.get(simpleEventType).incrementAndGet());
+    eventBinlogEventConsumer.consume(event);
   }
 }

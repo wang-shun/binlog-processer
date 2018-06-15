@@ -117,7 +117,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                                 DBUtil.insert(BINLOG_TRANS_TABLE, map);
                             }
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            LOG.error(e.getMessage(), e);
                         }
 
                         String filePath = HDFS_PATH +
@@ -152,7 +152,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         try {
             resultList = DBUtil.query(BINLOG_TRANS_TABLE, true, new String[]{TableInfo.DOWN_START_TIME, TableInfo.DOWN_END_TIME}, TableInfo.DOWN_STATUS + "=0", null, null, null, TableInfo.DOWN_START_TIME, null);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
         return resultList;
     }
@@ -233,7 +233,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(), e);
             }
         }
     }

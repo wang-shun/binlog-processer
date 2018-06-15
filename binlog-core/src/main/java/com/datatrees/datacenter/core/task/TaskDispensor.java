@@ -21,7 +21,7 @@ public class TaskDispensor {
 
   protected TaskDispensor() {
     __properties = PropertiesUtility.defaultProperties();
-    }
+  }
 
   public static TaskDispensor defaultDispensor() {
     synchronized (TaskDispensor.class) {
@@ -48,7 +48,7 @@ public class TaskDispensor {
     }
   }
 
-  static class KafkaDispensor extends TaskDispensor {
+  static class KafkaDlsispensor extends TaskDispensor {
 
     @Override
     public void dispense(Binlog binlog) {

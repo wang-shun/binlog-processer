@@ -32,7 +32,7 @@ public class RabbitMqProcessor extends TaskProcessor {
       channel = connection.createChannel();
       channel.queueDeclare(properties.getProperty("queue.topic"), false, false, false, null);
       channel
-        .basicConsume(properties.getProperty("queue.topic"), false, new DefaultConsumer(channel) {
+        .basicConsume(properties.getProperty("queue.topic"), true, new DefaultConsumer(channel) {
           @Override
           public void handleDelivery(String consumerTag, Envelope envelope,
             AMQP.BasicProperties properties,
@@ -52,7 +52,7 @@ public class RabbitMqProcessor extends TaskProcessor {
                     try {
                       TimeUnit.MILLISECONDS.sleep(500L);
                     } catch (InterruptedException e) {
-                      e.printStackTrace();
+                      logger.error(e.getMessage(), e);
                     }
                   }
                 });
