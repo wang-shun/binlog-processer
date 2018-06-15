@@ -10,6 +10,7 @@ import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.core.utility.IPUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
@@ -26,7 +27,7 @@ import java.io.File;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 /**
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  */
 public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
-    private static Properties properties = PropertiesUtility.load("instance.properties");
+    private static Properties properties = PropertiesUtility.defaultProperties();
     private static final String REGION_ID = properties.getProperty("REGION_ID");
     private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");
     private static final String ACCESS_SECRET = properties.getProperty("ACCESS_SECRET");
@@ -48,7 +49,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static final DefaultProfile profile;
     private static final IAcsClient client;
     private long currentTime = System.currentTimeMillis();
-    private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 6000, TableInfo.UTC_FORMAT);
+    private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60000, TableInfo.UTC_FORMAT);
     private String endTime;
     List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
 
@@ -109,7 +110,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                                 map.put(TableInfo.BAK_INSTANCE_ID, hostInstanceId);
                                 map.put(TableInfo.LOG_START_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logStartTime), TableInfo.COMMON_FORMAT));
                                 map.put(TableInfo.LOG_END_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logEndTime), TableInfo.COMMON_FORMAT));
-                                map.put(TableInfo.DOWN_LINK,binLogFile.getDownloadLink());
+                                map.put(TableInfo.DOWN_LINK, binLogFile.getDownloadLink());
+                                map.put(TableInfo.HOST,IPUtility.ipAddress());
                                 map.put(TableInfo.DOWN_START_TIME, TimeUtil.utc2Common(startTime));
                                 map.put(TableInfo.DOWN_END_TIME, TimeUtil.utc2Common(endTime));
                                 DBUtil.insert(BINLOG_TRANS_TABLE, map);
@@ -127,16 +129,16 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                                 fileName, dbInstance);
                         TransferProcess transferProcess = new TransferProcess(transInfo);
                         transferProcess.startTrans();
-                        LOG.info("download binlog file :" + binLogFile.getDownloadLink() + " successfully");
-
                     }
 
                 } else {
                     LOG.info("the downloaded binlog files is not complete");
                 }
+            } else {
+                LOG.info("no binlong backed in the master instance");
             }
         } else {
-            LOG.info("no binlog find in the: " + instanceId + " with time between " + binlogFilesRequest.getStartTime() + " and " + binlogFilesRequest.getStartTime());
+            LOG.info("no binlog find in the: " + instanceId + " with time between " + binlogFilesRequest.getStartTime() + " and " + binlogFilesRequest.getEndTime());
         }
     }
 
@@ -202,7 +204,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
         //重新下载未完成的数据
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
@@ -211,25 +213,29 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
             startTime = TimeUtil.dateToStr((Timestamp) lastTime.get(TableInfo.DOWN_END_TIME), TableInfo.UTC_FORMAT);
         } else {
-            //开始正常下载
-            currentTime = System.currentTimeMillis();
-            //将上一次的结束时间设置未这一次的开始时间
+            //开始正常下载,将上一次的结束时间设置未这一次的开始时间
             binlogFilesRequest.setStartTime(startTime);
-            LOG.info(startTime);
+            LOG.info("the start time of download: "+startTime);
             endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
             binlogFilesRequest.setEndTime(endTime);
-            LOG.info(endTime);
+            LOG.info("the end time of download: "+endTime);
             for (DBInstance dbInstance : instances) {
                 instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
             }
         }
-
-        ThreadPoolInstance.getExecutors().shutdown();
-        try {
-            ThreadPoolInstance.getExecutors().awaitTermination(1, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        //ThreadPoolExecutor executors=ThreadPoolInstance.getExecutors();
+        /*executors.shutdown();
+        while (true) {
+            if (executors.isTerminated()) {
+                LOG.info("all the child thread has finished！");
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }*/
     }
 
 }

@@ -3,6 +3,7 @@ package com.datatrees.datacenter.transfer.process.threadmanager;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
@@ -15,16 +16,14 @@ import org.apache.hadoop.hdfs.protocol.RecoveryInProgressException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_PROC_TABLE;
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_TRANS_TABLE;
@@ -33,7 +32,10 @@ import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_TRANS_TABL
  * @author personalc
  */
 public class TransThread implements Serializable, Runnable {
+    private static Properties properties = PropertiesUtility.defaultProperties();
+    private static final int BUFFER_SIZE = Integer.parseInt(properties.getProperty("BUFFER_SIZE"));
     private static Logger LOG = LoggerFactory.getLogger(TransThread.class);
+    FileSystem fs = HDFSFileUtil.fileSystem;
     /**
      * 文件所在src
      */
@@ -75,34 +77,34 @@ public class TransThread implements Serializable, Runnable {
 
     @Override
     public void run() {
+        LOG.info("the current thread is: " + Thread.currentThread().getName() + " begin to download file :" + fileName);
         while (startPos < endPos && !over) {
             try {
-                URL ourl = new URL(src);
-                HttpURLConnection httpConnection = (HttpURLConnection) ourl.openConnection();
+                URL surl = new URL(src);
+                HttpURLConnection httpConnection = (HttpURLConnection) surl.openConnection();
                 //下载starPos以后的数据
                 String prop = "bytes=" + startPos + "-";
                 //设置请求首部字段 RANGE
                 httpConnection.setRequestProperty("RANGE", prop);
                 LOG.info(prop);
-                InputStream input = httpConnection.getInputStream();
-                byte[] b = new byte[1024];
+                InputStream input = new BufferedInputStream(httpConnection.getInputStream(), 1000 * BUFFER_SIZE);
+                byte[] b = new byte[500 * BUFFER_SIZE];
                 int bytes;
-                int tries = 60;
+                int tries = 5;
                 boolean recovered = false;
-
                 Path dstPath = new Path(dest + File.separator + fileName);
-                FileSystem fs = HDFSFileUtil.fileSystem;
                 if (!fs.exists(dstPath)) {
                     fs.create(dstPath).close();
                 }
+                FSDataOutputStream out = null;
                 while (!recovered && tries > 0) {
-                    while ((((bytes = input.read(b))) > 0) && (startPos < endPos) && !over) {
+                    while ((((bytes = input.read(b))) != -1) && (startPos < endPos)) {
                         try {
-                            FSDataOutputStream out = fs.append(dstPath);
-                            out.write(b, 0, bytes);
-                            startPos += bytes;
+                            out = fs.append(dstPath);
+                            int minByte = (int) Math.min(bytes, (endPos - startPos));
+                            out.write(b, 0, minByte);
+                            startPos += minByte;
                             recovered = true;
-                            out.close();
                         } catch (IOException e) {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
                                 try {
@@ -113,15 +115,19 @@ public class TransThread implements Serializable, Runnable {
                                     e1.printStackTrace();
                                 }
                             }
+                        } finally {
+                            if (out != null) {
+                                out.close();
+                            }
                         }
                     }
                 }
-                LOG.info("Thread " + Thread.currentThread().getName() + " is done");
-                over = true;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        over = true;
+        LOG.info("Thread " + Thread.currentThread().getName() + " is done");
         // update a the record
         if (startPos == endPos && over) {
             Map<String, Object> whereMap = new HashMap<>(1);
@@ -153,12 +159,10 @@ public class TransThread implements Serializable, Runnable {
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
-
                     // send to queue
                     try {
                         String path = dest + File.separator + fileName;
-                        TaskDispensor.defaultDispensor().dispense(
-                                new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
+                        TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

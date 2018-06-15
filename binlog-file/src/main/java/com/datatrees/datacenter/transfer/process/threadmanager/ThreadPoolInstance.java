@@ -1,32 +1,37 @@
 package com.datatrees.datacenter.transfer.process.threadmanager;
 
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Properties;
+import java.util.concurrent.*;
 
 /**
  * @author personalc
  */
 public class ThreadPoolInstance {
-    private static int corePoolSize = 5;
-    private static int maximumPoolSize = 20;
-    private static long keepAliveTime = 100L;
+    private static Logger LOG = LoggerFactory.getLogger(ThreadPoolInstance.class);
+
+    private static Properties properties = PropertiesUtility.defaultProperties();
+    private static int corePoolSize =Integer.parseInt(properties.getProperty("thread.pool.corePoolSize"));
+    private static int maximumPoolSize = Integer.parseInt(properties.getProperty("thread.pool.maximumPoolSize"));
+    private static long keepAliveTime =Long.valueOf(properties.getProperty("thread.pool.keepAliveTime"));
 
     private static class LazyHolder {
-        private static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(corePoolSize,
+        private static final ThreadPoolExecutor executors = new ThreadPoolExecutor(corePoolSize,
                 maximumPoolSize,
                 keepAliveTime,
                 TimeUnit.SECONDS,
                 new LinkedBlockingDeque<>(),
                 r -> {
                     Thread t = new Thread(r);
-                    System.out.println("create thread " + t);
+                    LOG.info("create thread " + t.getName());
                     return t;
-                });
+                }, new ThreadPoolExecutor.AbortPolicy());
     }
 
-
     public static ThreadPoolExecutor getExecutors() {
-        return LazyHolder.THREAD_POOL_EXECUTOR;
+        return LazyHolder.executors;
     }
 }

@@ -15,6 +15,7 @@ public class TableInfo {
     public static String DOWN_START_TIME = "down_start";
     public static String DOWN_END_TIME = "down_end";
     public static String DOWN_LINK = "down_link";
+    public static String HOST="host";
     public static String DOWN_STATUS = "status";
     public static String UTC_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     public static String COMMON_FORMAT = "yyyy-MM-dd HH:mm:ss";

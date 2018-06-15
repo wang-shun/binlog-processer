@@ -10,94 +10,98 @@ import redis.clients.jedis.JedisPoolConfig;
 
 public class Redis {
 
-    public interface SimpleRedis<K, V> {
-        void destroy();
+  public interface SimpleRedis<K, V> {
 
-        void close();
+    void destroy();
 
-        V get(K key);
+    void close();
 
-        void set(K key, V value);
+    V get(K key);
 
-        Boolean exists(K key);
+    void set(K key, V value);
 
-        class JedisImpl implements Redis.SimpleRedis<String, String> {
-            private JedisPool pool = null;
-            private redis.clients.jedis.Jedis jedis = null;
+    Boolean exists(K key);
 
-            public JedisImpl() {
-                java.util.Properties props = null;
-                props = PropertiesUtility.load("redis.properties");
-                JedisPoolConfig config = new JedisPoolConfig();
-                String[] arr = props.getProperty("redis.server").split(":");
-                pool = new JedisPool(config, arr[0], Integer.parseInt(arr[1]));
-                jedis = pool.getResource();
-            }
+    class JedisImpl implements Redis.SimpleRedis<String, String> {
 
-            public void destroy() {
-                this.pool.destroy();
-            }
+      private JedisPool pool = null;
+      private redis.clients.jedis.Jedis jedis = null;
 
-            public void close() {
-                this.pool.close();
-            }
+      public JedisImpl() {
+        java.util.Properties props = null;
+        props = PropertiesUtility.defaultProperties();
+        JedisPoolConfig config = new JedisPoolConfig();
+        String[] arr = props.getProperty("redis.server").split(":");
+        pool = new JedisPool(config, arr[0], Integer.parseInt(arr[1]));
+        jedis = pool.getResource();
+      }
 
-            public String get(String key) {
-                return jedis.get(key);
-            }
+      public void destroy() {
+        this.pool.destroy();
+      }
 
-            public void set(String key, String value) {
-                jedis.set(key, value);
-            }
+      public void close() {
+        this.pool.close();
+      }
 
-            @Override
-            public Boolean exists(String key) {
-                return jedis.exists(key);
-            }
-        }
+      public String get(String key) {
+        return jedis.get(key);
+      }
 
-        class Redission implements Redis.SimpleRedis<String, String> {
-            private RedissonClient redisson;
+      public void set(String key, String value) {
+        jedis.set(key, value);
+      }
 
-            public Redission() {
-                Config config = new Config();
-                config.useSingleServer().setAddress(String.format("redis://%s", PropertiesUtility.load("redis.properties").getProperty("redis.server")));
-                redisson = Redisson.create(config);
-            }
-
-            public void destroy() {// TODO: 2018/5/31
-            }
-
-            public void close() {// TODO: 2018/5/31
-            }
-
-            public String get(String key) {
-                RBucket<String> bucket = redisson.getBucket(key);
-                return bucket.get();
-            }
-
-            public void set(String key, String value) {
-                redisson.getBucket(key).set(value);
-            }
-
-            @Override
-            public Boolean exists(String key) {
-                RBucket<String> bucket = redisson.getBucket(key);
-                return bucket.isExists();
-            }
-        }
+      @Override
+      public Boolean exists(String key) {
+        return jedis.exists(key);
+      }
     }
 
-    private volatile static SimpleRedis<String, String> manager;
+    class Redission implements Redis.SimpleRedis<String, String> {
 
-    public static SimpleRedis<String, String> getMgr() {
+      private RedissonClient redisson;
+
+      public Redission() {
+        Config config = new Config();
+        config.useSingleServer().setAddress(String.format("redis://%s",
+          PropertiesUtility.defaultProperties().getProperty("redis.server")));
+        redisson = Redisson.create(config);
+      }
+
+      public void destroy() {// TODO: 2018/5/31
+      }
+
+      public void close() {// TODO: 2018/5/31
+      }
+
+      public String get(String key) {
+        RBucket<String> bucket = redisson.getBucket(key);
+        return bucket.get();
+      }
+
+      public void set(String key, String value) {
+        redisson.getBucket(key).set(value);
+      }
+
+      @Override
+      public Boolean exists(String key) {
+        RBucket<String> bucket = redisson.getBucket(key);
+        return bucket.isExists();
+      }
+    }
+  }
+
+  private volatile static SimpleRedis<String, String> manager;
+
+  public static SimpleRedis<String, String> getMgr() {
+    if (manager == null) {
+      synchronized (Redis.class) {
         if (manager == null) {
-            synchronized (Redis.class) {
-                if (manager == null) {
-                    manager = new SimpleRedis.Redission();
-                }
-            }
+          manager = new SimpleRedis.Redission();
         }
-        return manager;
+      }
     }
+    return manager;
+  }
 }

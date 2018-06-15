@@ -19,18 +19,18 @@ public class Main2 {
 
     public static void main(String[] args) {
 
-        while (true) {
-            String desc = RedisQueue.defaultQueue().poll();
-
-            if (StringUtils.isNotBlank(desc)) {
-                System.out.println(desc);
-                try {
-                    TimeUnit.MILLISECONDS.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+//        while (true) {
+//            String desc = RedisQueue.defaultQueue().poll();
+//
+//            if (StringUtils.isNotBlank(desc)) {
+//                System.out.println(desc);
+//                try {
+//                    TimeUnit.MILLISECONDS.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
         /**
          * telmarketing
          */
@@ -118,5 +118,29 @@ public class Main2 {
 //            TaskDispensor.defaultDispensor().dispense(binlog);
 //        }).start();
 
+
+//        new Thread(()->{
+//
+////                        Binlog binlog = new Binlog("hdfs://localhost:9000/binlogfile/creditaudit/mysql-bin.000130_bak", "rm-bp1tcbap8lvphh08x_mysql-bin.000130_bak", "creditaudit.mysql.rds.aliyuncs.com");
+////                        Binlog binlog = new Binlog("hdfs://localhost:9000/binlogfile/creditaudit/mysql-bin.000130_bak", "rm-bp1tcbap8lvphh08x_mysql-bin.000130_bak", "creditaudit.mysql.rds.aliyuncs.com");
+////                        Binlog binlog = new Binlog("hdfs://localhost:9000/binlogfile/creditaudit/mysql-bin.000130.tar", "rm-bp1tcbap8lvphh08x_mysql-bin.000130.tar", "creditaudit.mysql.rds.aliyuncs.com");
+////                        Binlog binlog = new Binlog("hdfs://localhost:9000/binlogfile/customerservice/mysql-bin.000731", "rm-bp1d1ac1fa41jzf28_mysql-bin.000731", "customerservice.mysql.rds.aliyuncs.com");
+////                        Binlog binlog = new Binlog("hdfs://localhost:9000/binlogfile/pointserver/mysql-bin.000704", "rm-bp1k0lx0x43542h47_mysql-bin.000704", "pointserver.mysql.rds.aliyuncs.com");
+////                        Binlog binlog = new Binlog("hdfs://localhost:9000/binlogfile/pointserver/mysql-bin.000696", "rm-bp1k0lx0x43542h47_mysql-bin.000696", "pointserver.mysql.rds.aliyuncs.com");
+//                        Binlog binlog = new Binlog("hdfs://localhost:9000/pc/rm-bp1cowwkt73ni6271/4615201/1528396112000-mysql-bin.000083.tar", "rm-bp1cowwkt73ni6271_1528396112000-mysql-bin.000083.tar", "telemarketing.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+
+        /**
+         * operator
+         */
+        new Thread(() -> {
+            Binlog binlog = new Binlog("hdfs://localhost:9000/binlogfile/operator/mysql-bin.000728.tar", "rm-bp1x3mt0ogici00l5_mysql-bin.000728.tar", "basisdataoperator3.mysql.rds.aliyuncs.com");
+            TaskDispensor.defaultDispensor().dispense(binlog);
+        }).start();
+        new Thread(() -> {
+            Binlog binlog = new Binlog("hdfs://localhost:9000/binlogfile/operator/mysql-bin.000727.tar", "rm-bp1x3mt0ogici00l4_mysql-bin.000727.tar", "basisdataoperator3.mysql.rds.aliyuncs.com");
+            TaskDispensor.defaultDispensor().dispense(binlog);
+        }).start();
     }
 }

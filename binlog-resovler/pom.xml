@@ -55,5 +55,9 @@
             <groupId>com.callfire</groupId>
             <artifactId>avro-schema-generator</artifactId>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.xeustechnologies</groupId>-->
+            <!--<artifactId>jtar</artifactId>-->
+        <!--</dependency>-->
     </dependencies>
 </project>
