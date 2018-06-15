@@ -1,19 +1,18 @@
 package com.datatrees.datacenter.schema.service;
 
+import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.schema.service.loader.HistoryLoader;
 import com.datatrees.datacenter.schema.service.repository.SchemaRepository;
 import com.datatrees.datacenter.schema.service.rpc.RpcService;
 import io.debezium.config.Configuration;
 
-public class Main {
+public class BinlogService implements TaskRunner {
 
-    public static void main(String[] args) {
-
+    @Override
+    public void process() {
         try {
-            Configuration configuration = Configuration.create().build();
 
-            SchemaRepository schemaRepository = new SchemaRepository(configuration);
-
+            SchemaRepository schemaRepository = new SchemaRepository();
             HistoryLoader loader = new HistoryLoader(schemaRepository);
             loader.init();
             loader.start();
@@ -27,6 +26,6 @@ public class Main {
             System.out.println("application failed");
             System.exit(-1);
         }
-
     }
+
 }

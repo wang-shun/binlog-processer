@@ -8,4 +8,6 @@ public interface Constants {
 
     public static final String KEY_TOPIC = "subscribe.topics";
 
+    public static final String KAFKA_PROP_PREFIX = "binlog.service.kafka.";
+
 }
