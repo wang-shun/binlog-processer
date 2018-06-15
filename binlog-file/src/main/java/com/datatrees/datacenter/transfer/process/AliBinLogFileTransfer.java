@@ -20,7 +20,6 @@ import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.transfer.utility.TimeUtil;
-import com.datatrees.datacenter.transfer.utility.UuidUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

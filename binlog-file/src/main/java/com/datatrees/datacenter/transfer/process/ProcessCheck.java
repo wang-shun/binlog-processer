@@ -47,7 +47,7 @@ public class ProcessCheck {
                         .append(" ")
                         .append(TableInfo.PROCESS_START)
                         .append("<")
-                        .append("curdate()-interval")
+                        .append("now()-interval")
                         .append(" ")
                         .append(interval)
                         .append(" ")
