@@ -31,8 +31,9 @@ public class TransferTimerTask implements TaskRunner {
             BinlogFileTransfer binlogFileTransfer = factory.getServerType("AliBinLogFileTransfer");
             binlogFileTransfer.transfer();
         };
-        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
         // 第二个参数为首次执行的延时时间，第三个参数为定时执行的间隔时间
         service.scheduleAtFixedRate(runnable, INITIAL_DELAY, PERIOD, TimeUnit.MINUTES);
+        service.scheduleAtFixedRate(runnable,(INITIAL_DELAY+1)*1000,PERIOD*10,TimeUnit.MINUTES);
     }
 }

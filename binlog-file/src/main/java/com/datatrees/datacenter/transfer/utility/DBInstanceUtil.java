@@ -10,6 +10,7 @@ import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceAttributeResponse.DBIn
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceHAConfigResponse.NodeInfo;
 import com.aliyuncs.rds.model.v20140815.DescribeDatabasesResponse.Database;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.transfer.process.AliYunConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,36 +23,9 @@ public class DBInstanceUtil {
     private static Logger LOG = LoggerFactory.getLogger(DBInstance.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static final int PAGE_SIZE = Integer.valueOf(properties.getProperty("PAGE_SIZE"));
-    private static final String REGION_ID = properties.getProperty("REGION_ID");
-    private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");
-    private static final String ACCESS_SECRET = properties.getProperty("ACCESS_SECRET");
     private static final String DBINSTANCE_LIST = properties.getProperty("DBINSTANCE_LIST");
-    private static final DefaultProfile DEFAULT_PROFILE;
-    private static IAcsClient client;
-
-    static {
-        DEFAULT_PROFILE = DefaultProfile.getProfile(
-                // 您的可用区ID
-                REGION_ID,
-                // 您的AccessKey ID
-                ACCESS_KEY_ID,
-                // 您的AccessKey Secret
-                ACCESS_SECRET);
-        createConnection();
-    }
-
-    /**
-     * 云平台连接设置
-     *
-     * @return IAcsClient实例
-     */
-    private static IAcsClient createConnection() {
-        if (null == client) {
-            client = new DefaultAcsClient(DEFAULT_PROFILE);
-        }
-        return client;
-
-    }
+    private static IAcsClient client = AliYunConfig.getClient();
+    private static DefaultProfile profile = AliYunConfig.getProfile();
 
     /**
      * 获取所有Mysql数据库实例（DBInstance）
@@ -65,18 +39,17 @@ public class DBInstanceUtil {
             if (DBINSTANCE_LIST.contains(",")) {
                 instanceIds = Arrays.asList(DBINSTANCE_LIST.split(","));
             } else {
-                LOG.info("the only dbintance id is: "+DBINSTANCE_LIST);
+                LOG.info("the only dbintance id is: " + DBINSTANCE_LIST);
                 instanceIds.add(DBINSTANCE_LIST);
             }
             flag = true;
         }
-        IAcsClient client = createConnection();
         DescribeDBInstancesRequest dbInstancesRequest = new DescribeDBInstancesRequest();
         DescribeDBInstancesResponse dbInstancesResponse;
         List<DBInstance> dbInstances = null;
         dbInstancesRequest.setDBInstanceType("Primary");
         try {
-            dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, DEFAULT_PROFILE);
+            dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
             int totalInstance = dbInstancesResponse.getTotalRecordCount();
             dbInstances = new ArrayList<>(totalInstance);
             int pageCount = 0;
@@ -86,14 +59,13 @@ public class DBInstanceUtil {
             LOG.info("pageCount: " + pageCount);
             for (int i = 1; i <= pageCount; i++) {
                 dbInstancesRequest.setPageNumber(i);
-                dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, DEFAULT_PROFILE);
+                dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
                 List<DBInstance> dbInstanceList = dbInstancesResponse.getItems();
                 Iterator<DBInstance> iterator = dbInstanceList.iterator();
                 if (flag) {
                     while (iterator.hasNext()) {
                         DBInstance dbInstance = iterator.next();
                         if (!instanceIds.contains(dbInstance.getDBInstanceId())) {
-                            System.out.println(dbInstance.getDBInstanceId());
                             iterator.remove();
                         }
                     }
@@ -101,7 +73,7 @@ public class DBInstanceUtil {
                 dbInstances.addAll(dbInstanceList);
             }
         } catch (ClientException e) {
-            e.printStackTrace();
+            LOG.error("can't get all primary instance");
         }
         return dbInstances;
     }
@@ -113,13 +85,12 @@ public class DBInstanceUtil {
      * @return 备份实例编号
      */
     public static String getBackInstanceId(String instanceId) {
-        IAcsClient client = DBInstanceUtil.createConnection();
         DescribeDBInstanceHAConfigRequest haConfigRequest = new DescribeDBInstanceHAConfigRequest();
         haConfigRequest.setActionName("DescribeDBInstanceHAConfig");
         haConfigRequest.setDBInstanceId(instanceId);
         String backInstanceId = null;
         try {
-            DescribeDBInstanceHAConfigResponse haConfigResponse = client.getAcsResponse(haConfigRequest, DBInstanceUtil.getProfile());
+            DescribeDBInstanceHAConfigResponse haConfigResponse = client.getAcsResponse(haConfigRequest, profile);
             List<NodeInfo> hostInstanceInfos = haConfigResponse.getHostInstanceInfos();
             for (NodeInfo hostInstanceInfo : hostInstanceInfos) {
                 if ("Slave".equals(hostInstanceInfo.getNodeType())) {
@@ -128,7 +99,7 @@ public class DBInstanceUtil {
             }
 
         } catch (ClientException e) {
-            e.printStackTrace();
+            LOG.error("can't get the slave of instance : " + instanceId + " , please check the instance id");
         }
 
         return backInstanceId;
@@ -146,10 +117,10 @@ public class DBInstanceUtil {
         databasesRequest.setDBInstanceId(dbInstance.getDBInstanceId());
         List<Database> databases = null;
         try {
-            DescribeDatabasesResponse response = client.getAcsResponse(databasesRequest, DEFAULT_PROFILE);
+            DescribeDatabasesResponse response = client.getAcsResponse(databasesRequest, profile);
             databases = response.getDatabases();
         } catch (ClientException e) {
-            e.printStackTrace();
+            LOG.error("can't get the databases of instance : " + dbInstance.getDBInstanceId());
         }
         return databases;
     }
@@ -181,7 +152,7 @@ public class DBInstanceUtil {
         List<DBInstanceAttribute> dbInstanceAttributeList;
         String connectString = null;
         try {
-            DescribeDBInstanceAttributeResponse response = client.getAcsResponse(attributeRequest, DEFAULT_PROFILE);
+            DescribeDBInstanceAttributeResponse response = client.getAcsResponse(attributeRequest, profile);
             dbInstanceAttributeList = response.getItems();
 
             for (int i = 0; i < dbInstanceAttributeList.size(); i++) {
@@ -191,13 +162,9 @@ public class DBInstanceUtil {
                 }
             }
         } catch (ClientException e) {
-            e.printStackTrace();
+            LOG.error("can't get the connection string of instance : " + instanceId);
         }
         return connectString;
-    }
-
-    private static DefaultProfile getProfile() {
-        return DEFAULT_PROFILE;
     }
 }
 

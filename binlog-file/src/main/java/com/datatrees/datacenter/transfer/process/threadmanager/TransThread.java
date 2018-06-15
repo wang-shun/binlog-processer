@@ -80,17 +80,17 @@ public class TransThread implements Serializable, Runnable {
         LOG.info("the current thread is: " + Thread.currentThread().getName() + " begin to download file :" + fileName);
         while (startPos < endPos && !over) {
             try {
-                URL surl = new URL(src);
-                HttpURLConnection httpConnection = (HttpURLConnection) surl.openConnection();
+                URL srcUrl = new URL(src);
+                HttpURLConnection httpConnection = (HttpURLConnection) srcUrl.openConnection();
                 //下载starPos以后的数据
                 String prop = "bytes=" + startPos + "-";
                 //设置请求首部字段 RANGE
                 httpConnection.setRequestProperty("RANGE", prop);
-                LOG.info(prop);
+                LOG.info("start download file : " + fileName + " from :" + prop);
                 InputStream input = new BufferedInputStream(httpConnection.getInputStream(), 1000 * BUFFER_SIZE);
                 byte[] b = new byte[500 * BUFFER_SIZE];
                 int bytes;
-                int tries = 5;
+                int tries = 20;
                 boolean recovered = false;
                 Path dstPath = new Path(dest + File.separator + fileName);
                 if (!fs.exists(dstPath)) {
@@ -109,10 +109,10 @@ public class TransThread implements Serializable, Runnable {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
                                 try {
                                     LOG.info("sleep 1000 millis and retry to append data to HDFS");
-                                    Thread.sleep(1000);
+                                    Thread.sleep(3000);
                                     tries--;
                                 } catch (InterruptedException e1) {
-                                    e1.printStackTrace();
+                                    LOG.error(e.getMessage(), e);
                                 }
                             }
                         } finally {
@@ -123,7 +123,7 @@ public class TransThread implements Serializable, Runnable {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.error(e.getMessage(), e);
             }
         }
         over = true;
@@ -132,44 +132,51 @@ public class TransThread implements Serializable, Runnable {
         if (startPos == endPos && over) {
             Map<String, Object> whereMap = new HashMap<>(1);
             whereMap.put(TableInfo.FILE_NAME, fileName);
-            Map<String, Object> valueMap = new HashMap<>(1);
+            Map<String, Object> valueMap = new HashMap<>(2);
+            valueMap.put(TableInfo.REQUEST_END, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
             valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
             try {
                 DBUtil.update(BINLOG_TRANS_TABLE, valueMap, whereMap);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+            insertBinlogProcess();
+        }
+    }
 
-            // insert a record to t_binlog_process
-            whereMap = new HashMap<>(2);
-            whereMap.put(TableInfo.FILE_NAME, fileName);
-            whereMap.put(TableInfo.DB_INSTANCE, instanceId);
-            try {
-                List<Map<String, Object>> processRecord = DBUtil.query(TableInfo.BINLOG_PROC_TABLE, whereMap);
-                if (processRecord.size() == 0) {
-                    long currentTime = System.currentTimeMillis();
-                    String processStart = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
-                    Map<String, Object> map = new HashMap<>(5);
-                    map.put(TableInfo.FILE_NAME, fileName);
-                    map.put(TableInfo.DB_INSTANCE, instanceId);
-                    map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
-                    map.put(TableInfo.PROCESS_START, TimeUtil.strToDate(processStart, TableInfo.UTC_FORMAT));
-                    try {
-                        DBUtil.insert(BINLOG_PROC_TABLE, map);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                    // send to queue
-                    try {
-                        String path = dest + File.separator + fileName;
-                        TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+    /**
+     * insert a new record to t_binlog_process
+     */
+    private void insertBinlogProcess() {
+        Map<String, Object> whereMap;
+        whereMap = new HashMap<>(2);
+        whereMap.put(TableInfo.FILE_NAME, fileName);
+        whereMap.put(TableInfo.DB_INSTANCE, instanceId);
+        try {
+            List<Map<String, Object>> processRecord = DBUtil.query(TableInfo.BINLOG_PROC_TABLE, whereMap);
+            if (processRecord.size() == 0) {
+                long currentTime = System.currentTimeMillis();
+                String processStart = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
+                Map<String, Object> map = new HashMap<>(5);
+                map.put(TableInfo.FILE_NAME, fileName);
+                map.put(TableInfo.DB_INSTANCE, instanceId);
+                map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
+                map.put(TableInfo.PROCESS_START, TimeUtil.strToDate(processStart, TableInfo.UTC_FORMAT));
+                try {
+                    DBUtil.insert(BINLOG_PROC_TABLE, map);
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+                // send to queue
+                try {
+                    String path = dest + File.separator + fileName;
+                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

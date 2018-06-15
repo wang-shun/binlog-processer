@@ -43,6 +43,7 @@ public class TransferProcess {
             if (HDFSFileUtil.fileSystem.exists(new Path(filePath))) {
                 firstDown = false;
                 startPos = HDFSFileUtil.getFileSize(filePath);
+                LOG.info("the file size of : "+filePath+" is : "+startPos);
             } else {
                 startPos = 0;
             }
@@ -70,7 +71,7 @@ public class TransferProcess {
                 endPos = fileLen;
             }
         }
-        if (startPos != endPos) {
+        if (startPos < endPos) {
             TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
                     transInfo.getFileName(), transInfo.getDbInstance().getDBInstanceId());
             LOG.info("start= " + startPos + ",  end= " + endPos);

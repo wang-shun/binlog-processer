@@ -20,6 +20,7 @@ import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.transfer.utility.TimeUtil;
+import com.datatrees.datacenter.transfer.utility.UuidUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,28 +39,16 @@ import java.util.stream.Collectors;
 public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private static final String REGION_ID = properties.getProperty("REGION_ID");
-    private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");
-    private static final String ACCESS_SECRET = properties.getProperty("ACCESS_SECRET");
     private static final String REGEX_PATTERN = properties.getProperty("REGEX_PATTERN");
     private static final String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
     private static final String HDFS_PATH = properties.getProperty("HDFS_PATH");
     private static final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
     private static final String BINLOG_TRANS_TABLE = TableInfo.BINLOG_TRANS_TABLE;
-    private static final DefaultProfile profile;
-    private static final IAcsClient client;
     private long currentTime = System.currentTimeMillis();
     private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60000, TableInfo.UTC_FORMAT);
     private String endTime;
     List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
 
-    static {
-        profile = DefaultProfile.getProfile(
-                REGION_ID,
-                ACCESS_KEY_ID,
-                ACCESS_SECRET);
-        client = new DefaultAcsClient(profile);
-    }
 
     /**
      * 下载单个实例binlog文件
@@ -71,23 +60,24 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private void instanceBinlogTrans(IAcsClient client, DescribeBinlogFilesRequest binlogFilesRequest, DBInstance dbInstance) {
         String instanceId = dbInstance.getDBInstanceId();
         binlogFilesRequest.setDBInstanceId(instanceId);
-        List<BinLogFile> binLogFiles = BinLogFileUtil.getBinLogFiles(client, binlogFilesRequest, AliBinLogFileTransfer.profile);
+        List<BinLogFile> binLogFiles = BinLogFileUtil.getBinLogFiles(client, binlogFilesRequest, AliYunConfig.getProfile());
         if (binLogFiles.size() > 0) {
             String bakInstanceId = DBInstanceUtil.getBackInstanceId(instanceId);
             List<BinLogFile> fileList = binLogFiles.parallelStream()
                     .filter(binLogFile -> binLogFile.getHostInstanceID().equals(bakInstanceId)).collect(Collectors.toList());
-            long instanceLogSize = fileList.size();
-            List<Integer> fileNumList = BinLogFileUtil.getFileNumberFromUrl(fileList, REGEX_PATTERN);
-            fileNumList = fileNumList.stream().sorted().collect(Collectors.toList());
+            long fileListSize = fileList.size();
+            //List<Integer> fileNumList = BinLogFileUtil.getFileNumberFromUrl(fileList, REGEX_PATTERN);
+            //fileNumList = fileNumList.stream().sorted().collect(Collectors.toList());
 
-            if (fileList.size() > 0 && fileNumList.size() > 0) {
+            if (fileListSize > 0) {
                 //判断文件编号是否连续
-                int maxDiff = Math.abs(fileNumList.get(0) - fileNumList.get(fileNumList.size() - 1));
-                if (instanceLogSize == (maxDiff + 1)) {
+                //int maxDiff = Math.abs(fileNumList.get(0) - fileNumList.get(fileNumList.size() - 1));
+                //if (instanceLogSize == (maxDiff + 1)) {
+                String batchId=binlogFilesRequest.getStartTime()+"_"+binlogFilesRequest.getEndTime();
+                    LOG.info("the batch_id of this download batch is :" + binlogFilesRequest.getStartTime()+"_"+binlogFilesRequest.getEndTime());
                     for (int i = 0; i < fileList.size(); i++) {
                         BinLogFile binLogFile = fileList.get(i);
-                        System.out.println(binLogFile.getChecksum());
-                        LOG.info("file size: " + binLogFile.getFileSize());
+                        LOG.info("the real size of file [ " + binLogFile.getDownloadLink() + " ] is:" + binLogFile.getFileSize());
                         LOG.info("begin download binlog file :" + "[" + binLogFile.getDownloadLink() + "]");
                         String dbInstanceId = dbInstance.getDBInstanceId();
                         String hostInstanceId = binLogFile.getHostInstanceID();
@@ -106,12 +96,14 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             if (recordCount == 0) {
                                 Map<String, Object> map = new HashMap<>(7);
                                 map.put(TableInfo.DB_INSTANCE, dbInstanceId);
+                                map.put(TableInfo.BATCH_ID, batchId);
                                 map.put(TableInfo.FILE_NAME, fileName);
                                 map.put(TableInfo.BAK_INSTANCE_ID, hostInstanceId);
                                 map.put(TableInfo.LOG_START_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logStartTime), TableInfo.COMMON_FORMAT));
                                 map.put(TableInfo.LOG_END_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logEndTime), TableInfo.COMMON_FORMAT));
                                 map.put(TableInfo.DOWN_LINK, binLogFile.getDownloadLink());
-                                map.put(TableInfo.HOST,IPUtility.ipAddress());
+                                map.put(TableInfo.REQUEST_START,TimeUtil.timeStamp2DateStr(System.currentTimeMillis(),TableInfo.COMMON_FORMAT));
+                                map.put(TableInfo.HOST, IPUtility.ipAddress());
                                 map.put(TableInfo.DOWN_START_TIME, TimeUtil.utc2Common(startTime));
                                 map.put(TableInfo.DOWN_END_TIME, TimeUtil.utc2Common(endTime));
                                 DBUtil.insert(BINLOG_TRANS_TABLE, map);
@@ -131,9 +123,9 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         transferProcess.startTrans();
                     }
 
-                } else {
+               /* } else {
                     LOG.info("the downloaded binlog files is not complete");
-                }
+                }*/
             } else {
                 LOG.info("no binlong backed in the master instance");
             }
@@ -170,7 +162,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             binlogFilesRequest.setStartTime(startTime);
             binlogFilesRequest.setEndTime(endTime);
             for (DBInstance dbInstance : instances) {
-                instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
+                instanceBinlogTrans(AliYunConfig.getClient(), binlogFilesRequest, dbInstance);
             }
         }
     }
@@ -200,7 +192,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
                             + recordMap.get(TableInfo.FILE_NAME);
                     String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
-                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
                 }
             }
         } catch (SQLException e) {
@@ -215,27 +207,14 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         } else {
             //开始正常下载,将上一次的结束时间设置未这一次的开始时间
             binlogFilesRequest.setStartTime(startTime);
-            LOG.info("the start time of download: "+startTime);
+            LOG.info("the start time of download: " + startTime);
             endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
             binlogFilesRequest.setEndTime(endTime);
-            LOG.info("the end time of download: "+endTime);
+            LOG.info("the end time of download: " + endTime);
             for (DBInstance dbInstance : instances) {
-                instanceBinlogTrans(client, binlogFilesRequest, dbInstance);
+                instanceBinlogTrans(AliYunConfig.getClient(), binlogFilesRequest, dbInstance);
             }
         }
-        //ThreadPoolExecutor executors=ThreadPoolInstance.getExecutors();
-        /*executors.shutdown();
-        while (true) {
-            if (executors.isTerminated()) {
-                LOG.info("all the child thread has finished！");
-                break;
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }*/
     }
 
 }

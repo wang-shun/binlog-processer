@@ -28,11 +28,13 @@ public class ProcessCheck {
     private static final String TIME_SCALE = properties.getProperty("process.check.time.scale");
     private static final long INITIAL_DELAY = Integer.parseInt(properties.getProperty("process.check.schedule.task.initaildelay"));
     private static final long THREAD_PERIOD = Integer.parseInt(properties.getProperty("process.check.schedule.task.period"));
+    private static final int RETRY_TIMES = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessCheck.class);
 
     public void process() {
         Runnable runnable = () -> {
+            logger.info("start process check....");
             List<Map<String, Object>> resultList;
             Map<String, Object> oneRecord;
             try {
@@ -53,10 +55,10 @@ public class ProcessCheck {
                         .append(" ")
                         .append("and")
                         .append(" ")
-                        .append(TableInfo.PROCESS_STATUS)
+                        .append(TableInfo.RETRY_TIMES)
                         .append(" ")
-                        .append("=")
-                        .append(SendStatus.NO.getValue());
+                        .append("<")
+                        .append(RETRY_TIMES);
                 resultList = DBUtil.query(sql.toString());
 
                 if (resultList.size() > 0) {
@@ -72,7 +74,7 @@ public class ProcessCheck {
                         String filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                         String identity = instanceId + "_" + fileName;
                         String mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
-                        TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
+                        //TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
                         logger.info("send " + identity + " to massage queue");
 
                         //update t_binlog_process table
