@@ -3,7 +3,9 @@ package com.datatrees.datacenter.transfer.process;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesRequest;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
+import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.TaskRunner;
+import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.IPUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
@@ -73,12 +75,13 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String logEndTime = binLogFile.getLogEndTime();
                     String logStartTime = binLogFile.getLogBeginTime();
 
-                    //LOG.info("the binlog start time is :" + logStartTime + ", the end time of binlog file is :" + logEndTime);
                     Long logEndTimeStamp = TimeUtil.utc2TimeStamp(logEndTime)+TIMESTAMP_DIFF;
                     String fileName = logEndTimeStamp / 1000 + "-" + BinLogFileUtil.getFileNameFromUrl(binLogFile.getDownloadLink(), REGEX_PATTERN);
                     Map<String, Object> whereMap = new HashMap<>(4);
                     whereMap.put(TableInfo.DB_INSTANCE, dbInstanceId);
                     whereMap.put(TableInfo.FILE_NAME, fileName);
+                    Long start=TimeUtil.strToDate(startTime,TableInfo.UTC_FORMAT).getTime()+TIMESTAMP_DIFF;
+                    Long end=TimeUtil.strToDate(endTime,TableInfo.UTC_FORMAT).getTime()+TIMEHOURS_DIFF;
                     try {
                         //判断这个binlog文件是否下载过
                         int recordCount = DBUtil.query(BINLOG_TRANS_TABLE, whereMap).size();
@@ -94,8 +97,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             map.put(TableInfo.DOWN_LINK, binLogFile.getDownloadLink());
                             map.put(TableInfo.REQUEST_START, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
                             map.put(TableInfo.HOST, IPUtility.ipAddress());
-                            map.put(TableInfo.DOWN_START_TIME, TimeUtil.utc2Common(startTime));
-                            map.put(TableInfo.DOWN_END_TIME, TimeUtil.utc2Common(endTime));
+                            map.put(TableInfo.DOWN_START_TIME, TimeUtil.timeStamp2DateStr(start,TableInfo.COMMON_FORMAT));
+                            map.put(TableInfo.DOWN_END_TIME, TimeUtil.timeStamp2DateStr(end,TableInfo.COMMON_FORMAT));
                             DBUtil.insert(BINLOG_TRANS_TABLE, map);
                         }
                     } catch (Exception e) {
@@ -181,7 +184,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
                             + recordMap.get(TableInfo.FILE_NAME);
                     String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
-                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
                 }
             }
         } catch (SQLException e) {
