@@ -40,10 +40,10 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static final String HDFS_PATH = properties.getProperty("HDFS_PATH");
     private static final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
     private static final String BINLOG_TRANS_TABLE = TableInfo.BINLOG_TRANS_TABLE;
-   private static final long TIMESTAMP_DIFF=8*60*60*1000L;
-   private static final long TIMEHOURS_DIFF=-8L;
-   private long currentTime = System.currentTimeMillis()-TIMESTAMP_DIFF;
-    private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60*1000, TableInfo.UTC_FORMAT);
+    private static final long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
+    private static final long TIMEHOURS_DIFF = -8L;
+    private long currentTime = System.currentTimeMillis() - TIMESTAMP_DIFF;
+    private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60 * 1000, TableInfo.UTC_FORMAT);
     private String endTime;
     private static FileUtil fileUtil = new FileUtil();
     List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
@@ -65,7 +65,9 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     .filter(binLogFile -> binLogFile.getHostInstanceID().equals(bakInstanceId)).collect(Collectors.toList());
             long fileListSize = fileList.size();
             if (fileListSize > 0) {
-                String batchId = binlogFilesRequest.getStartTime() + "_" + binlogFilesRequest.getEndTime();
+                String start = TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(binlogFilesRequest.getStartTime()) + TIMESTAMP_DIFF, TableInfo.COMMON_FORMAT);
+                String end = TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(binlogFilesRequest.getEndTime()) + TIMESTAMP_DIFF, TableInfo.COMMON_FORMAT);
+                String batchId = start + "_" + end;
                 LOG.info("the batch_id of this download batch is :" + binlogFilesRequest.getStartTime() + "_" + binlogFilesRequest.getEndTime());
                 for (BinLogFile binLogFile : fileList) {
                     LOG.info("the real size of file [ " + binLogFile.getDownloadLink() + " ] is:" + binLogFile.getFileSize());
@@ -75,13 +77,11 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String logEndTime = binLogFile.getLogEndTime();
                     String logStartTime = binLogFile.getLogBeginTime();
 
-                    Long logEndTimeStamp = TimeUtil.utc2TimeStamp(logEndTime)+TIMESTAMP_DIFF;
+                    Long logEndTimeStamp = TimeUtil.utc2TimeStamp(logEndTime) + TIMESTAMP_DIFF;
                     String fileName = logEndTimeStamp / 1000 + "-" + BinLogFileUtil.getFileNameFromUrl(binLogFile.getDownloadLink(), REGEX_PATTERN);
                     Map<String, Object> whereMap = new HashMap<>(4);
                     whereMap.put(TableInfo.DB_INSTANCE, dbInstanceId);
                     whereMap.put(TableInfo.FILE_NAME, fileName);
-                    Long start=TimeUtil.strToDate(startTime,TableInfo.UTC_FORMAT).getTime()+TIMESTAMP_DIFF;
-                    Long end=TimeUtil.strToDate(endTime,TableInfo.UTC_FORMAT).getTime()+TIMEHOURS_DIFF;
                     try {
                         //判断这个binlog文件是否下载过
                         int recordCount = DBUtil.query(BINLOG_TRANS_TABLE, whereMap).size();
@@ -92,13 +92,13 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             map.put(TableInfo.BATCH_ID, batchId);
                             map.put(TableInfo.FILE_NAME, fileName);
                             map.put(TableInfo.BAK_INSTANCE_ID, hostInstanceId);
-                            map.put(TableInfo.LOG_START_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logStartTime)+TIMESTAMP_DIFF, TableInfo.COMMON_FORMAT));
-                            map.put(TableInfo.LOG_END_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logEndTime)+TIMESTAMP_DIFF, TableInfo.COMMON_FORMAT));
+                            map.put(TableInfo.LOG_START_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logStartTime) + TIMESTAMP_DIFF, TableInfo.COMMON_FORMAT));
+                            map.put(TableInfo.LOG_END_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logEndTime) + TIMESTAMP_DIFF, TableInfo.COMMON_FORMAT));
                             map.put(TableInfo.DOWN_LINK, binLogFile.getDownloadLink());
                             map.put(TableInfo.REQUEST_START, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
                             map.put(TableInfo.HOST, IPUtility.ipAddress());
-                            map.put(TableInfo.DOWN_START_TIME, TimeUtil.timeStamp2DateStr(start,TableInfo.COMMON_FORMAT));
-                            map.put(TableInfo.DOWN_END_TIME, TimeUtil.timeStamp2DateStr(end,TableInfo.COMMON_FORMAT));
+                            map.put(TableInfo.DOWN_START_TIME, start);
+                            map.put(TableInfo.DOWN_END_TIME, end);
                             DBUtil.insert(BINLOG_TRANS_TABLE, map);
                         }
                     } catch (Exception e) {
@@ -143,10 +143,10 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         Iterator itr = uncompleted.iterator();
         while (itr.hasNext()) {
             Map<String, Object> info = (Map<String, Object>) itr.next();
-            Timestamp startTs=(Timestamp) info.get(TableInfo.DOWN_START_TIME);
-            Timestamp endTs=(Timestamp) info.get(TableInfo.DOWN_END_TIME);
-            LocalDateTime startLDT=startTs.toLocalDateTime().plusHours(TIMEHOURS_DIFF);
-            LocalDateTime endLDT=endTs.toLocalDateTime().plusHours(TIMEHOURS_DIFF);
+            Timestamp startTs = (Timestamp) info.get(TableInfo.DOWN_START_TIME);
+            Timestamp endTs = (Timestamp) info.get(TableInfo.DOWN_END_TIME);
+            LocalDateTime startLDT = startTs.toLocalDateTime().plusHours(TIMEHOURS_DIFF);
+            LocalDateTime endLDT = endTs.toLocalDateTime().plusHours(TIMEHOURS_DIFF);
 
             startTime = TimeUtil.dateToStr(Timestamp.valueOf(startLDT), TableInfo.UTC_FORMAT);
             endTime = TimeUtil.dateToStr(Timestamp.valueOf(endLDT), TableInfo.UTC_FORMAT);
@@ -196,7 +196,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             processUnComplete(unCompleteList);
             Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
             //设置下次下载的时间下载完成的结束时间
-            Timestamp timestamp=(Timestamp) lastTime.get(TableInfo.DOWN_END_TIME);
+            Timestamp timestamp = (Timestamp) lastTime.get(TableInfo.DOWN_END_TIME);
             startTime = TimeUtil.dateToStr(Timestamp.valueOf(timestamp.toLocalDateTime().plusHours(TIMEHOURS_DIFF)), TableInfo.UTC_FORMAT);
         } else {
             try {
@@ -204,7 +204,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 if (lastDownEnd.size() > 0) {
                     //设置下载开始时间为上次结束时间
 
-                    Timestamp timestamp=(Timestamp) lastDownEnd.get(0).get(TableInfo.DOWN_END_TIME);
+                    Timestamp timestamp = (Timestamp) lastDownEnd.get(0).get(TableInfo.DOWN_END_TIME);
                     startTime = TimeUtil.dateToStr(Timestamp.valueOf(timestamp.toLocalDateTime().plusHours(TIMEHOURS_DIFF)), TableInfo.UTC_FORMAT);
                 }
             } catch (SQLException e) {
