@@ -29,6 +29,46 @@ public class DBInstanceUtil {
     private static String primaryInstanceFlag = "Primary";
     private static String slaveInstanceFlag = "Slave";
 
+    /**
+     * 获取所有实例id
+     * @return  List<String>
+     */
+    public static List<String> getAllPrimaryInstanceId() {
+        List<String> instanceIds = null;
+        if (DBINSTANCE_LIST != null && DBINSTANCE_LIST.length() > 0) {
+            instanceIds=new ArrayList<>();
+            if (DBINSTANCE_LIST.contains(instanceSeparator)) {
+                instanceIds = Arrays.asList(DBINSTANCE_LIST.split(instanceSeparator));
+            } else {
+                LOG.info("the only dbintance id is: " + DBINSTANCE_LIST);
+                instanceIds.add(DBINSTANCE_LIST);
+            }
+        } else {
+            DescribeDBInstancesRequest dbInstancesRequest = new DescribeDBInstancesRequest();
+            DescribeDBInstancesResponse dbInstancesResponse;
+            dbInstancesRequest.setDBInstanceType(primaryInstanceFlag);
+            try {
+                dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
+                int totalInstance = dbInstancesResponse.getTotalRecordCount();
+                instanceIds = new ArrayList<>(totalInstance);
+                int pageCount = 0;
+                if (totalInstance >0) {
+                    pageCount = (int) Math.ceil(totalInstance / PAGE_SIZE);
+                }
+                for (int i = 1; i <= pageCount; i++) {
+                    dbInstancesRequest.setPageNumber(i);
+                    dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
+                    List<DBInstance> dbInstanceList = dbInstancesResponse.getItems();
+                    for (DBInstance dbInstance:dbInstanceList) {
+                        instanceIds.add(dbInstance.getDBInstanceId());
+                    }
+                }
+            } catch (ClientException e) {
+                LOG.error("can't get all primary instance");
+            }
+        }
+        return instanceIds;
+    }
 
     /**
      * 获取所有Mysql数据库实例（DBInstance）
