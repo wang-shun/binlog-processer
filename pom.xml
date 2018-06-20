@@ -14,8 +14,8 @@
         <module>binlog-file</module>
         <module>binlog-resovler</module>
         <module>binlog-main</module>
-        <module>schema-service</module>
-        <module>schema-api</module>
+        <module>binlog-service</module>
+        <module>binlog-api</module>
     </modules>
 
     <properties>

@@ -28,11 +28,13 @@ public class ProcessCheck {
     private static final String TIME_SCALE = properties.getProperty("process.check.time.scale");
     private static final long INITIAL_DELAY = Integer.parseInt(properties.getProperty("process.check.schedule.task.initaildelay"));
     private static final long THREAD_PERIOD = Integer.parseInt(properties.getProperty("process.check.schedule.task.period"));
+    private static final int RETRY_TIMES = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessCheck.class);
 
     public void process() {
         Runnable runnable = () -> {
+            logger.info("start process check....");
             List<Map<String, Object>> resultList;
             Map<String, Object> oneRecord;
             try {
@@ -45,7 +47,7 @@ public class ProcessCheck {
                         .append(" ")
                         .append(TableInfo.PROCESS_START)
                         .append("<")
-                        .append("curdate()-interval")
+                        .append("now()-interval")
                         .append(" ")
                         .append(interval)
                         .append(" ")
@@ -53,10 +55,10 @@ public class ProcessCheck {
                         .append(" ")
                         .append("and")
                         .append(" ")
-                        .append(TableInfo.PROCESS_STATUS)
+                        .append(TableInfo.RETRY_TIMES)
                         .append(" ")
-                        .append("=")
-                        .append(SendStatus.NO.getValue());
+                        .append("<")
+                        .append(RETRY_TIMES);
                 resultList = DBUtil.query(sql.toString());
 
                 if (resultList.size() > 0) {
@@ -87,8 +89,8 @@ public class ProcessCheck {
                     }
                 }
             } catch (Exception e) {
-                logger.info("can't get the timeout task, please check you sql string");
-                logger.error(e.getMessage(), e);
+                logger.info("can't get the timer task, please check you sql string");
+                e.printStackTrace();
             }
         };
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();

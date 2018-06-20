@@ -13,7 +13,7 @@
         <dependencySet>
             <unpack>false</unpack>
             <scope>runtime</scope>
-            <outputDirectory>schema-service/lib</outputDirectory>
+            <outputDirectory>binlog-service/lib</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
         </dependencySet>
     </dependencySets>
@@ -22,12 +22,12 @@
 
         <fileSet>
             <directory>src/main/resources</directory>
-            <outputDirectory>schema-service/conf</outputDirectory>
+            <outputDirectory>binlog-service/conf</outputDirectory>
         </fileSet>
 
         <fileSet>
             <directory>bin</directory>
-            <outputDirectory>schema-service/bin</outputDirectory>
+            <outputDirectory>binlog-service/bin</outputDirectory>
         </fileSet>
 
     </fileSets>
