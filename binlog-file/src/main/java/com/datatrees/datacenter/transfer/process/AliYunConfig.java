@@ -4,13 +4,10 @@ import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
 import com.aliyuncs.profile.DefaultProfile;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
 public class AliYunConfig {
-    private static Logger LOG = LoggerFactory.getLogger(AliYunConfig.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static final String REGION_ID = properties.getProperty("REGION_ID");
     private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");

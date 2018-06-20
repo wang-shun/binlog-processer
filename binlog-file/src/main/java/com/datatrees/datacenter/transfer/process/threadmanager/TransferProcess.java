@@ -24,7 +24,7 @@ public class TransferProcess {
     /**
      * 开始位置
      */
-    private long startPos;
+    private volatile long startPos;
     /**
      * 结束位置
      */
@@ -43,7 +43,7 @@ public class TransferProcess {
             if (HDFSFileUtil.fileSystem.exists(new Path(filePath))) {
                 firstDown = false;
                 startPos = HDFSFileUtil.getFileSize(filePath);
-                LOG.info("the file size of : "+filePath+" is : "+startPos);
+                LOG.info("the file size of : " + filePath + " is : " + startPos);
             } else {
                 startPos = 0;
             }
@@ -72,11 +72,11 @@ public class TransferProcess {
             }
         }
         if (startPos < endPos) {
+            LOG.info("begin download binlog file :" + "[" + transInfo.getSrcPath() + "]");
             TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
                     transInfo.getFileName(), transInfo.getDbInstance().getDBInstanceId());
             LOG.info("start= " + startPos + ",  end= " + endPos);
             ThreadPoolInstance.getExecutors().execute(transThread);
-            //停止标志
             boolean stop = false;
             while (!stop) {
                 sleep(checkInterval);
@@ -88,6 +88,8 @@ public class TransferProcess {
                     LOG.info("file transfer over");
                 }
             }
+        } else {
+            LOG.info("binlog file :" + "[" + transInfo.getSrcPath() + "] has been finished!");
         }
     }
 

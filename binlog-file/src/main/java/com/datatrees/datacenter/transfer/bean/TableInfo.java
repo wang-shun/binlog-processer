@@ -26,4 +26,6 @@ public class TableInfo {
     public static String PROCESS_END = "process_end";
     public static String RETRY_TIMES = "retry_times";
     public static String PROCESS_STATUS = "status";
+    public static String FILE_SIZE = "file_size";
+    public static String DOWN_SIZE = "down_size";
 }

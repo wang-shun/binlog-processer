@@ -49,7 +49,6 @@ public class FileUtil {
             LOG.info(e.getMessage());
             e.printStackTrace();
         }
-        LOG.info("the real size of this file :" + path + " is :  " + len);
         return len;
     }
 }
