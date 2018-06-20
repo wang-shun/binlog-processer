@@ -121,8 +121,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 LOG.info("no binlog backed in the back instance : " + bakInstanceId);
             }
         } else {
-            String beginTime = TimeUtil.timeStamp2DateStr(TimeUtil.strToDate(binlogFilesRequest.getStartTime(), TableInfo.COMMON_FORMAT).getTime(), TableInfo.UTC_FORMAT);
-            String finishTime = TimeUtil.timeStamp2DateStr(TimeUtil.strToDate(binlogFilesRequest.getEndTime(), TableInfo.COMMON_FORMAT).getTime(), TableInfo.UTC_FORMAT);
+            String beginTime = TimeUtil.timeStamp2DateStr(TimeUtil.strToDate(binlogFilesRequest.getStartTime(), TableInfo.UTC_FORMAT).getTime(), TableInfo.UTC_FORMAT);
+            String finishTime = TimeUtil.timeStamp2DateStr(TimeUtil.strToDate(binlogFilesRequest.getEndTime(), TableInfo.UTC_FORMAT).getTime(), TableInfo.UTC_FORMAT);
             LOG.info("no binlog find in the: " + instanceId + " with time between " + beginTime + " and " + finishTime);
         }
     }
