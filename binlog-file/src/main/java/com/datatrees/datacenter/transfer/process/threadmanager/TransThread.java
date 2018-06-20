@@ -35,7 +35,7 @@ public class TransThread implements Serializable, Runnable {
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static final int BUFFER_SIZE = Integer.parseInt(properties.getProperty("BUFFER_SIZE"));
     private static Logger LOG = LoggerFactory.getLogger(TransThread.class);
-    FileSystem fs = HDFSFileUtil.fileSystem;
+    private FileSystem fs = HDFSFileUtil.fileSystem;
     /**
      * 文件所在src
      */
@@ -49,9 +49,9 @@ public class TransThread implements Serializable, Runnable {
      */
     private String fileName;
     /**
-     * 分段传输的开始位置
+     * 传输开始位置
      */
-    private long startPos;
+    private volatile long startPos;
     /**
      * 结束位置
      */
@@ -96,11 +96,9 @@ public class TransThread implements Serializable, Runnable {
                 if (!fs.exists(dstPath)) {
                     fs.create(dstPath).close();
                 }
-                FSDataOutputStream out = null;
                 while (!recovered && tries > 0) {
                     while ((((bytes = input.read(b))) != -1) && (startPos < endPos)) {
-                        try {
-                            out = fs.append(dstPath);
+                        try (FSDataOutputStream out = fs.append(dstPath)) {
                             int minByte = (int) Math.min(bytes, (endPos - startPos));
                             out.write(b, 0, minByte);
                             startPos += minByte;
@@ -115,26 +113,23 @@ public class TransThread implements Serializable, Runnable {
                                     LOG.error(e.getMessage(), e);
                                 }
                             }
-                        } finally {
-                            if (out != null) {
-                                out.close();
-                            }
                         }
                     }
                 }
+                over = true;
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
             }
         }
-        over = true;
-        LOG.info("Thread " + Thread.currentThread().getName() + " is done");
         // update a the record
         if (startPos == endPos && over) {
+            LOG.info("the current thread is: " + Thread.currentThread().getName() + " file :" + fileName + " download finished");
             Map<String, Object> whereMap = new HashMap<>(1);
             whereMap.put(TableInfo.FILE_NAME, fileName);
-            Map<String, Object> valueMap = new HashMap<>(2);
+            Map<String, Object> valueMap = new HashMap<>(3);
             valueMap.put(TableInfo.REQUEST_END, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
             valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
+            valueMap.put(TableInfo.DOWN_SIZE, HDFSFileUtil.getFileSize(dest + File.separator + fileName));
             try {
                 DBUtil.update(BINLOG_TRANS_TABLE, valueMap, whereMap);
             } catch (SQLException e) {
@@ -170,7 +165,7 @@ public class TransThread implements Serializable, Runnable {
                 // send to queue
                 try {
                     String path = dest + File.separator + fileName;
-                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
+                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

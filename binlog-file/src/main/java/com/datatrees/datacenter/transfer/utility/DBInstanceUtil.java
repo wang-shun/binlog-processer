@@ -1,13 +1,12 @@
 package com.datatrees.datacenter.transfer.utility;
 
-import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
 import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.rds.model.v20140815.*;
-import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceAttributeResponse.DBInstanceAttribute;
 import com.aliyuncs.rds.model.v20140815.DescribeDBInstanceHAConfigResponse.NodeInfo;
+import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
 import com.aliyuncs.rds.model.v20140815.DescribeDatabasesResponse.Database;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.process.AliYunConfig;
@@ -26,6 +25,10 @@ public class DBInstanceUtil {
     private static final String DBINSTANCE_LIST = properties.getProperty("DBINSTANCE_LIST");
     private static IAcsClient client = AliYunConfig.getClient();
     private static DefaultProfile profile = AliYunConfig.getProfile();
+    private static String instanceSeparator = ",";
+    private static String primaryInstanceFlag = "Primary";
+    private static String slaveInstanceFlag = "Slave";
+
 
     /**
      * 获取所有Mysql数据库实例（DBInstance）
@@ -36,8 +39,8 @@ public class DBInstanceUtil {
         List<String> instanceIds = new ArrayList<>();
         boolean flag = false;
         if (DBINSTANCE_LIST != null && DBINSTANCE_LIST.length() > 0) {
-            if (DBINSTANCE_LIST.contains(",")) {
-                instanceIds = Arrays.asList(DBINSTANCE_LIST.split(","));
+            if (DBINSTANCE_LIST.contains(instanceSeparator)) {
+                instanceIds = Arrays.asList(DBINSTANCE_LIST.split(instanceSeparator));
             } else {
                 LOG.info("the only dbintance id is: " + DBINSTANCE_LIST);
                 instanceIds.add(DBINSTANCE_LIST);
@@ -47,7 +50,7 @@ public class DBInstanceUtil {
         DescribeDBInstancesRequest dbInstancesRequest = new DescribeDBInstancesRequest();
         DescribeDBInstancesResponse dbInstancesResponse;
         List<DBInstance> dbInstances = null;
-        dbInstancesRequest.setDBInstanceType("Primary");
+        dbInstancesRequest.setDBInstanceType(primaryInstanceFlag);
         try {
             dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
             int totalInstance = dbInstancesResponse.getTotalRecordCount();
@@ -93,7 +96,7 @@ public class DBInstanceUtil {
             DescribeDBInstanceHAConfigResponse haConfigResponse = client.getAcsResponse(haConfigRequest, profile);
             List<NodeInfo> hostInstanceInfos = haConfigResponse.getHostInstanceInfos();
             for (NodeInfo hostInstanceInfo : hostInstanceInfos) {
-                if ("Slave".equals(hostInstanceInfo.getNodeType())) {
+                if (slaveInstanceFlag.equals(hostInstanceInfo.getNodeType())) {
                     backInstanceId = hostInstanceInfo.getNodeId();
                 }
             }
@@ -133,8 +136,8 @@ public class DBInstanceUtil {
      */
     public static String dataBasesToStr(List<Database> databases) {
         StringBuilder dataBaseNames = new StringBuilder();
-        for (int i = 0; i < databases.size(); i++) {
-            dataBaseNames.append(databases.get(i).getDBName()).append("=");
+        for (Database database : databases) {
+            dataBaseNames.append(database.getDBName()).append("=");
         }
         return dataBaseNames.toString();
     }
@@ -155,8 +158,7 @@ public class DBInstanceUtil {
             DescribeDBInstanceAttributeResponse response = client.getAcsResponse(attributeRequest, profile);
             dbInstanceAttributeList = response.getItems();
 
-            for (int i = 0; i < dbInstanceAttributeList.size(); i++) {
-                DBInstanceAttribute attribute = dbInstanceAttributeList.get(i);
+            for (DBInstanceAttribute attribute : dbInstanceAttributeList) {
                 if (attribute.getDBInstanceId().equals(instanceId)) {
                     connectString = attribute.getConnectionString();
                 }
