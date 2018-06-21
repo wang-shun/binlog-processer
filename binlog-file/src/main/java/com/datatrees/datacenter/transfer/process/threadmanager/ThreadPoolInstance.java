@@ -22,13 +22,13 @@ public class ThreadPoolInstance {
         private static final ThreadPoolExecutor executors = new ThreadPoolExecutor(corePoolSize,
                 maximumPoolSize,
                 keepAliveTime,
-                TimeUnit.SECONDS,
+                TimeUnit.MINUTES,
                 new LinkedBlockingDeque<>(),
                 r -> {
                     Thread t = new Thread(r);
                     LOG.info("create thread " + t.getName());
                     return t;
-                }, new ThreadPoolExecutor.AbortPolicy());
+                });
     }
 
     public static ThreadPoolExecutor getExecutors() {

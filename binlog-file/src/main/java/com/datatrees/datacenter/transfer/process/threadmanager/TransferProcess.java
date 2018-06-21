@@ -74,7 +74,7 @@ public class TransferProcess {
         if (startPos < endPos) {
             LOG.info("begin download binlog file :" + "[" + transInfo.getSrcPath() + "]");
             TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
-                    transInfo.getFileName(), transInfo.getDbInstance().getDBInstanceId());
+                    transInfo.getFileName(),transInfo.getInstanceId());
             LOG.info("start= " + startPos + ",  end= " + endPos);
             ThreadPoolInstance.getExecutors().execute(transThread);
             boolean stop = false;
@@ -85,7 +85,6 @@ public class TransferProcess {
                     break;
                 } else {
                     stop = true;
-                    LOG.info("file transfer over");
                 }
             }
         } else {
@@ -105,6 +104,4 @@ public class TransferProcess {
             e.printStackTrace();
         }
     }
-
-
 }

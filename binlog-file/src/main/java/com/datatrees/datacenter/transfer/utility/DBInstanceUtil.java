@@ -34,9 +34,8 @@ public class DBInstanceUtil {
      * @return  List<String>
      */
     public static List<String> getAllPrimaryInstanceId() {
-        List<String> instanceIds = null;
+        List<String> instanceIds = new ArrayList<>();
         if (DBINSTANCE_LIST != null && DBINSTANCE_LIST.length() > 0) {
-            instanceIds=new ArrayList<>();
             if (DBINSTANCE_LIST.contains(instanceSeparator)) {
                 instanceIds = Arrays.asList(DBINSTANCE_LIST.split(instanceSeparator));
             } else {
@@ -50,7 +49,6 @@ public class DBInstanceUtil {
             try {
                 dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
                 int totalInstance = dbInstancesResponse.getTotalRecordCount();
-                instanceIds = new ArrayList<>(totalInstance);
                 int pageCount = 0;
                 if (totalInstance >0) {
                     pageCount = (int) Math.ceil(totalInstance / PAGE_SIZE);
@@ -146,6 +144,21 @@ public class DBInstanceUtil {
         }
 
         return backInstanceId;
+    }
+
+    /**
+     * 返回所有实例拼接字符串
+     */
+    public static String getInstancesString(List<String> instanceIds) {
+        StringBuilder instanceStr = new StringBuilder();
+        for (int i = 0; i < instanceIds.size(); i++) {
+            if (i < instanceIds.size() - 1) {
+                instanceStr.append("'").append(instanceIds.get(i)).append("'").append(",");
+            } else {
+                instanceStr.append("'").append(instanceIds.get(i)).append("'");
+            }
+        }
+        return instanceStr.toString();
     }
 
     /**
