@@ -1,5 +1,9 @@
 package com.datatrees.datacenter.resolver.reader;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.ganglia.GangliaReporter;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.EventConsumer;
 import com.datatrees.datacenter.core.task.domain.Binlog;
@@ -18,8 +22,8 @@ import com.github.shyiko.mysql.binlog.event.WriteRowsEventData;
 import com.github.shyiko.mysql.binlog.event.deserialization.ChecksumType;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import com.google.common.base.Function;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
+import info.ganglia.gmetric4j.gmetric.GMetric;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -39,7 +43,11 @@ import org.slf4j.LoggerFactory;
 public final class BinlogFileReader implements Runnable {
 
   private static Logger logger = LoggerFactory.getLogger(BinlogFileReader.class);
-  Stopwatch stopwatch = new Stopwatch();
+  private GMetric ganglia;
+  private MetricRegistry metrics;
+  private Timer requests;
+  private Slf4jReporter reporter;
+  private GangliaReporter reporter2;
   private ThreadLocal<AtomicInteger> readEventError = new ThreadLocal<>();
   private EnumMap<EventType, EventConsumer<Event>> consumerCache;
   /**
@@ -61,14 +69,28 @@ public final class BinlogFileReader implements Runnable {
 
   public BinlogFileReader() {
     resultMap = new HashMap<>(
-      ImmutableMap.<Operator, AtomicLong>builder().put(Operator.Create, new AtomicLong(0L)).
-        put(Operator.Update, new AtomicLong(0L)).put(Operator.Delete, new AtomicLong(0L))
-        .put(Operator.DEFAULT, new AtomicLong(0L)).
-        build());
+      ImmutableMap.<Operator, AtomicLong>builder().put(Operator.Create, new AtomicLong(0L))
+        .put(Operator.Update, new AtomicLong(0L)).put(Operator.Delete, new AtomicLong(0L))
+        .put(Operator.DEFAULT, new AtomicLong(0L)).build());
     currentStatus = Status.SUCCESS;
     eventDeserializer = new EventDeserializer();
     tableMapCache = new ConcurrentHashMap<>();
     consumerCache = new EnumMap<>(EventType.class);
+//    metrics = new MetricRegistry();
+//    requests = metrics.timer(name(BinlogFileReader.class, "resolve binlog"));
+//    reporter = Slf4jReporter.forRegistry(metrics).build();
+//    reporter.start(3000L, TimeUnit.MILLISECONDS);
+
+//    try {
+//      ganglia = new GMetric("localhost", 8649, UDPAddressingMode.MULTICAST, 1);
+//      reporter2 = GangliaReporter.forRegistry(metrics)
+//        .convertRatesTo(TimeUnit.SECONDS)
+//        .convertDurationsTo(TimeUnit.MILLISECONDS)
+//        .build(ganglia);
+//      reporter2.start(3000L, TimeUnit.MILLISECONDS);
+//    } catch (IOException e) {
+//      e.printStackTrace();
+//    }
   }
 
   public BinlogFileReader(Binlog binlog,
@@ -128,6 +150,7 @@ public final class BinlogFileReader implements Runnable {
         new SimpleEntry(binlog, this.currentStatus), resultMap
       )
     );
+//    this.reporter2.stop();
   }
 
   private void handleTableMap(Event event) {
@@ -149,6 +172,7 @@ public final class BinlogFileReader implements Runnable {
       if (schema != null) {
         Object resultValue = schemaUtility.toAvroData(schema, operator, before, after);
         if (resultValue != null) {
+//          Timer.Context context = requests.time();
           try {
             consumer.consume(schema, this.binlog, operator, resultValue);
           } catch (Exception e) {
@@ -157,6 +181,7 @@ public final class BinlogFileReader implements Runnable {
               String.format("error to consume binlog event of %s", tableId));
           } finally {
             resultMap.get(operator).incrementAndGet();
+//            context.stop();
           }
         }
       }
@@ -167,7 +192,6 @@ public final class BinlogFileReader implements Runnable {
     WriteRowsEventData writeRowsEventData = unwrapData(event);
     List<Serializable[]> writeRows = writeRowsEventData.getRows();
     for (Serializable[] rows : writeRows) {
-//      resultMap.get(Operator.Create).incrementAndGet();
       consumeBufferRecord(Operator.Create, writeRowsEventData.getTableId(), null, rows);
     }
   }
@@ -176,7 +200,6 @@ public final class BinlogFileReader implements Runnable {
     UpdateRowsEventData updateRowsEventData = unwrapData(event);
     List<Map.Entry<Serializable[], Serializable[]>> updateRows = updateRowsEventData.getRows();
     for (Map.Entry<Serializable[], Serializable[]> rows : updateRows) {
-//      resultMap.get(Operator.Update).incrementAndGet();
       consumeBufferRecord(Operator.Update, updateRowsEventData.getTableId(), rows.getKey(),
         rows.getValue());
     }
@@ -186,7 +209,6 @@ public final class BinlogFileReader implements Runnable {
     DeleteRowsEventData deleteRowsEventData = unwrapData(event);
     List<Serializable[]> deleteRows = deleteRowsEventData.getRows();
     for (Serializable[] rows : deleteRows) {
-//      resultMap.get(Operator.Create).incrementAndGet();
       consumeBufferRecord(Operator.Delete, deleteRowsEventData.getTableId(), rows, null);
     }
   }

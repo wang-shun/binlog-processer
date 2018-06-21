@@ -16,6 +16,10 @@
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
         </dependency>
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-mapred</artifactId>
+      </dependency>
 
         <!--<dependency>-->
             <!--<groupId>org.apache.avro</groupId>-->
@@ -59,5 +63,13 @@
             <!--<groupId>org.xeustechnologies</groupId>-->
             <!--<artifactId>jtar</artifactId>-->
         <!--</dependency>-->
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+        </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-ganglia</artifactId>
+      </dependency>
     </dependencies>
 </project>

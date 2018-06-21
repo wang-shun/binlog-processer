@@ -48,6 +48,8 @@
         <joda.time>2.10</joda.time>
         <tar.zip>1.1</tar.zip>
         <rabbitmq>4.2.0</rabbitmq>
+        <dropwizard.metrics>4.0.2</dropwizard.metrics>
+        <metrics.ganglia>3.2.5</metrics.ganglia>
     </properties>
 
     <dependencyManagement>
@@ -119,6 +121,11 @@
             <dependency>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-ipc</artifactId>
+                <version>${org.apache.avro}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro-mapred</artifactId>
                 <version>${org.apache.avro}</version>
             </dependency>
             <dependency>
@@ -220,6 +227,18 @@
                 <artifactId>amqp-client</artifactId>
                 <version>${rabbitmq}</version>
             </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${dropwizard.metrics}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-ganglia</artifactId>
+                <version>${metrics.ganglia}</version>
+            </dependency>
+
         </dependencies>
 
 

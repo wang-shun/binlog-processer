@@ -40,10 +40,12 @@ public class SchemaProviders {
   private static Properties properties;
   private static LoadingCache<SecondaryCacheKey, KeyValue<String, String>> secondaryCache;
 
+  private static Long CACHE_TIMEOUT = 7L;
+
   static {
     properties = PropertiesUtility.defaultProperties();
-    secondaryCache = CacheBuilder.newBuilder().maximumSize(1000).
-      expireAfterAccess(10, TimeUnit.HOURS)
+    secondaryCache = CacheBuilder.newBuilder().maximumSize(10000).
+      expireAfterAccess(CACHE_TIMEOUT, TimeUnit.HOURS)
       .build(new CacheLoader<SecondaryCacheKey, KeyValue<String, String>>() {
         @Override
         public KeyValue<String, String> load(SecondaryCacheKey cacheKey) throws Exception {
@@ -77,15 +79,19 @@ public class SchemaProviders {
     final String patternTable = schemaNameMapper.apply(table);
 
     try {
-      String redisKey = String.format("%s.%s.%s", patternInstance, patternSchema, patternTable);
-      String namespace = String.format("%s.%s", patternInstance, patternSchema);
+      String redisKey =
+        String.format("%s:%s:%s", patternInstance, patternSchema, patternTable);
+      String nameSpace =
+        String.format("%s.%s", patternInstance, patternSchema);
 
       if (redis.exists(redisKey)) {
-        return KeyValue.with(namespace, redis.get(redisKey));
+        return KeyValue.with(nameSpace, redis.get(redisKey));
       }
 
-      dbSchemaExtractor = new DbSchemaExtractor(jdbcPort(binlog.getJdbcUrl()), user(), password());
-      AvroConfig config = new AvroConfig(String.format("%s.%s", patternInstance, patternSchema));
+      dbSchemaExtractor =
+        new DbSchemaExtractor(jdbcPort(binlog.getJdbcUrl()), user(), password());
+      AvroConfig config =
+        new AvroConfig(String.format("%s.%s", patternInstance, patternSchema));
       config.setFieldNameMapper(r -> r.replaceAll("`", ""));
       config.setSchemaNameMapper(r -> r.replaceAll("`", ""));
       List<AvroSchema> tableAvroSchema = dbSchemaExtractor.getForSchema(config, schema);
@@ -95,14 +101,16 @@ public class SchemaProviders {
         if (patternTable.equalsIgnoreCase(avroSchema.getName())) {
           result = avroSchemaString;
         }
-        redis.set(String.format("%s.%s.%s", patternInstance, patternSchema, avroSchema.getName()),
-          avroSchemaString);
+        redis.
+          set(String.
+              format("%s:%s:%s", patternInstance, patternSchema, avroSchema.getName()),
+            avroSchemaString);
       }
       if (StringUtils.isBlank(result)) {
         redis.set(redisKey, NULL);
       }
 
-      return KeyValue.with(namespace, result);
+      return KeyValue.with(nameSpace, result);
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
       throw new BinlogException(

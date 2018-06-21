@@ -11,6 +11,7 @@ import com.datatrees.datacenter.resolver.reader.BinlogFileReader;
 import com.datatrees.datacenter.resolver.reader.DefaultEventListner;
 import com.datatrees.datacenter.resolver.storage.HdfsStorage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -100,9 +101,13 @@ public class TaskProcessor implements TaskRunner, Runnable {
   }
 
   protected void startRead(Binlog task) throws IOException {
-    BinlogFileReader binlogFileReader = new BinlogFileReader(task,
-      fileStorage.openReader(task.getPath()),
-      new DefaultEventListner.InnerEventListner(fileStorage));
+    InputStream file = fileStorage.openReader(task.getPath());
+    if (null == file) {
+      logger.info("perhaps file of " + task.getPath() + " does not exist");
+      return;
+    }
+    BinlogFileReader binlogFileReader =
+      new BinlogFileReader(task, file, new DefaultEventListner.InnerEventListner(fileStorage));
     binlogFileReader.read();
   }
 

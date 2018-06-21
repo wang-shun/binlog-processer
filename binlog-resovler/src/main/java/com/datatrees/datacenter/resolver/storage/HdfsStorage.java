@@ -3,6 +3,7 @@ package com.datatrees.datacenter.resolver.storage;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import com.datatrees.datacenter.core.utility.ArchiveUtility;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import org.apache.hadoop.conf.Configuration;
@@ -32,7 +33,7 @@ public class HdfsStorage implements FileStorage {
     try {
       FileSystem srcFileSystem = FileSystem.get(src.toUri(), conf);
       FileSystem dstFileSystem = FileSystem.get(dst.toUri(), conf);
-      FileUtil.copy(srcFileSystem, src, dstFileSystem, dst, true, conf);
+      FileUtil.copy(srcFileSystem, src, dstFileSystem, dst, true, false, conf);
       return Boolean.TRUE;
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
@@ -56,12 +57,30 @@ public class HdfsStorage implements FileStorage {
     Path path = new Path(file);
     try {
       FileSystem fs = path.getFileSystem(conf);
-      return ArchiveUtility.unArchive(file, fs.open(path));
-//            return new TarArchiveInputStream(fs.open(path));
-//            return new TarInputStream(fs.open(path));
+      if (fs.exists(path)) {
+        return ArchiveUtility.unArchive(file, fs.open(path));
+      } else {
+        return null;
+      }
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("open reader of file %s failed.", file));
+      throw new BinlogException(String.format("open reader of file %s failed.",
+        file)
+      );
+    }
+  }
+
+  @Override
+  public Boolean exists(String file) {
+    try {
+      Path path = new Path(file);
+      FileSystem fs = path.getFileSystem(conf);
+      return fs.exists(path);
+    } catch (IOException e) {
+      logger.error(e.getMessage(), e);
+      throw new BinlogException(String.format("determind open of file %s failed.",
+        file)
+      );
     }
   }
 }

@@ -32,7 +32,6 @@ public final class SchemaData {
   private static final String RESULT_AFTER_TAG = "After";
   private static final String RESULT_ENVELOP_TAG = "Envelop";
   private static final String RESULT_OP_TAG = "op";
-  private static Schema.Parser schemaParser = new Schema.Parser();
 
   static {
     TO_CONNECT_CLASS_CONVERTERS.put(BigDecimal.class, new LogicalTypeConverter() {
@@ -176,20 +175,6 @@ public final class SchemaData {
         }
       }
       envelopBuilder.set(operator, recordBuilder.build());
-    }
-  }
-
-  void fixNullValue(GenericRecordBuilder builder, Schema.Field field, Object value) {
-    if (field.defaultVal() != null && (!isValidValue(field, value))) {
-      if (value instanceof Integer) {
-        builder.set(field.name(), 0);
-      } else if (value instanceof String) {
-        builder.set(field.name(), "");
-      } else {
-        // TODO: 2018/6/7 just handle Integer and Varchar
-      }
-    } else {
-      builder.set(field.name(), value);
     }
   }
 

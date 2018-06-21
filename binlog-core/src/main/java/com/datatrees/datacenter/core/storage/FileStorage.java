@@ -23,4 +23,11 @@ public interface FileStorage {
    * 打开一个文件读写器
    */
   InputStream openReader(String file) throws BinlogException;
+
+  /**
+   * 判断文件是否存在
+   * @param file
+   * @return
+   */
+  Boolean exists(String file);
 }

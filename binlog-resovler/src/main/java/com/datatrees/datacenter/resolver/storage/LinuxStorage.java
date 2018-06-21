@@ -47,4 +47,9 @@ public class LinuxStorage implements FileStorage {
       throw new BinlogException(String.format("open reader of file %s failed.", file));
     }
   }
+
+  @Override
+  public Boolean exists(String file) {
+    return null;
+  }
 }
