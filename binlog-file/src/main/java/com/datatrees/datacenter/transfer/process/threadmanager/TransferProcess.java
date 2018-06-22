@@ -1,6 +1,8 @@
 package com.datatrees.datacenter.transfer.process.threadmanager;
 
+import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
+import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
 import com.datatrees.datacenter.transfer.utility.FileUtil;
 import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
@@ -10,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author personalc
@@ -88,8 +92,20 @@ public class TransferProcess {
                 }
             }
         } else {
-            LOG.info("binlog file :" + "[" + transInfo.getSrcPath() + "] has been finished!");
+            Map<String,Object> whereMap=new HashMap<>();
+            whereMap.put(TableInfo.FILE_NAME,transInfo.getFileName());
+            whereMap.put(TableInfo.DB_INSTANCE,transInfo.getInstanceId());
+            whereMap.put(TableInfo.DOWN_STATUS,0);
+            Map<String,Object>valueMap=new HashMap<>();
+            valueMap.put(TableInfo.DOWN_STATUS,1);
+            try {
+                DBUtil.update(TableInfo.BINLOG_TRANS_TABLE,whereMap,valueMap);
+            } catch (Exception e) {
+                LOG.error("update binlog file"+transInfo.getInstanceId()+"-"+transInfo.getFileName()+" status 0 to 1 failed");
+                e.printStackTrace();
+            }
         }
+        LOG.info("binlog file :" + "[" + transInfo.getSrcPath() + "] has been finished!");
     }
 
     /**
