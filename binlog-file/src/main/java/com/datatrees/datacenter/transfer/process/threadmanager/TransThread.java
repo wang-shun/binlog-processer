@@ -60,7 +60,14 @@ public class TransThread implements Serializable, Runnable {
      * 下载完成标志
      */
     boolean over = false;
+    /**
+     * 实例Id
+     */
     private String instanceId;
+    /**
+     * 下载进度
+     */
+    private long percent;
 
 
     TransThread(String src, String dest, long startPos, long endPos, String fileName, String instanceId) {
@@ -99,6 +106,7 @@ public class TransThread implements Serializable, Runnable {
                             int minByte = (int) Math.min(bytes, (endPos - startPos));
                             out.write(b, 0, minByte);
                             startPos += minByte;
+                            percent=(100*startPos)/endPos;
                             recovered = true;
                         } catch (IOException e) {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {

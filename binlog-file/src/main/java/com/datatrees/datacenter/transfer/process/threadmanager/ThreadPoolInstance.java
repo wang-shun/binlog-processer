@@ -24,13 +24,10 @@ public class ThreadPoolInstance {
                 keepAliveTime,
                 TimeUnit.MINUTES,
                 new LinkedBlockingDeque<>(),
-                new ThreadFactory() {
-                    @Override
-                    public Thread newThread(Runnable r) {
-                        Thread t = new Thread(r);
-                        LOG.info("create thread " + t.getName());
-                        return t;
-                    }
+                r -> {
+                    Thread t = new Thread(r);
+                    LOG.info("create thread " + t.getName());
+                    return t;
                 });
     }
 
