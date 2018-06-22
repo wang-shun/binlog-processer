@@ -20,22 +20,21 @@ import java.util.concurrent.TimeUnit;
  * @author personalc
  */
 public class ProcessCheck {
-    private static Logger LOG = LoggerFactory.getLogger(ProcessCheck.class);
-    private static final Properties properties = PropertiesUtility.defaultProperties();
-    private static final String DEST = properties != null ? properties.getProperty("HDFS_PATH") : null;
-    private static final int interval = Integer.parseInt(properties.getProperty("process.check.interval"));
-    private static final String TIME_SCALE = properties.getProperty("process.check.time.scale");
-    private static final long INITIAL_DELAY = Integer.parseInt(properties.getProperty("process.check.schedule.task.initaildelay"));
-    private static final long THREAD_PERIOD = Integer.parseInt(properties.getProperty("process.check.schedule.task.period"));
-    private static final int RETRY_TIMES = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
+    private static final Logger LOG = LoggerFactory.getLogger(ProcessCheck.class);
+    private Properties properties = PropertiesUtility.defaultProperties();
+    private String DEST = properties != null ? properties.getProperty("HDFS_PATH") : null;
+    private int interval = Integer.parseInt(properties.getProperty("process.check.interval"));
+    private String TIME_SCALE = properties.getProperty("process.check.time.scale");
+    private long INITIAL_DELAY = Integer.parseInt(properties.getProperty("process.check.schedule.task.initaildelay"));
+    private long THREAD_PERIOD = Integer.parseInt(properties.getProperty("process.check.schedule.task.period"));
+    private int RETRY_TIMES = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
     private List<String> instanceIds = DBInstanceUtil.getAllPrimaryInstanceId();
     private String instanceStr = DBInstanceUtil.getInstancesString(instanceIds);
-    private static final Logger logger = LoggerFactory.getLogger(ProcessCheck.class);
 
     public void process() {
         Runnable runnable = () -> {
             try {
-                logger.info("start process check....");
+                LOG.info("start process check....");
                 List<Map<String, Object>> resultList;
                 Map<String, Object> oneRecord;
                 try {
@@ -82,7 +81,7 @@ public class ProcessCheck {
                             String identity = instanceId + "_" + fileName;
                             String mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
                             TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
-                            logger.info("send " + identity + " to massage queue");
+                            LOG.info("send " + identity + " to massage queue");
 
                             //update t_binlog_process table
                             int retryTimes = (Integer) oneRecord.get(TableInfo.RETRY_TIMES) + 1;
@@ -92,11 +91,11 @@ public class ProcessCheck {
                             Map<String, Object> valueMap = new HashMap<>(1);
                             valueMap.put(TableInfo.RETRY_TIMES, retryTimes);
                             DBUtil.update(TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
-                            logger.info("update t_binlog_process table, set " + identity + " retrys " + retryTimes);
+                            LOG.info("update t_binlog_process table, set " + identity + " retrys " + retryTimes);
                         }
                     }
                 } catch (Exception e) {
-                    logger.info("can't get the timer task, please check you sql string");
+                    LOG.info("can't get the timer task, please check you sql string");
                     e.printStackTrace();
                 }
             }catch (Exception e) {

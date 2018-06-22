@@ -16,9 +16,9 @@ import java.util.concurrent.TimeUnit;
 public class TransferTimerTask implements TaskRunner {
 
     private static Logger LOG = LoggerFactory.getLogger(TransferTimerTask.class);
-    private static final Properties properties = PropertiesUtility.defaultProperties();
-    private static final long INITIAL_DELAY = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.initaildelay"));
-    private static final long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
+    private Properties properties = PropertiesUtility.defaultProperties();
+    private long INITIAL_DELAY = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.initaildelay"));
+    private long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
 
     ProcessCheck processCheck;
 
