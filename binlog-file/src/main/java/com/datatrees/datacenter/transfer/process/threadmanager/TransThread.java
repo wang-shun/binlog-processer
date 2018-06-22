@@ -108,7 +108,7 @@ public class TransThread implements Serializable, Runnable {
                             startPos += minByte;
                             recovered = true;
                             percent = (100 * startPos) / endPos;
-                            statusInfo();
+                            //statusInfo();
                         } catch (IOException e) {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
                                 try {
