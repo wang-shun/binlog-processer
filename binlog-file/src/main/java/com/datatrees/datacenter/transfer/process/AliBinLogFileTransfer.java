@@ -37,19 +37,18 @@ import java.util.stream.Collectors;
  */
 public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
-    private static Properties properties = PropertiesUtility.defaultProperties();
-    private static final String REGEX_PATTERN = properties.getProperty("REGEX_PATTERN");
-    private static final String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
-    private static final String HDFS_PATH = properties.getProperty("HDFS_PATH");
-    private static final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
-    private final long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
-    private static final String BINLOG_TRANS_TABLE = TableInfo.BINLOG_TRANS_TABLE;
-    private static final long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
-    private static final long TIMEHOURS_DIFF = -8L;
+    private Properties properties = PropertiesUtility.defaultProperties();
+    private String REGEX_PATTERN = properties.getProperty("REGEX_PATTERN");
+    private String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
+    private String HDFS_PATH = properties.getProperty("HDFS_PATH");
+    private long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
+    private long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
+    private long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
+    private long TIMEHOURS_DIFF = -8L;
     private long currentTime = System.currentTimeMillis() - TIMESTAMP_DIFF;
     private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60 * 1000, TableInfo.UTC_FORMAT);
     private String endTime;
-    private static FileUtil fileUtil = new FileUtil();
+    private FileUtil fileUtil = new FileUtil();
     private List<String> instanceIds = DBInstanceUtil.getAllPrimaryInstanceId();
     private String instanceStr = DBInstanceUtil.getInstancesString(instanceIds);
 
@@ -87,7 +86,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     whereMap.put(TableInfo.FILE_NAME, fileName);
                     try {
                         //判断这个binlog文件是否下载过
-                        int recordCount = DBUtil.query(BINLOG_TRANS_TABLE, whereMap).size();
+                        int recordCount = DBUtil.query(TableInfo.BINLOG_TRANS_TABLE, whereMap).size();
                         if (recordCount == 0) {
                             Map<String, Object> map = new HashMap<>(7);
                             map.put(TableInfo.FILE_SIZE, fileUtil.getFileSize(binLogFile.getDownloadLink()));
@@ -102,7 +101,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             map.put(TableInfo.HOST, IPUtility.ipAddress());
                             map.put(TableInfo.DOWN_START_TIME, start);
                             map.put(TableInfo.DOWN_END_TIME, end);
-                            DBUtil.insert(BINLOG_TRANS_TABLE, map);
+                            DBUtil.insert(TableInfo.BINLOG_TRANS_TABLE, map);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();

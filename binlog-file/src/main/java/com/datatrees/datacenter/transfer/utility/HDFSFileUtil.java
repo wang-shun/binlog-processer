@@ -151,9 +151,8 @@ public class HDFSFileUtil {
      * @param src
      * @param dest
      * @return
-     * @throws Exception
      */
-    public static long upload2HDFSinOffset(String src, String dest, HttpServletRequest request) throws Exception {
+    public static long upload2HDFSinOffset(String src, String dest, HttpServletRequest request) {
 
         if (src == null || src.equals("")) {
             return 0;
