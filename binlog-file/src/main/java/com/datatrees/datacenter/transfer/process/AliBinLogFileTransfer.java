@@ -218,7 +218,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
                             + recordMap.get(TableInfo.FILE_NAME);
                     String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
-                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
                 }
             }
         } catch (SQLException e) {

@@ -28,7 +28,7 @@ public class TransferProcess {
     /**
      * 开始位置
      */
-    private volatile long startPos;
+    private long startPos;
     /**
      * 结束位置
      */

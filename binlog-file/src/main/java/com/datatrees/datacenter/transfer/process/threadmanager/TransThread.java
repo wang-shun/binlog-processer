@@ -51,7 +51,7 @@ public class TransThread implements Serializable, Runnable {
     /**
      * 传输开始位置
      */
-    private volatile long startPos;
+    private long startPos;
     /**
      * 结束位置
      */
