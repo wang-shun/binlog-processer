@@ -28,7 +28,8 @@ public class ProcessCheck {
     private static final long INITIAL_DELAY = Integer.parseInt(properties.getProperty("process.check.schedule.task.initaildelay"));
     private static final long THREAD_PERIOD = Integer.parseInt(properties.getProperty("process.check.schedule.task.period"));
     private static final int RETRY_TIMES = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
-
+    private List<String> instanceIds = DBInstanceUtil.getAllPrimaryInstanceId();
+    private String instanceStr = DBInstanceUtil.getInstancesString(instanceIds);
     private static final Logger logger = LoggerFactory.getLogger(ProcessCheck.class);
 
     public void process() {
@@ -45,22 +46,30 @@ public class ProcessCheck {
                             .append(" ")
                             .append("where")
                             .append(" ")
+                            .append(TableInfo.DB_INSTANCE)
+                            .append(" ")
+                            .append("in")
+                            .append(" ")
+                            .append("(" + instanceStr + ")")
+                            .append(" ")
+                            .append(" and ")
+                            .append(" ")
+                            .append(TableInfo.RETRY_TIMES)
+                            .append(" ")
+                            .append("<")
+                            .append(RETRY_TIMES)
+                            .append(" ")
+                            .append("and")
+                            .append(" ")
                             .append(TableInfo.PROCESS_START)
                             .append("<")
                             .append("now()-interval")
                             .append(" ")
                             .append(interval)
                             .append(" ")
-                            .append(TIME_SCALE)
-                            .append(" ")
-                            .append("and")
-                            .append(" ")
-                            .append(TableInfo.RETRY_TIMES)
-                            .append(" ")
-                            .append("<")
-                            .append(RETRY_TIMES);
-                    resultList = DBUtil.query(sql.toString());
+                            .append(TIME_SCALE);
 
+                    resultList = DBUtil.query(sql.toString());
                     if (resultList.size() > 0) {
                         Iterator<Map<String, Object>> iterator = resultList.iterator();
                         while (iterator.hasNext()) {
@@ -90,8 +99,7 @@ public class ProcessCheck {
                     logger.info("can't get the timer task, please check you sql string");
                     e.printStackTrace();
                 }
-            }catch (Exception e)
-            {
+            }catch (Exception e) {
                 LOG.error(e.getMessage(),e);
             }
         };

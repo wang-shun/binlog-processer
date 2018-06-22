@@ -1,8 +1,5 @@
 package com.datatrees.datacenter.transfer.bean;
 
-import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse;
-import com.aliyuncs.rds.model.v20140815.DescribeDBInstancesResponse.DBInstance;
-
 import java.io.Serializable;
 
 /**
@@ -26,14 +23,14 @@ public class TransInfo implements Serializable {
     /**
      * binlog 文件
      */
-    private DBInstance dbInstance;
+    private String instanceId;
 
 
-    public TransInfo(String srcPath, String destPath, String fileName, DBInstance dbInstance) {
+    public TransInfo(String srcPath, String destPath, String fileName, String instanceId) {
         this.srcPath = srcPath;
         this.destPath = destPath;
         this.fileName = fileName;
-        this.dbInstance = dbInstance;
+        this.instanceId = instanceId;
     }
 
     public String getSrcPath() {
@@ -64,11 +61,11 @@ public class TransInfo implements Serializable {
         return fileName.replace(".tar", "");
     }
 
-    public DescribeDBInstancesResponse.DBInstance getDbInstance() {
-        return dbInstance;
+    public String getInstanceId() {
+        return instanceId;
     }
 
-    public void setDbInstance(DBInstance dbInstance) {
-        this.dbInstance = dbInstance;
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
     }
 }

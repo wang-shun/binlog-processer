@@ -12,6 +12,7 @@ import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
+import com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance;
 import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
@@ -25,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -40,6 +42,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static final String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
     private static final String HDFS_PATH = properties.getProperty("HDFS_PATH");
     private static final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
+    private final long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
     private static final String BINLOG_TRANS_TABLE = TableInfo.BINLOG_TRANS_TABLE;
     private static final long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
     private static final long TIMEHOURS_DIFF = -8L;
@@ -47,18 +50,17 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60 * 1000, TableInfo.UTC_FORMAT);
     private String endTime;
     private static FileUtil fileUtil = new FileUtil();
-    private List<DBInstance> instances = DBInstanceUtil.getAllPrimaryDBInstance();
-    private List<String> instanceIds=DBInstanceUtil.getAllPrimaryInstanceId();
+    private List<String> instanceIds = DBInstanceUtil.getAllPrimaryInstanceId();
+    private String instanceStr = DBInstanceUtil.getInstancesString(instanceIds);
 
 
     /**
      * 下载单个实例binlog文件
      *
      * @param binlogFilesRequest 服务请求
-     * @param dbInstance         实例
+     * @param instanceId         实例
      */
-    private void instanceBinlogTrans(DescribeBinlogFilesRequest binlogFilesRequest, DBInstance dbInstance) {
-        String instanceId = dbInstance.getDBInstanceId();
+    private void instanceBinlogTrans(DescribeBinlogFilesRequest binlogFilesRequest, String instanceId) {
         binlogFilesRequest.setDBInstanceId(instanceId);
         List<BinLogFile> binLogFiles = BinLogFileUtil.getBinLogFiles(AliYunConfig.getClient(), binlogFilesRequest, AliYunConfig.getProfile());
         if (binLogFiles.size() > 0) {
@@ -73,7 +75,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 LOG.info("the batch_id of this download batch is :" + start + "_" + end);
                 for (BinLogFile binLogFile : fileList) {
                     LOG.info("the real size of file [ " + binLogFile.getDownloadLink() + " ] is:" + binLogFile.getFileSize());
-                    String dbInstanceId = dbInstance.getDBInstanceId();
                     String hostInstanceId = binLogFile.getHostInstanceID();
 
                     String logEndTime = binLogFile.getLogEndTime();
@@ -82,7 +83,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     Long logEndTimeStamp = TimeUtil.utc2TimeStamp(logEndTime) + TIMESTAMP_DIFF;
                     String fileName = logEndTimeStamp / 1000 + "-" + BinLogFileUtil.getFileNameFromUrl(binLogFile.getDownloadLink(), REGEX_PATTERN);
                     Map<String, Object> whereMap = new HashMap<>(4);
-                    whereMap.put(TableInfo.DB_INSTANCE, dbInstanceId);
+                    whereMap.put(TableInfo.DB_INSTANCE, instanceId);
                     whereMap.put(TableInfo.FILE_NAME, fileName);
                     try {
                         //判断这个binlog文件是否下载过
@@ -90,7 +91,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         if (recordCount == 0) {
                             Map<String, Object> map = new HashMap<>(7);
                             map.put(TableInfo.FILE_SIZE, fileUtil.getFileSize(binLogFile.getDownloadLink()));
-                            map.put(TableInfo.DB_INSTANCE, dbInstanceId);
+                            map.put(TableInfo.DB_INSTANCE, instanceId);
                             map.put(TableInfo.BATCH_ID, batchId);
                             map.put(TableInfo.FILE_NAME, fileName);
                             map.put(TableInfo.BAK_INSTANCE_ID, hostInstanceId);
@@ -109,11 +110,11 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
 
                     String filePath = HDFS_PATH +
                             File.separator +
-                            dbInstanceId +
+                            instanceId +
                             File.separator +
                             hostInstanceId;
                     TransInfo transInfo = new TransInfo(binLogFile.getDownloadLink(), filePath,
-                            fileName, dbInstance);
+                            fileName, instanceId);
                     TransferProcess transferProcess = new TransferProcess(transInfo);
                     transferProcess.startTrans();
                 }
@@ -121,9 +122,9 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 LOG.info("no binlog backed in the back instance : " + bakInstanceId);
             }
         } else {
-            String beginTime = TimeUtil.timeStamp2DateStr(TimeUtil.strToDate(binlogFilesRequest.getStartTime(), TableInfo.UTC_FORMAT).getTime(), TableInfo.UTC_FORMAT);
-            String finishTime = TimeUtil.timeStamp2DateStr(TimeUtil.strToDate(binlogFilesRequest.getEndTime(), TableInfo.UTC_FORMAT).getTime(), TableInfo.UTC_FORMAT);
-            LOG.info("no binlog find in the: " + instanceId + " with time between " + beginTime + " and " + finishTime);
+            String beginTime = TimeUtil.timeStamp2DateStr(TimeUtil.strToDate(binlogFilesRequest.getStartTime(), TableInfo.UTC_FORMAT).getTime() + TIMESTAMP_DIFF, TableInfo.UTC_FORMAT);
+            String finishTime = TimeUtil.timeStamp2DateStr(TimeUtil.strToDate(binlogFilesRequest.getEndTime(), TableInfo.UTC_FORMAT).getTime() + TIMESTAMP_DIFF, TableInfo.UTC_FORMAT);
+            LOG.info("no binlog find in the : " + instanceId + " with time between " + beginTime + " and " + finishTime);
         }
     }
 
@@ -133,14 +134,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private List<Map<String, Object>> getUnCompleteTrans() {
         List<Map<String, Object>> resultList = null;
         try {
-            StringBuilder instanceStr = new StringBuilder();
-            for (int i = 0; i < instanceIds.size(); i++) {
-                if (i < instanceIds.size() - 1) {
-                    instanceStr.append("'").append(instanceIds.get(i)).append("'").append(",");
-                } else {
-                    instanceStr.append("'").append(instanceIds.get(i)).append("'");
-                }
-            }
             StringBuilder sql = new StringBuilder();
             sql.append("select")
                     .append(" ")
@@ -166,12 +159,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     .append(" ")
                     .append("in")
                     .append(" ")
-                    .append("("+instanceStr.toString()+")")
+                    .append("(" + instanceStr + ")")
                     .append(" ")
                     .append("order by")
                     .append(" ")
                     .append(TableInfo.DOWN_START_TIME);
-            resultList = DBUtil.query(BINLOG_TRANS_TABLE, true, new String[]{TableInfo.DOWN_START_TIME, TableInfo.DOWN_END_TIME}, TableInfo.DOWN_STATUS + "=" + DownloadStatus.UNCOMPLETED.getValue(), null, null, null, TableInfo.DOWN_START_TIME, null);
+
             resultList = DBUtil.query(sql.toString());
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
@@ -179,13 +172,13 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         return resultList;
     }
 
+
+
     /**
      * 处理未下载完成的的binlog文件
      */
     private void processUnComplete(List<Map<String, Object>> uncompleted) {
-        Iterator itr = uncompleted.iterator();
-        while (itr.hasNext()) {
-            Map<String, Object> info = (Map<String, Object>) itr.next();
+        for (Map<String, Object> info : uncompleted) {
             Timestamp startTs = (Timestamp) info.get(TableInfo.DOWN_START_TIME);
             Timestamp endTs = (Timestamp) info.get(TableInfo.DOWN_END_TIME);
             LocalDateTime startLDT = startTs.toLocalDateTime().plusHours(TIMEHOURS_DIFF);
@@ -196,8 +189,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
             binlogFilesRequest.setStartTime(startTime);
             binlogFilesRequest.setEndTime(endTime);
-            for (DBInstance dbInstance : instances) {
-                instanceBinlogTrans(binlogFilesRequest, dbInstance);
+            for (String instanceId : instanceIds) {
+                instanceBinlogTrans(binlogFilesRequest, instanceId);
             }
         }
     }
@@ -243,10 +236,21 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             startTime = TimeUtil.dateToStr(Timestamp.valueOf(timestamp.toLocalDateTime().plusHours(TIMEHOURS_DIFF)), TableInfo.UTC_FORMAT);
         } else {
             try {
-                List<Map<String, Object>> lastDownEnd = DBUtil.query("select " + TableInfo.DOWN_END_TIME + " from " + TableInfo.BINLOG_TRANS_TABLE + " order by " + TableInfo.DOWN_END_TIME + " desc limit 1");
+                StringBuilder endTimeSql = new StringBuilder();
+                endTimeSql.append("select ")
+                        .append(TableInfo.DOWN_END_TIME)
+                        .append(" from  ")
+                        .append(TableInfo.BINLOG_TRANS_TABLE)
+                        .append(" where ")
+                        .append(TableInfo.DB_INSTANCE)
+                        .append(" in ")
+                        .append("(" + instanceStr + ")")
+                        .append(" order by ")
+                        .append(TableInfo.DOWN_END_TIME)
+                        .append(" desc limit 1");
+                List<Map<String, Object>> lastDownEnd = DBUtil.query(endTimeSql.toString());
                 if (lastDownEnd.size() > 0) {
                     //设置下载开始时间为上次结束时间
-
                     Timestamp timestamp = (Timestamp) lastDownEnd.get(0).get(TableInfo.DOWN_END_TIME);
                     startTime = TimeUtil.dateToStr(Timestamp.valueOf(timestamp.toLocalDateTime().plusHours(TIMEHOURS_DIFF)), TableInfo.UTC_FORMAT);
                 }
@@ -260,8 +264,13 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
         binlogFilesRequest.setEndTime(endTime);
         LOG.info("the end time of download: " + endTime);
-        for (DBInstance dbInstance : instances) {
-            instanceBinlogTrans(binlogFilesRequest, dbInstance);
+        for (String instanceId : instanceIds) {
+            instanceBinlogTrans(binlogFilesRequest, instanceId);
+        }
+        try {
+            ThreadPoolInstance.getExecutors().awaitTermination(PERIOD, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

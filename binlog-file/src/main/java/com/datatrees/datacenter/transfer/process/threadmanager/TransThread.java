@@ -60,9 +60,6 @@ public class TransThread implements Serializable, Runnable {
      * 下载完成标志
      */
     boolean over = false;
-    /**
-     * 实例id
-     */
     private String instanceId;
 
 
@@ -110,37 +107,36 @@ public class TransThread implements Serializable, Runnable {
                                     Thread.sleep(3000);
                                     tries--;
                                 } catch (InterruptedException e1) {
-                                    LOG.error(e.getMessage(), e);
+                                    LOG.error(e1.getMessage(), e1);
                                 }
                             }
                         }
                     }
                 }
-                over = true;
+
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
             }
         }
+        over = true;
         // update a the record
-        if (startPos == endPos && over) {
-            LOG.info("the current thread is: " + Thread.currentThread().getName() + " file :" + fileName + " download finished");
-            Map<String, Object> whereMap = new HashMap<>(1);
-            whereMap.put(TableInfo.FILE_NAME, fileName);
-            Map<String, Object> valueMap = new HashMap<>(3);
-            valueMap.put(TableInfo.REQUEST_END, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
-            valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
-            valueMap.put(TableInfo.DOWN_SIZE, HDFSFileUtil.getFileSize(dest + File.separator + fileName));
-            try {
-                DBUtil.update(BINLOG_TRANS_TABLE, valueMap, whereMap);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            insertBinlogProcess();
+        LOG.info("the current thread is: " + Thread.currentThread().getName() + " file :" + fileName + " download finished");
+        Map<String, Object> whereMap = new HashMap<>(1);
+        whereMap.put(TableInfo.FILE_NAME, fileName);
+        Map<String, Object> valueMap = new HashMap<>(3);
+        valueMap.put(TableInfo.REQUEST_END, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
+        valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
+        valueMap.put(TableInfo.DOWN_SIZE, HDFSFileUtil.getFileSize(dest + File.separator + fileName));
+        try {
+            DBUtil.update(BINLOG_TRANS_TABLE, valueMap, whereMap);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        insertBinlogProcess();
     }
 
     /**
-     * insert a new record to t_binlog_process
+     * 将下载完成的binlog文件记录写入t_binlog_process
      */
     private void insertBinlogProcess() {
         Map<String, Object> whereMap;
@@ -174,4 +170,5 @@ public class TransThread implements Serializable, Runnable {
             e.printStackTrace();
         }
     }
+
 }
