@@ -20,10 +20,10 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_PROC_TABLE;
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_TRANS_TABLE;
@@ -106,8 +106,9 @@ public class TransThread implements Serializable, Runnable {
                             int minByte = (int) Math.min(bytes, (endPos - startPos));
                             out.write(b, 0, minByte);
                             startPos += minByte;
-                            percent=(100*startPos)/endPos;
                             recovered = true;
+                            percent = (100 * startPos) / endPos;
+                            statusInfo();
                         } catch (IOException e) {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
                                 try {
@@ -177,6 +178,28 @@ public class TransThread implements Serializable, Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 进度条
+     */
+    public void statusInfo() {
+        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        service.scheduleAtFixedRate(
+
+                new TimerTask() {
+                    long num = 0;
+                    @Override
+                    public void run() {
+                        if (percent > num) {
+                            LOG.info(fileName + "当前下载进度为：" + percent + "%");
+                            num = percent;
+                        }
+                        if (percent == 101) {
+                            System.gc();
+                        }
+                    }
+                }, 0, 200, TimeUnit.MILLISECONDS);
     }
 
 }
