@@ -99,7 +99,7 @@ public class TransferProcess {
             Map<String,Object>valueMap=new HashMap<>();
             valueMap.put(TableInfo.DOWN_STATUS,1);
             try {
-                DBUtil.update(TableInfo.BINLOG_TRANS_TABLE,whereMap,valueMap);
+                DBUtil.update(TableInfo.BINLOG_TRANS_TABLE,valueMap,whereMap);
             } catch (Exception e) {
                 LOG.error("update binlog file"+transInfo.getInstanceId()+"-"+transInfo.getFileName()+" status 0 to 1 failed");
                 e.printStackTrace();

@@ -108,7 +108,7 @@ public class TransThread implements Serializable, Runnable {
                             startPos += minByte;
                             recovered = true;
                             percent = (100 * startPos) / endPos;
-                            //statusInfo();
+                            statusInfo();
                         } catch (IOException e) {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
                                 try {
@@ -184,22 +184,13 @@ public class TransThread implements Serializable, Runnable {
      * 进度条
      */
     public void statusInfo() {
-        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-        service.scheduleAtFixedRate(
-
-                new TimerTask() {
-                    long num = 0;
-                    @Override
-                    public void run() {
-                        if (percent > num) {
-                            LOG.info(fileName + "当前下载进度为：" + percent + "%");
-                            num = percent;
-                        }
-                        if (percent == 101) {
-                            System.gc();
-                        }
-                    }
-                }, 0, 200, TimeUnit.MILLISECONDS);
+        long num = 0;
+        if (percent > num) {
+            LOG.info(fileName + "当前下载进度为：" + percent + "%");
+        }
+        if (percent == 101) {
+            System.gc();
+        }
     }
 
 }
