@@ -74,7 +74,7 @@ public class DBInstanceUtil {
      *
      * @return 返回所有的实例
      */
-    public static List<DBInstance> getAllPrimaryDBInstance() {
+    public static List<DBInstance> getAllDBInstance() {
         List<String> instanceIds = new ArrayList<>();
         boolean flag = false;
         if (DBINSTANCE_LIST != null && DBINSTANCE_LIST.length() > 0) {
@@ -123,7 +123,7 @@ public class DBInstanceUtil {
     /**
      * @return
      */
-    public static List<DBInstance> getAllDBInstance() {
+    public static List<DBInstance> getAllPrimaryDBInstance() {
         DescribeDBInstancesRequest dbInstancesRequest = new DescribeDBInstancesRequest();
         DescribeDBInstancesResponse dbInstancesResponse;
         List<DBInstance> dbInstances = null;
