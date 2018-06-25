@@ -5,6 +5,7 @@ cd `dirname $0`
 BIN_DIR=`pwd`
 cd ..
 DEPLOY_DIR=`pwd`
+HADOOP_DIR=/etc/hadoop/conf
 CONF_DIR=${DEPLOY_DIR}/conf
 LOG_DIR=${DEPLOY_DIR}/logs
 LIB_DIR=${DEPLOY_DIR}/lib
@@ -33,7 +34,7 @@ start()
                 echo "==========================="
         else
                 echo "binlog process is starting ..."
-                nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} > ${LOG_FILE} 2>&1 &
+                nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS}:${HADOOP_DIR} ${APP_MAIN_CLASS} > ${LOG_FILE} 2>&1 &
 #java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} dispense
                 checkpid
 

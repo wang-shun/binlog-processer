@@ -10,6 +10,7 @@ import com.datatrees.datacenter.core.utility.ReflectUtility;
 import com.datatrees.datacenter.resolver.reader.BinlogFileReader;
 import com.datatrees.datacenter.resolver.reader.DefaultEventListner;
 import com.datatrees.datacenter.resolver.storage.HdfsStorage;
+import com.datatrees.datacenter.resolver.storage.LinuxStorage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -46,7 +47,7 @@ public class TaskProcessor implements TaskRunner, Runnable {
 
   public TaskProcessor() {
     blockingQueue = RedisQueue.defaultQueue();
-    fileStorage = new HdfsStorage();// TODO: 2018/6/1 reflect from config
+    fileStorage = new HdfsStorage(new LinuxStorage(), true);// TODO: 2018/6/1 reflect from config
   }
 
   public static TaskProcessor defaultProcessor() {

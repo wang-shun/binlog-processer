@@ -143,9 +143,21 @@ public class Main2 {
 //            TaskDispensor.defaultDispensor().dispense(binlog);
 //        }).start();
 
+//        new Thread(() -> {
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000180", "rm-bp1x3mt0ogici00l4_mysql-bin.000180.tar", "debtcollection.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+
+//        new Thread(() -> {
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000139.tar", "rm-bp1x3mt0ogici00l4_mysql-bin.000137.tar", "telemarketing.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+
         new Thread(() -> {
-            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000180", "rm-bp1x3mt0ogici00l4_mysql-bin.000180.tar", "debtcollection.mysql.rds.aliyuncs.com");
+            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000151.tar", "rm-bp1x3mt0ogici00l4_mysql-bin.000137.tar", "basisdataoperator8.mysql.rds.aliyuncs.com");
             TaskDispensor.defaultDispensor().dispense(binlog);
         }).start();
+
+
     }
 }
