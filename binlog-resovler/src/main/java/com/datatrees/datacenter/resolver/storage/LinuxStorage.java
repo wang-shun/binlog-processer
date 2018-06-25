@@ -30,12 +30,14 @@ public class LinuxStorage implements FileStorage {
     return success;
   }
 
-  public OutputStream openWriter(String file) throws BinlogException {
+  public OutputStream openWriter(String filePath) throws BinlogException {
     try {
-      return Files.newOutputStreamSupplier(new File(file)).getOutput();
+      File file = new File(filePath);
+      file.getParentFile().mkdirs();
+      return Files.newOutputStreamSupplier(file).getOutput();
     } catch (IOException e) {
       logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("open reader of file %s failed.", file));
+      throw new BinlogException(String.format("open reader of file %s failed.", filePath));
     }
   }
 
