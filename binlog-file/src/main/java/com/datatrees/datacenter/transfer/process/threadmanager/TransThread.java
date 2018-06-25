@@ -20,10 +20,10 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_PROC_TABLE;
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_TRANS_TABLE;
@@ -122,7 +122,7 @@ public class TransThread implements Serializable, Runnable {
                         }
                     }
                 }
-
+                input.close();
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
             }

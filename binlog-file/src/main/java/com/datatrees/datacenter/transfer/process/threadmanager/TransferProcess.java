@@ -1,9 +1,7 @@
 package com.datatrees.datacenter.transfer.process.threadmanager;
 
 import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
-import com.datatrees.datacenter.transfer.bean.TableInfo;
-import com.datatrees.datacenter.transfer.bean.TransInfo;
+import com.datatrees.datacenter.transfer.bean.*;
 import com.datatrees.datacenter.transfer.utility.FileUtil;
 import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
 import org.apache.hadoop.fs.Path;
@@ -95,9 +93,9 @@ public class TransferProcess {
             Map<String,Object> whereMap=new HashMap<>();
             whereMap.put(TableInfo.FILE_NAME,transInfo.getFileName());
             whereMap.put(TableInfo.DB_INSTANCE,transInfo.getInstanceId());
-            whereMap.put(TableInfo.DOWN_STATUS,0);
+            whereMap.put(TableInfo.DOWN_STATUS,DownloadStatus.UNCOMPLETED.getValue());
             Map<String,Object>valueMap=new HashMap<>();
-            valueMap.put(TableInfo.DOWN_STATUS,1);
+            valueMap.put(TableInfo.DOWN_STATUS,DownloadStatus.COMPLETE.getValue());
             try {
                 DBUtil.update(TableInfo.BINLOG_TRANS_TABLE,valueMap,whereMap);
             } catch (Exception e) {

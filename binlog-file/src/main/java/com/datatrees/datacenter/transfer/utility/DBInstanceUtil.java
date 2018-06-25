@@ -31,7 +31,8 @@ public class DBInstanceUtil {
 
     /**
      * 获取所有实例id
-     * @return  List<String>
+     *
+     * @return List<String>
      */
     public static List<String> getAllPrimaryInstanceId() {
         List<String> instanceIds = new ArrayList<>();
@@ -50,14 +51,14 @@ public class DBInstanceUtil {
                 dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
                 int totalInstance = dbInstancesResponse.getTotalRecordCount();
                 int pageCount = 0;
-                if (totalInstance >0) {
-                    pageCount = (int) Math.ceil(totalInstance / PAGE_SIZE);
+                if (totalInstance > 0) {
+                    pageCount = (int) Math.ceil((double)totalInstance / PAGE_SIZE);
                 }
                 for (int i = 1; i <= pageCount; i++) {
                     dbInstancesRequest.setPageNumber(i);
                     dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
                     List<DBInstance> dbInstanceList = dbInstancesResponse.getItems();
-                    for (DBInstance dbInstance:dbInstanceList) {
+                    for (DBInstance dbInstance : dbInstanceList) {
                         instanceIds.add(dbInstance.getDBInstanceId());
                     }
                 }
@@ -95,7 +96,7 @@ public class DBInstanceUtil {
             dbInstances = new ArrayList<>(totalInstance);
             int pageCount = 0;
             if (totalInstance > 0) {
-                pageCount = (int) Math.ceil(totalInstance / PAGE_SIZE);
+                pageCount = (int) Math.ceil((double)totalInstance / PAGE_SIZE);
             }
             LOG.info("pageCount: " + pageCount);
             for (int i = 1; i <= pageCount; i++) {
@@ -111,6 +112,35 @@ public class DBInstanceUtil {
                         }
                     }
                 }
+                dbInstances.addAll(dbInstanceList);
+            }
+        } catch (ClientException e) {
+            LOG.error("can't get all primary instance");
+        }
+        return dbInstances;
+    }
+
+    /**
+     * @return
+     */
+    public static List<DBInstance> getAllDBInstance() {
+        DescribeDBInstancesRequest dbInstancesRequest = new DescribeDBInstancesRequest();
+        DescribeDBInstancesResponse dbInstancesResponse;
+        List<DBInstance> dbInstances = null;
+        dbInstancesRequest.setDBInstanceType(primaryInstanceFlag);
+        try {
+            dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
+            int totalInstance = dbInstancesResponse.getTotalRecordCount();
+            dbInstances = new ArrayList<>(totalInstance);
+            int pageCount = 0;
+            if (totalInstance > 0) {
+                pageCount = (int) Math.ceil((double) totalInstance / PAGE_SIZE);
+            }
+            LOG.info("pageCount: " + pageCount);
+            for (int i = 1; i <= pageCount; i++) {
+                dbInstancesRequest.setPageNumber(i);
+                dbInstancesResponse = client.getAcsResponse(dbInstancesRequest, profile);
+                List<DBInstance> dbInstanceList = dbInstancesResponse.getItems();
                 dbInstances.addAll(dbInstanceList);
             }
         } catch (ClientException e) {

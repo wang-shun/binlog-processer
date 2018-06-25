@@ -171,7 +171,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     }
 
 
-
     /**
      * 处理未下载完成的的binlog文件
      */
@@ -218,7 +217,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
                             + recordMap.get(TableInfo.FILE_NAME);
                     String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
-                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
                 }
             }
         } catch (SQLException e) {
@@ -247,7 +246,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         .append(TableInfo.DOWN_END_TIME)
                         .append(" desc limit 1");
                 List<Map<String, Object>> lastDownEnd = DBUtil.query(endTimeSql.toString());
-                if (lastDownEnd.size() > 0) {
+                if (lastDownEnd.size() == 1) {
                     //设置下载开始时间为上次结束时间
                     Timestamp timestamp = (Timestamp) lastDownEnd.get(0).get(TableInfo.DOWN_END_TIME);
                     startTime = TimeUtil.dateToStr(Timestamp.valueOf(timestamp.toLocalDateTime().plusHours(TIMEHOURS_DIFF)), TableInfo.UTC_FORMAT);
