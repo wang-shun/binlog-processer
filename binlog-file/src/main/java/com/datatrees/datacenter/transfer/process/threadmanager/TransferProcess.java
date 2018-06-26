@@ -85,8 +85,6 @@ public class TransferProcess {
                 if (!transThread.over) {
                     // 还存在未下载完成的线程
                     break;
-                } else {
-                    stop = true;
                 }
             }
         } else {
@@ -102,8 +100,8 @@ public class TransferProcess {
                 LOG.error("update binlog file"+transInfo.getInstanceId()+"-"+transInfo.getFileName()+" status 0 to 1 failed");
                 e.printStackTrace();
             }
+            LOG.info("binlog file :" + "[" + transInfo.getSrcPath() + "] has been finished!");
         }
-        LOG.info("binlog file :" + "[" + transInfo.getSrcPath() + "] has been finished!");
     }
 
     /**

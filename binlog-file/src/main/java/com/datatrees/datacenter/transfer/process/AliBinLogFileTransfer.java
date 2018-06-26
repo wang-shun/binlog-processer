@@ -105,7 +105,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
                     String filePath = HDFS_PATH +
                             File.separator +
                             instanceId +

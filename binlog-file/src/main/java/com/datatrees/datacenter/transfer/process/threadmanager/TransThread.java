@@ -20,10 +20,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_PROC_TABLE;
 import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_TRANS_TABLE;
@@ -165,14 +162,14 @@ public class TransThread implements Serializable, Runnable {
                 try {
                     DBUtil.insert(BINLOG_PROC_TABLE, map);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    LOG.error("insert " + fileName + "to t_binlog_process failed");
                 }
                 // send to queue
                 try {
                     String path = dest + File.separator + fileName;
                     TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOG.error("send " + fileName + " to queue failed");
                 }
             }
         } catch (Exception e) {
@@ -188,9 +185,25 @@ public class TransThread implements Serializable, Runnable {
         if (percent > num) {
             LOG.info(fileName + "当前下载进度为：" + percent + "%");
         }
-        if (percent == 101) {
-            System.gc();
+        if (percent > 100) {
+            delErrorFile();
         }
+    }
+
+    private void delErrorFile() {
+        HDFSFileUtil.checkAndDel(dest + File.separator + fileName);
+        Map<String, Object> whereMap = new HashMap<>(2);
+        whereMap.put(TableInfo.FILE_NAME, fileName);
+        whereMap.put(TableInfo.DB_INSTANCE, instanceId);
+        Map<String, Object> valueMap = new HashMap<>(1);
+        valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
+        try {
+            DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+        } catch (SQLException e) {
+            LOG.error("reset down_status of file:" + fileName + " to 0 failed");
+        }
+        startPos=0;
+        Thread.currentThread().interrupt();
     }
 
 }
