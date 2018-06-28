@@ -1,12 +1,15 @@
 package com.datatrees.datacenter.resolver;
 
 import com.alibaba.fastjson.JSON;
+import com.datatrees.datacenter.core.domain.Status;
+import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import com.datatrees.datacenter.core.task.RedisQueue;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.core.utility.ReflectUtility;
+import com.datatrees.datacenter.resolver.handler.ExceptionHandler;
 import com.datatrees.datacenter.resolver.reader.BinlogFileReader;
 import com.datatrees.datacenter.resolver.reader.DefaultEventListner;
 import com.datatrees.datacenter.resolver.storage.HdfsStorage;
@@ -26,17 +29,22 @@ public class TaskProcessor implements TaskRunner, Runnable {
 
   protected static Logger logger = LoggerFactory.getLogger(TaskProcessor.class);
   protected static Properties properties;
+  protected static Integer MAX_THREAD_BINLOG_THREAD;
   private static TaskProcessor __taskProcessor;
 
   static {
     properties = PropertiesUtility.defaultProperties();
+    MAX_THREAD_BINLOG_THREAD = Integer.valueOf(properties.getProperty("max.thread.binlog.thread"));
   }
 
+  protected ExceptionHandler exceptionHandler;
   /**
    * 最大单机跑n个binlogreader
    */
   protected ExecutorService executorService = Executors.
-    newFixedThreadPool(Integer.valueOf(properties.getProperty("max.thread.binlog.thread")),
+    newFixedThreadPool(Integer.valueOf(
+      MAX_THREAD_BINLOG_THREAD > Runtime.getRuntime().availableProcessors() ? Runtime.getRuntime()
+        .availableProcessors() : MAX_THREAD_BINLOG_THREAD),
       r -> {
         Thread thread = new Thread(r);
         thread.setDaemon(true);
@@ -48,6 +56,9 @@ public class TaskProcessor implements TaskRunner, Runnable {
   public TaskProcessor() {
     blockingQueue = RedisQueue.defaultQueue();
     fileStorage = new HdfsStorage(new LinuxStorage(), true);// TODO: 2018/6/1 reflect from config
+    exceptionHandler = (file, e) -> {
+      DBbiz.update(file, e.getMessage(), e.getStatus());
+    };
   }
 
   public static TaskProcessor defaultProcessor() {
@@ -72,10 +83,14 @@ public class TaskProcessor implements TaskRunner, Runnable {
           if (StringUtils.isNotBlank(taskDesc)) {
             logger.info(String.format("start to read log file of %s", taskDesc));
             executorService.submit(() -> {
+              Binlog task = JSON.parseObject(taskDesc, Binlog.class);
               try {
-                startRead(JSON.parseObject(taskDesc, Binlog.class));
+                startRead(task, () -> {
+                });
               } catch (Exception e) {
                 logger.error(e.getMessage(), e);
+                exceptionHandler.handle(task.getIdentity1(), new BinlogException(e.getMessage(),
+                  Status.OTHER, e));
               }
             });
           }
@@ -101,15 +116,16 @@ public class TaskProcessor implements TaskRunner, Runnable {
     runThread.start();
   }
 
-  protected void startRead(Binlog task) throws IOException {
-    InputStream file = fileStorage.openReader(task.getPath());
-    if (null == file) {
-      logger.info("perhaps file of " + task.getPath() + " does not exist");
-      return;
+  protected void startRead(Binlog task, Runnable r) throws IOException {
+    try {
+      InputStream file = fileStorage.openReader(task.getPath());
+      BinlogFileReader binlogFileReader = new BinlogFileReader(task, file,
+        new DefaultEventListner.InnerEventListner(fileStorage, task), null, exceptionHandler, r);
+      binlogFileReader.read();
+    } catch (Exception e) {
+      r.run();
+      throw e;
     }
-    BinlogFileReader binlogFileReader =
-      new BinlogFileReader(task, file, new DefaultEventListner.InnerEventListner(fileStorage));
-    binlogFileReader.read();
   }
 
   static class KafkaProcessor extends TaskProcessor {

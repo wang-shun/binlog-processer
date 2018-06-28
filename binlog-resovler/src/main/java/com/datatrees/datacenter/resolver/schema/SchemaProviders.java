@@ -4,6 +4,7 @@ import com.callfire.avro.AvroSchema;
 import com.callfire.avro.DbSchemaExtractor;
 import com.callfire.avro.SchemaGenerator;
 import com.callfire.avro.config.AvroConfig;
+import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
@@ -45,7 +46,7 @@ public class SchemaProviders {
   static {
     properties = PropertiesUtility.defaultProperties();
     secondaryCache = CacheBuilder.newBuilder().maximumSize(10000).
-      expireAfterAccess(CACHE_TIMEOUT, TimeUnit.HOURS)
+      expireAfterAccess(CACHE_TIMEOUT, TimeUnit.DAYS)
       .build(new CacheLoader<SecondaryCacheKey, KeyValue<String, String>>() {
         @Override
         public KeyValue<String, String> load(SecondaryCacheKey cacheKey) throws Exception {
@@ -67,9 +68,10 @@ public class SchemaProviders {
       return secondaryCache
         .get(SecondaryCacheKey.builder().binlog(binlog).schema(schema).table(table).build());
     } catch (ExecutionException e) {
-      logger.error(e.getMessage(), e);
-      throw new BinlogException("error to get local cache of" + schema + "-" + table,
-        e);
+      throw new BinlogException(
+        String.format("error to get cache schema of [%s-%s-%s] from %s.",
+          binlog.getInstanceId(), schema, table, binlog.getJdbcUrl()), Status.SCHEMAFAILED, e
+      );
     }
   }
 
@@ -112,11 +114,9 @@ public class SchemaProviders {
 
       return KeyValue.with(nameSpace, result);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
       throw new BinlogException(
-        String.format("error to get schema of [%s-%s-%s] from %s because of %s",
-          binlog.getInstanceId(), schema, table, binlog.getJdbcUrl(), e.getMessage(),
-          e)
+        String.format("error to get schema of [%s-%s-%s] from %s.",
+          binlog.getInstanceId(), schema, table, binlog.getJdbcUrl()), Status.SCHEMAFAILED, e
       );
     }
   }
@@ -133,7 +133,7 @@ public class SchemaProviders {
     return properties.getProperty("user");
   }
 
-  static class SecondaryCacheKey {
+  public static class SecondaryCacheKey {
 
     public Binlog binlog;
     public String schema;
@@ -182,7 +182,7 @@ public class SchemaProviders {
       return String.format("%s.%s.%s", this.binlog.getInstanceId(), this.schema, this.table);
     }
 
-    static class CacheKeyBuilder {
+    public static class CacheKeyBuilder {
 
       public Binlog binlog;
       public String schema;

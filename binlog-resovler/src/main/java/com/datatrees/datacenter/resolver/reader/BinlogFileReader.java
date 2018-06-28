@@ -4,11 +4,13 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.ganglia.GangliaReporter;
+import com.datatrees.datacenter.core.domain.Operator;
+import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.EventConsumer;
 import com.datatrees.datacenter.core.task.domain.Binlog;
-import com.datatrees.datacenter.resolver.domain.Operator;
-import com.datatrees.datacenter.resolver.domain.Status;
+import com.datatrees.datacenter.resolver.DBbiz;
+import com.datatrees.datacenter.resolver.handler.ExceptionHandler;
 import com.datatrees.datacenter.resolver.schema.SchemaData;
 import com.github.shyiko.mysql.binlog.BinaryLogFileReader;
 import com.github.shyiko.mysql.binlog.event.DeleteRowsEventData;
@@ -20,6 +22,7 @@ import com.github.shyiko.mysql.binlog.event.TableMapEventData;
 import com.github.shyiko.mysql.binlog.event.UpdateRowsEventData;
 import com.github.shyiko.mysql.binlog.event.WriteRowsEventData;
 import com.github.shyiko.mysql.binlog.event.deserialization.ChecksumType;
+import com.github.shyiko.mysql.binlog.event.deserialization.EventDataDeserializationException;
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -27,7 +30,6 @@ import info.ganglia.gmetric4j.gmetric.GMetric;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -53,7 +55,7 @@ public final class BinlogFileReader implements Runnable {
   /**
    * Map<SimpleEntry<Binlog, Status>  binlog 和最终处理状态 Map<Operator, AtomicLong> 处理文件个数
    */
-  private EventListner<AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Binlog, Status>, Map<Operator, AtomicLong>>> consumer;
+  private EventListner<Runnable> consumer;
   private InputStream fileStream;
   private Binlog binlog;
   private HashMap<Operator, AtomicLong> resultMap;
@@ -62,6 +64,9 @@ public final class BinlogFileReader implements Runnable {
   private ConcurrentHashMap<Long, SimpleEntry> tableMapCache;
   private SchemaData schemaUtility;
   private Status currentStatus;
+
+  private ExceptionHandler exceptionHandler;
+  private Runnable callback;
   /**
    * 分库
    */
@@ -95,15 +100,17 @@ public final class BinlogFileReader implements Runnable {
 
   public BinlogFileReader(Binlog binlog,
     InputStream fileStream,
-    EventListner<AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Binlog, Status>, Map<Operator, AtomicLong>>> consumer
+    EventListner<Runnable> consumer
   ) throws IOException {
-    this(binlog, fileStream, consumer, null);
+    this(binlog, fileStream, consumer, null, null, null);
   }
 
   public BinlogFileReader(Binlog binlog,
     InputStream fileStream,
-    EventListner<AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Binlog, Status>, Map<Operator, AtomicLong>>> consumer,
-    Function<String, String> schemaNameMapper
+    EventListner<Runnable> consumer,
+    Function<String, String> schemaNameMapper,
+    ExceptionHandler exceptionHandler,
+    Runnable r
   ) throws IOException {
     this();
     this.fileStream = fileStream;
@@ -121,6 +128,12 @@ public final class BinlogFileReader implements Runnable {
     this.consumerCache.put(EventType.EXT_DELETE_ROWS, this::handleDeleteRow);
     if (schemaNameMapper != null) {
       this.schemaNameMapper = schemaNameMapper;
+    }
+    if (exceptionHandler != null) {
+      this.exceptionHandler = exceptionHandler;
+    }
+    if (r != null) {
+      this.callback = r;
     }
   }
 
@@ -145,11 +158,14 @@ public final class BinlogFileReader implements Runnable {
   }
 
   private void onFinished() {
-    this.consumer.onFinish(
-      new SimpleEntry<SimpleEntry<Binlog, Status>, Map<Operator, AtomicLong>>(
-        new SimpleEntry(binlog, this.currentStatus), resultMap
-      )
-    );
+    this.consumer.onFinish(callback);
+    if (reader != null) {
+      try {
+        reader.close();
+      } catch (IOException e) {
+        logger.error(e.getMessage(), e);
+      }
+    }
 //    this.reporter2.stop();
   }
 
@@ -172,17 +188,7 @@ public final class BinlogFileReader implements Runnable {
       if (schema != null) {
         Object resultValue = schemaUtility.toAvroData(schema, operator, before, after);
         if (resultValue != null) {
-//          Timer.Context context = requests.time();
-          try {
-            consumer.consume(schema, this.binlog, operator, resultValue);
-          } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            throw new BinlogException(
-              String.format("error to consume binlog event of %s", tableId));
-          } finally {
-            resultMap.get(operator).incrementAndGet();
-//            context.stop();
-          }
+          consumer.consume(schema, this.binlog, operator, resultValue);
         }
       }
     }
@@ -223,11 +229,10 @@ public final class BinlogFileReader implements Runnable {
         while (true) {
           try {
             event = reader.readEvent();
-          } catch (IOException e) {
-            //如果是readevent 错误则继续读取下一个
-            logger.error("failed to read event because of "
-              + e.getMessage(), e);
-//            readEventError.set(readEventError.get().getAndIncrement());
+          } catch (EventDataDeserializationException e2) {
+            throw new BinlogException(e2.getMessage(), Status.SERIALIZEEVENTFAILED, e2);
+          } catch (Exception e) {
+            throw new BinlogException(e.getMessage(), Status.OTHER, e);
           } finally {
             if (event == null) {
               break;
@@ -235,14 +240,23 @@ public final class BinlogFileReader implements Runnable {
             consume(event);
           }
         }
-//        for (Event event; (event = reader.readEvent()) != null; ) {
-//          consume(event);
-//        }
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
-        currentStatus = Status.FAIL;
+        if (e instanceof BinlogException) {
+          exceptionHandler.handle(this.binlog.getIdentity1(), (BinlogException) e);
+          currentStatus = ((BinlogException) e).getStatus();
+        } else {
+          exceptionHandler.handle(this.binlog.getIdentity1(),
+            new BinlogException(e.getMessage(), Status.OTHER, e));
+          currentStatus = Status.OTHER;
+        }
       }
     } finally {
+      if (currentStatus == Status.SUCCESS) {
+        DBbiz.updateLog(this.binlog.getIdentity1(), this.consumer.result().getValueCacheByFile());
+        DBbiz.updatePartitions(this.consumer.result().getValueCacheByPartition());
+        DBbiz.update(this.binlog.getIdentity1(), "success", Status.SUCCESS);
+      }
       onFinished();
     }
     logger.info("end to read binlog file {} of instance.", this.binlog);
@@ -251,10 +265,11 @@ public final class BinlogFileReader implements Runnable {
   private void consume(Event event) {
     final EventHeader eventHeader = event.getHeader();
     final EventType eventType = eventHeader.getEventType();
-    final Operator simpleEventType = Operator.valueOf(eventType);
-    EventConsumer<Event> eventBinlogEventConsumer =
-      consumerCache.getOrDefault(eventType,
-        bufferRecord -> resultMap.get(simpleEventType).incrementAndGet());
+    EventConsumer<Event> eventBinlogEventConsumer = consumerCache
+      .getOrDefault(eventType, this::idle);
     eventBinlogEventConsumer.consume(event);
+  }
+
+  private void idle(Event e) {
   }
 }

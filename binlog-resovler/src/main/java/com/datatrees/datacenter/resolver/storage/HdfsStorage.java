@@ -1,9 +1,9 @@
 package com.datatrees.datacenter.resolver.storage;
 
+import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import com.datatrees.datacenter.core.utility.ArchiveUtility;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,49 +35,33 @@ public class HdfsStorage implements FileStorage {
     this();
     this.adapter = adapter;
     this.adapterFileStorage = fileStorage;
-
   }
 
   public Boolean commit(String source, String target) throws BinlogException {
     try {
       FileSystem fileSystem = FileSystem.get((new Path(target)).toUri(), conf);
       fileSystem.moveFromLocalFile(new Path(source), new Path(target));
-      //      OutputStream os = fs.create(new Path(target));
-//      File file = new File(source);
-//      InputStream is = new BufferedInputStream(new FileInputStream(file));
-//      IOUtils.copyBytes(is, os, conf);
-//      file.delete();
       return Boolean.TRUE;
-    } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("error to commit temp file of %s", source));
+    } catch (Exception e) {
+      throw new BinlogException(String.format("error to commit temp file of %s", source),
+        Status.COMMITRECORDFAILED,
+        e);
     }
-//    Path src = new Path(source);
-//    Path dst = new Path(target);
-//    try {
-//      FileSystem srcFileSystem = FileSystem.get(src.toUri(), conf);
-//      FileSystem dstFileSystem = FileSystem.get(dst.toUri(), conf);
-//      FileUtil.copy(srcFileSystem, src, dstFileSystem, dst, true, false, conf);
-//      return Boolean.TRUE;
-//    } catch (Exception e) {
-//      logger.error(e.getMessage(), e);
-//      throw new BinlogException(String.format("error to commit temp file of %s", source));
-////            return Boolean.FALSE;
-//    }
   }
 
   public OutputStream openWriter(String file) throws BinlogException {
-    if (adapter) {
-      return adapterFileStorage.openWriter(file);
-    } else {
-      Path path = new Path(file);
-      try {
+    try {
+      if (adapter) {
+        return adapterFileStorage.openWriter(file);
+      } else {
+        Path path = new Path(file);
         FileSystem fs = path.getFileSystem(conf);
         return fs.create(path, true);
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-        throw new BinlogException(String.format("open writer of file %s failed.", file));
       }
+    } catch (Exception e) {
+      throw new BinlogException(String.format("open writer of file %s failed.", file),
+        Status.OPERAVROWRITERFAILED,
+        e);
     }
   }
 
@@ -91,10 +75,9 @@ public class HdfsStorage implements FileStorage {
         return null;
       }
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("open reader of file %s failed.",
-        file)
-      );
+      throw new BinlogException(String.format("open reader of file %s failed.", file),
+        Status.OPENFAILED
+        , e);
     }
   }
 
@@ -105,10 +88,10 @@ public class HdfsStorage implements FileStorage {
       FileSystem fs = path.getFileSystem(conf);
       return fs.exists(path);
     } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("determind open of file %s failed.",
-        file)
-      );
+      String msg = String.format("determind open of file %s failed.",
+        file);
+      logger.error(msg, e);
+      throw new BinlogException(msg, e);
     }
   }
 }

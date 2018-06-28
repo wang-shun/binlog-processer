@@ -2,8 +2,10 @@ package com.datatrees.datacenter.resolver.schema;
 
 import static java.util.Objects.requireNonNull;
 
+import com.datatrees.datacenter.core.domain.Operator;
+import com.datatrees.datacenter.core.domain.Status;
+import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.task.domain.Binlog;
-import com.datatrees.datacenter.resolver.domain.Operator;
 import com.datatrees.datacenter.resolver.schema.converter.LogicalTypeConverter;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -20,18 +22,19 @@ import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.javatuples.KeyValue;
+import org.slf4j.LoggerFactory;
 
 public final class SchemaData {
 
   private static final HashMap<String, LogicalTypeConverter> TO_CONNECT_LOGICAL_CONVERTERS
     = new HashMap<>();
-
   private static final HashMap<Class<?>, LogicalTypeConverter> TO_CONNECT_CLASS_CONVERTERS = new HashMap<>();
   private static final String RESULT_VALUE_TAG = "Value";
   private static final String RESULT_BEFORE_TAG = "Before";
   private static final String RESULT_AFTER_TAG = "After";
   private static final String RESULT_ENVELOP_TAG = "Envelop";
   private static final String RESULT_OP_TAG = "op";
+  private static org.slf4j.Logger logger = LoggerFactory.getLogger(SchemaData.class);
 
   static {
     TO_CONNECT_CLASS_CONVERTERS.put(BigDecimal.class, new LogicalTypeConverter() {
@@ -145,15 +148,22 @@ public final class SchemaData {
 
   public Object toAvroData(Schema schema, Operator operator, Serializable[] beforeValue,
     Serializable[] afterValue) {
-    Schema recordUnionSchema = schema.getField(RESULT_BEFORE_TAG).schema();
-    Schema recordSchema = avroSchemaForUnderlyingTypeIfOptional(recordUnionSchema);
+    try {
+      Schema recordUnionSchema = schema.getField(RESULT_BEFORE_TAG).schema();
+      Schema recordSchema = avroSchemaForUnderlyingTypeIfOptional(recordUnionSchema);
 
-    GenericRecordBuilder envelopBuilder = new GenericRecordBuilder(schema);
-    buildGenericData(beforeValue, recordSchema, envelopBuilder, RESULT_BEFORE_TAG);
+      GenericRecordBuilder envelopBuilder = new GenericRecordBuilder(schema);
+      buildGenericData(beforeValue, recordSchema, envelopBuilder, RESULT_BEFORE_TAG);
 
-    buildGenericData(afterValue, recordSchema, envelopBuilder, RESULT_AFTER_TAG);
-    GenericData.Record finalRecord = envelopBuilder.set(RESULT_OP_TAG, operator.toString()).build();
-    return finalRecord;
+      buildGenericData(afterValue, recordSchema, envelopBuilder, RESULT_AFTER_TAG);
+      GenericData.Record finalRecord = envelopBuilder.set(RESULT_OP_TAG, operator.toString())
+        .build();
+      return finalRecord;
+    } catch (Exception e) {
+      String errMsg = String
+        .format("error to build avro data of %s", schema.toString());
+      throw new BinlogException(errMsg, Status.RESOVLERECORDFAILED, e);
+    }
   }
 
   private void buildGenericData(Serializable[] recordValue, Schema recordSchema,
@@ -178,10 +188,9 @@ public final class SchemaData {
     }
   }
 
-  public Schema toAvroSchema(Binlog binlog, String schema, String table) {
+  public Schema toAvroSchema(Binlog binlog, String schema, String table)  {
     requireNonNull(schema, "No schema provided");
     requireNonNull(table, "No table provided");
-
     String key = schema + "." + table;
     Schema cached = cachedAvroSchema.get(key);
     if (cached != null) {

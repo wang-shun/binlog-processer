@@ -16,12 +16,12 @@ do
     done
 done
 
-ssh root@application1 << EOF
-    cd $BINLOG_PROCESS_HOME/bin
-    sh cluster_stop.sh
-    sh cluster_start.sh
-    exit;
-EOF
+#ssh root@application1 << EOF
+ #   cd $BINLOG_PROCESS_HOME/bin
+   # sh cluster_stop.sh
+   # sh cluster_start.sh
+ #   exit;
+# EOF
 
 
 

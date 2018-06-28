@@ -153,8 +153,24 @@ public class Main2 {
 //            TaskDispensor.defaultDispensor().dispense(binlog);
 //        }).start();
 
+//        new Thread(() -> {
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000151.tar", "rm-bp1x3mt0ogici00l4_mysql-bin.000137.tar", "basisdataoperator8.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+
+
+//        new Thread(() -> {
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000476.tar", "rm-bp1x3mt0ogici00l4_mysql-bin.000476.tar", "dataplatform.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+
+//        new Thread(() -> {
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000342.tar", "rm-bp1x3mt0ogici00l4_mysql-bin.000342.tar", "rulesplatform-three.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+
         new Thread(() -> {
-            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000151.tar", "rm-bp1x3mt0ogici00l4_mysql-bin.000137.tar", "basisdataoperator8.mysql.rds.aliyuncs.com");
+            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000360.tar", "rm-bp101325tnut8me53_1529811602-mysql-bin.000360.tar", "rulesplatform-three.mysql.rds.aliyuncs.com");
             TaskDispensor.defaultDispensor().dispense(binlog);
         }).start();
 
