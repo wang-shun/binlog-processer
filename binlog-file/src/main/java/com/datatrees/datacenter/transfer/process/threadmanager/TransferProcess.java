@@ -1,11 +1,9 @@
 package com.datatrees.datacenter.transfer.process.threadmanager;
 
 import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
-import com.datatrees.datacenter.transfer.bean.TableInfo;
-import com.datatrees.datacenter.transfer.bean.TransInfo;
+import com.datatrees.datacenter.transfer.bean.*;
 import com.datatrees.datacenter.transfer.utility.FileUtil;
-import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
+import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +42,9 @@ public class TransferProcess {
         this.transInfo = transInfo;
         String filePath = transInfo.getDestPath() + File.separator + transInfo.getFileName();
         try {
-            if (HDFSFileUtil.fileSystem.exists(new Path(filePath))) {
+            if (HDFSFileUtility.fileSystem.exists(new Path(filePath))) {
                 firstDown = false;
-                startPos = HDFSFileUtil.getFileSize(filePath);
+                startPos = HDFSFileUtility.getFileSize(filePath);
                 LOG.info("the file size of : " + filePath + " is : " + startPos);
             } else {
                 startPos = 0;
@@ -87,25 +85,27 @@ public class TransferProcess {
                 if (!transThread.over) {
                     // 还存在未下载完成的线程
                     break;
-                } else {
-                    stop = true;
+                }
+                else
+                {
+                    stop=true;
                 }
             }
         } else {
             Map<String,Object> whereMap=new HashMap<>();
             whereMap.put(TableInfo.FILE_NAME,transInfo.getFileName());
             whereMap.put(TableInfo.DB_INSTANCE,transInfo.getInstanceId());
-            whereMap.put(TableInfo.DOWN_STATUS,0);
+            whereMap.put(TableInfo.DOWN_STATUS,DownloadStatus.UNCOMPLETED.getValue());
             Map<String,Object>valueMap=new HashMap<>();
-            valueMap.put(TableInfo.DOWN_STATUS,1);
+            valueMap.put(TableInfo.DOWN_STATUS,DownloadStatus.COMPLETE.getValue());
             try {
                 DBUtil.update(TableInfo.BINLOG_TRANS_TABLE,valueMap,whereMap);
             } catch (Exception e) {
                 LOG.error("update binlog file"+transInfo.getInstanceId()+"-"+transInfo.getFileName()+" status 0 to 1 failed");
                 e.printStackTrace();
             }
+            LOG.info("binlog file :" + "[" + transInfo.getSrcPath() + "] has been finished!");
         }
-        LOG.info("binlog file :" + "[" + transInfo.getSrcPath() + "] has been finished!");
     }
 
     /**

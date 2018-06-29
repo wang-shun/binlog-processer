@@ -78,8 +78,7 @@ public class BinLogFileUtil {
         try {
             binlogFilesResponse = client.getAcsResponse(binlogFilesRequest, profile);
         } catch (ClientException e) {
-            LOG.info("The type of the specified instance does not support this operation");
-            e.printStackTrace();
+            LOG.error("can't get binlog file from AliYun, please check the server",e);
         }
         int totalRecordCount = 0;
         if (binlogFilesResponse != null) {

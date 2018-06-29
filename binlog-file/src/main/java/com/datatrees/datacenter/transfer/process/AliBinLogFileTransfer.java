@@ -15,7 +15,6 @@ import com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstanc
 import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import com.datatrees.datacenter.transfer.utility.FileUtil;
 import com.datatrees.datacenter.transfer.utility.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +46,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private long currentTime = System.currentTimeMillis() - TIMESTAMP_DIFF;
     private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60 * 1000, TableInfo.UTC_FORMAT);
     private String endTime;
-    private FileUtil fileUtil = new FileUtil();
     private List<String> instanceIds = DBInstanceUtil.getAllPrimaryInstanceId();
     private String instanceStr = DBInstanceUtil.getInstancesString(instanceIds);
 
@@ -88,7 +86,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         int recordCount = DBUtil.query(TableInfo.BINLOG_TRANS_TABLE, whereMap).size();
                         if (recordCount == 0) {
                             Map<String, Object> map = new HashMap<>(7);
-                            map.put(TableInfo.FILE_SIZE, fileUtil.getFileSize(binLogFile.getDownloadLink()));
+                            map.put(TableInfo.FILE_SIZE, binLogFile.getFileSize());
                             map.put(TableInfo.DB_INSTANCE, instanceId);
                             map.put(TableInfo.BATCH_ID, batchId);
                             map.put(TableInfo.FILE_NAME, fileName);
@@ -105,7 +103,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
                     String filePath = HDFS_PATH +
                             File.separator +
                             instanceId +
@@ -171,7 +168,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     }
 
 
-
     /**
      * 处理未下载完成的的binlog文件
      */
@@ -218,7 +214,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
                             + recordMap.get(TableInfo.FILE_NAME);
                     String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
-                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
                 }
             }
         } catch (SQLException e) {
@@ -247,7 +243,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         .append(TableInfo.DOWN_END_TIME)
                         .append(" desc limit 1");
                 List<Map<String, Object>> lastDownEnd = DBUtil.query(endTimeSql.toString());
-                if (lastDownEnd.size() > 0) {
+                if (lastDownEnd.size() == 1) {
                     //设置下载开始时间为上次结束时间
                     Timestamp timestamp = (Timestamp) lastDownEnd.get(0).get(TableInfo.DOWN_END_TIME);
                     startTime = TimeUtil.dateToStr(Timestamp.valueOf(timestamp.toLocalDateTime().plusHours(TIMEHOURS_DIFF)), TableInfo.UTC_FORMAT);

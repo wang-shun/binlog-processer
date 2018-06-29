@@ -16,6 +16,7 @@
         <module>binlog-main</module>
         <module>binlog-service</module>
         <module>binlog-api</module>
+        <module>binlog-comparer</module>
     </modules>
 
     <properties>
@@ -50,6 +51,7 @@
         <rabbitmq>4.2.0</rabbitmq>
         <dropwizard.metrics>4.0.2</dropwizard.metrics>
         <metrics.ganglia>3.2.5</metrics.ganglia>
+        <hive.jdbc>3.0.0</hive.jdbc>
     </properties>
 
     <dependencyManagement>
@@ -121,11 +123,6 @@
             <dependency>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-ipc</artifactId>
-                <version>${org.apache.avro}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.avro</groupId>
-                <artifactId>avro-mapred</artifactId>
                 <version>${org.apache.avro}</version>
             </dependency>
             <dependency>
@@ -227,18 +224,6 @@
                 <artifactId>amqp-client</artifactId>
                 <version>${rabbitmq}</version>
             </dependency>
-            <dependency>
-                <groupId>io.dropwizard.metrics</groupId>
-                <artifactId>metrics-core</artifactId>
-                <version>${dropwizard.metrics}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.dropwizard.metrics</groupId>
-                <artifactId>metrics-ganglia</artifactId>
-                <version>${metrics.ganglia}</version>
-            </dependency>
-
         </dependencies>
 
 

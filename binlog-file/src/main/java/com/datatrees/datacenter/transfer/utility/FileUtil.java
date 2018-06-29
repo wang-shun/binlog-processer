@@ -46,8 +46,7 @@ public class FileUtil {
                 }
             }
         } catch (IOException e) {
-            LOG.info(e.getMessage());
-            e.printStackTrace();
+            LOG.error("connection refused",e.getMessage());
         }
         return len;
     }

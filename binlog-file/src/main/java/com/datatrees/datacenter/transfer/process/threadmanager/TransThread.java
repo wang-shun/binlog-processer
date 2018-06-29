@@ -7,7 +7,7 @@ import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
+import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.transfer.utility.TimeUtil;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -21,12 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_PROC_TABLE;
-import static com.datatrees.datacenter.transfer.bean.TableInfo.BINLOG_TRANS_TABLE;
 
 /**
  * @author personalc
@@ -35,7 +30,7 @@ public class TransThread implements Serializable, Runnable {
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static final int BUFFER_SIZE = Integer.parseInt(properties.getProperty("BUFFER_SIZE"));
     private static Logger LOG = LoggerFactory.getLogger(TransThread.class);
-    private FileSystem fs = HDFSFileUtil.fileSystem;
+    private FileSystem fs = HDFSFileUtility.fileSystem;
     /**
      * 文件所在src
      */
@@ -108,7 +103,6 @@ public class TransThread implements Serializable, Runnable {
                             startPos += minByte;
                             recovered = true;
                             percent = (100 * startPos) / endPos;
-                            statusInfo();
                         } catch (IOException e) {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
                                 try {
@@ -121,27 +115,34 @@ public class TransThread implements Serializable, Runnable {
                             }
                         }
                     }
+                    statusInfo();
                 }
-
+                input.close();
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
             }
         }
         over = true;
         // update a the record
-        LOG.info("the current thread is: " + Thread.currentThread().getName() + " file :" + fileName + " download finished");
+        changeDownStatus();
+        insertBinlogProcess();
+    }
+
+    /**
+     * 下载完毕，修改状态
+     */
+    private void changeDownStatus() {
         Map<String, Object> whereMap = new HashMap<>(1);
         whereMap.put(TableInfo.FILE_NAME, fileName);
         Map<String, Object> valueMap = new HashMap<>(3);
         valueMap.put(TableInfo.REQUEST_END, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
         valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
-        valueMap.put(TableInfo.DOWN_SIZE, HDFSFileUtil.getFileSize(dest + File.separator + fileName));
+        valueMap.put(TableInfo.DOWN_SIZE, HDFSFileUtility.getFileSize(dest + File.separator + fileName));
         try {
-            DBUtil.update(BINLOG_TRANS_TABLE, valueMap, whereMap);
+            DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        insertBinlogProcess();
     }
 
     /**
@@ -163,16 +164,16 @@ public class TransThread implements Serializable, Runnable {
                 map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
                 map.put(TableInfo.PROCESS_START, TimeUtil.strToDate(processStart, TableInfo.UTC_FORMAT));
                 try {
-                    DBUtil.insert(BINLOG_PROC_TABLE, map);
+                    DBUtil.insert(TableInfo.BINLOG_PROC_TABLE, map);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    LOG.error("insert " + fileName + "to t_binlog_process failed");
                 }
                 // send to queue
                 try {
                     String path = dest + File.separator + fileName;
                     TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOG.error("send " + fileName + " to queue failed");
                 }
             }
         } catch (Exception e) {
@@ -188,9 +189,25 @@ public class TransThread implements Serializable, Runnable {
         if (percent > num) {
             LOG.info(fileName + "当前下载进度为：" + percent + "%");
         }
-        if (percent == 101) {
-            System.gc();
+        if (percent > 100) {
+            delErrorFile();
         }
+    }
+
+    private void delErrorFile() {
+        HDFSFileUtility.checkAndDel(dest + File.separator + fileName);
+        Map<String, Object> whereMap = new HashMap<>(2);
+        whereMap.put(TableInfo.FILE_NAME, fileName);
+        whereMap.put(TableInfo.DB_INSTANCE, instanceId);
+        Map<String, Object> valueMap = new HashMap<>(1);
+        valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
+        try {
+            DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+        } catch (SQLException e) {
+            LOG.error("reset down_status of file:" + fileName + " to 0 failed");
+        }
+        startPos = 0;
+        Thread.currentThread().interrupt();
     }
 
 }
