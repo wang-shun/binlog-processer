@@ -100,7 +100,7 @@ public class ProcessCheck {
                         }
                     }
                 } catch (Exception e) {
-                    LOG.info("can't get the timer task, please check you sql string");
+                    LOG.info("something error with queue or database");
                     e.printStackTrace();
                 }
             }catch (Exception e) {

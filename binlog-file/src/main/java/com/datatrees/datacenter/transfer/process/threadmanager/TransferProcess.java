@@ -3,7 +3,7 @@ package com.datatrees.datacenter.transfer.process.threadmanager;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.transfer.bean.*;
 import com.datatrees.datacenter.transfer.utility.FileUtil;
-import com.datatrees.datacenter.transfer.utility.HDFSFileUtil;
+import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +42,9 @@ public class TransferProcess {
         this.transInfo = transInfo;
         String filePath = transInfo.getDestPath() + File.separator + transInfo.getFileName();
         try {
-            if (HDFSFileUtil.fileSystem.exists(new Path(filePath))) {
+            if (HDFSFileUtility.fileSystem.exists(new Path(filePath))) {
                 firstDown = false;
-                startPos = HDFSFileUtil.getFileSize(filePath);
+                startPos = HDFSFileUtility.getFileSize(filePath);
                 LOG.info("the file size of : " + filePath + " is : " + startPos);
             } else {
                 startPos = 0;
@@ -85,6 +85,10 @@ public class TransferProcess {
                 if (!transThread.over) {
                     // 还存在未下载完成的线程
                     break;
+                }
+                else
+                {
+                    stop=true;
                 }
             }
         } else {

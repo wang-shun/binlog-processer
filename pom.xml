@@ -16,6 +16,7 @@
         <module>binlog-main</module>
         <module>binlog-service</module>
         <module>binlog-api</module>
+        <module>binlog-comparer</module>
     </modules>
 
     <properties>
@@ -48,6 +49,7 @@
         <joda.time>2.10</joda.time>
         <tar.zip>1.1</tar.zip>
         <rabbitmq>4.2.0</rabbitmq>
+        <hive.jdbc>3.0.0</hive.jdbc>
     </properties>
 
     <dependencyManagement>
