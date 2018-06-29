@@ -118,9 +118,14 @@ public class TaskProcessor implements TaskRunner, Runnable {
 
   protected void startRead(Binlog task, Runnable r) throws IOException {
     try {
+      logger.
+        info("start to read task desc step2:" + task.toString());
       InputStream file = fileStorage.openReader(task.getPath());
       BinlogFileReader binlogFileReader = new BinlogFileReader(task, file,
         new DefaultEventListner.InnerEventListner(fileStorage, task), null, exceptionHandler, r);
+      logger.
+        info("end to open file:" + task.toString());
+
       binlogFileReader.read();
     } catch (Exception e) {
       r.run();

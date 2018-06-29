@@ -169,11 +169,15 @@ public class Main2 {
 //            TaskDispensor.defaultDispensor().dispense(binlog);
 //        }).start();
 
+//        new Thread(() -> {
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.001012.tar", "rm-bp101325tnut8me53_1529811602-mysql-bin.001012.tar", "acrm-usercenter.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+
         new Thread(() -> {
-            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000360.tar", "rm-bp101325tnut8me53_1529811602-mysql-bin.000360.tar", "rulesplatform-three.mysql.rds.aliyuncs.com");
+            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000668.tar", "rm-bp101325tnut8me53_1529811602-mysql-bin.000667.tar", "gongfudai.mysql.rds.aliyuncs.com");
             TaskDispensor.defaultDispensor().dispense(binlog);
         }).start();
-
 
     }
 }

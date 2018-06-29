@@ -56,7 +56,7 @@ public class RabbitMqProcessor extends TaskProcessor {
         executorService.submit(() -> {
           Binlog task = JSON.parseObject(taskDesc, Binlog.class);
           try {
-            logger.info("start to read task desc " + taskDesc);
+            logger.info("start to read task desc step1:" + taskDesc);
             startRead(task, this::releaseSemaphore);
           } catch (Exception e) {
             logger.error("error to start consume message from rabbitmq because of "
@@ -78,7 +78,9 @@ public class RabbitMqProcessor extends TaskProcessor {
   }
 
   private void enqueue(String task) {
+    logger.info("success to get task from rabbitmq " + task);
     taskQueue.offer(task);
+    logger.info("success to offer task to local queue " + task);
   }
 
   @Override
