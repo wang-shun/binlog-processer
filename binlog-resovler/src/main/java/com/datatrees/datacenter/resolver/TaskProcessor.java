@@ -50,8 +50,12 @@ public class TaskProcessor implements TaskRunner, Runnable {
         thread.setDaemon(true);
         return thread;
       });
+  protected String topic;
+  protected TaskProcessorListner taskProcessorListner;
+
   private RBlockingQueue<String> blockingQueue;
   private FileStorage fileStorage;
+
 
   public TaskProcessor() {
     blockingQueue = RedisQueue.defaultQueue();
@@ -65,13 +69,23 @@ public class TaskProcessor implements TaskRunner, Runnable {
     synchronized (TaskProcessor.class) {
       if (__taskProcessor == null) {
         Properties properties = PropertiesUtility.defaultProperties();
-        __taskProcessor = ReflectUtility.reflect(properties.getProperty("queue.dispense.class"));
+        __taskProcessor = ReflectUtility.reflect(properties.getProperty("queue.process.class"));
         if (__taskProcessor == null) {
           __taskProcessor = new RabbitMqProcessor();
         }
       }
       return __taskProcessor;
     }
+  }
+
+  public TaskProcessor setTopic(String topic) {
+    this.topic = topic;
+    return this;
+  }
+
+  public TaskProcessor registerListner(TaskProcessorListner listner) {
+    this.taskProcessorListner = listner;
+    return this;
   }
 
   @Override
@@ -121,6 +135,9 @@ public class TaskProcessor implements TaskRunner, Runnable {
       logger.
         info("start to read task desc step2:" + task.toString());
       InputStream file = fileStorage.openReader(task.getPath());
+      logger.
+
+        info("success to open task desc step3:" + task.toString() + " file:" + file);
       BinlogFileReader binlogFileReader = new BinlogFileReader(task, file,
         new DefaultEventListner.InnerEventListner(fileStorage, task), null, exceptionHandler, r);
       logger.

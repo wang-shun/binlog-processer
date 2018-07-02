@@ -19,16 +19,16 @@ public class RabbitMqDispensor extends TaskDispensor {
   }
 
   @Override
-  public void dispense(Binlog binlog) {
+  public <T> void dispense(String topic, T binlog) {
     executorService.submit(() -> {
       Connection connection = null;
       Channel channel = null;
       try {
         connection = factory.newConnection();
         channel = connection.createChannel();
-        channel.queueDeclare(__properties.getProperty("queue.topic"), false, false, false, null);
-        channel.basicPublish("", __properties.getProperty("queue.topic"),
-          null, JSON.toJSONString(binlog).getBytes("UTF-8"));
+        channel.queueDeclare(topic, false, false, false, null);
+        channel.
+          basicPublish("", topic, null, JSON.toJSONString(binlog).getBytes("UTF-8"));
       } catch (IOException e) {
         logger.error(e.getMessage(), e);
       } catch (TimeoutException e) {
@@ -53,5 +53,11 @@ public class RabbitMqDispensor extends TaskDispensor {
         }
       }
     });
+  }
+
+  @Override
+  public void dispense(Binlog binlog) {
+    String topic = __properties.getProperty("queue.topic");
+    dispense(topic, binlog);
   }
 }

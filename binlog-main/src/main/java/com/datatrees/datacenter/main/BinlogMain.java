@@ -8,11 +8,11 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Main {
+public class BinlogMain {
 
   private static TaskRunner taskRunner;
 
-  private static Logger logger = LoggerFactory.getLogger(Main.class);
+  private static Logger logger = LoggerFactory.getLogger(BinlogMain.class);
 
   public static void main(String[] args) {
     try {
@@ -23,6 +23,14 @@ public class Main {
         taskRunner = ReflectUtility.<TaskRunner>reflect(value.getProperty("runner.class"));
       }
       taskRunner.process();
+
+//      TaskProcessor.defaultProcessor().setTopic("local_topic").registerListner(
+//        new TaskProcessorListner() {
+//          @Override
+//          public void onMessageReceived(String desc) {
+//            System.out.println(desc);
+//          }
+//        }).process();
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }

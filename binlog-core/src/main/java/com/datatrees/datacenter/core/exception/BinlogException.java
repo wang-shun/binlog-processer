@@ -10,6 +10,11 @@ public class BinlogException extends RuntimeException {
     this(msg, Status.OTHER, e);
   }
 
+  public BinlogException(String msg, Status status) {
+    super(msg);
+    this.status = status;
+  }
+
   public BinlogException(String msg, Status status, Exception e) {
     super(msg, e);
     this.status = status;

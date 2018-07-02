@@ -19,6 +19,8 @@ public class TaskDispensor {
   protected static ExecutorService executorService = Executors.newFixedThreadPool(100);
   private static TaskDispensor __taskDispensor;
 
+  protected String topic;
+
   protected TaskDispensor() {
     __properties = PropertiesUtility.defaultProperties();
   }
@@ -37,6 +39,10 @@ public class TaskDispensor {
     }
   }
 
+  public void setTopic(String topic) {
+    this.topic = topic;
+  }
+
   public void dispense(Binlog binlog) {
     try {
       RedisQueue.defaultQueue().offer(JSON.toJSONString(binlog));
@@ -46,6 +52,10 @@ public class TaskDispensor {
         String.format("error to offer binlog of %s", binlog.toString()), e
       );
     }
+  }
+
+  public <T> void dispense(String topic, T message) {
+
   }
 
   static class KafkaDlsispensor extends TaskDispensor {

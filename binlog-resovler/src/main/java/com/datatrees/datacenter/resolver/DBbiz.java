@@ -10,6 +10,7 @@ import com.datatrees.datacenter.resolver.partition.WriteResultValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.LinkedHashMultimap;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import org.joda.time.DateTime;
@@ -28,7 +29,8 @@ public class DBbiz {
       }
 
       DBUtil.update("t_binlog_process",
-        builder.put("processor_ip", IPUtility.ipAddress()).put("remarks", remarks)
+        builder.put("processor_ip", IPUtility.ipAddress())
+          .put("remarks", remarks == null ? "null" : remarks)
           .put("status", status.getValue()).build(),
         ImmutableMap.<String, Object>builder().put("file_name", fileName)
           .build());
@@ -84,5 +86,31 @@ public class DBbiz {
             e.getMessage()), e);
       }
     });
+  }
+
+  public static void report(String topic, int lqs, long tc, long tcc, int ps, int cps, int pac,
+    int mps, int sap,
+    int sql) {
+    try {
+      DBUtil.insert("t_binlog_process_report",
+        ImmutableMap.<String, Object>builder()
+          .put("topic", topic)
+          .put("local_queue_size", lqs)
+          .put("thread_pool_task_count", tc)
+          .put("thread_pool_task_completed_count", tcc)
+          .put("thread_pool_size", ps)
+          .put("thread_pool_core_pool_size", cps)
+          .put("thread_pool_active_count", pac)
+          .put("thread_pool_max_pool_size", mps)
+          .put("sempahore_available_permits", sap)
+          .put("sempahore_queue_length", sql)
+          .put("create_date", DateTime.now().toDate())
+          .put("prossesor_ip", IPUtility.ipAddress())
+          .build());
+    } catch (SQLException e) {
+      logger.error(String
+        .format("error to report status"), e);
+    }
+
   }
 }

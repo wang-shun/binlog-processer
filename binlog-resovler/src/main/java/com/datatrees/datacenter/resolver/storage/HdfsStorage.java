@@ -72,7 +72,9 @@ public class HdfsStorage implements FileStorage {
       if (fs.exists(path)) {
         return ArchiveUtility.unArchive(file, fs.open(path));
       } else {
-        return null;
+        throw new BinlogException(
+          String.format("open reader of file %s failed because file is null.", file),
+          Status.OPENFAILED);
       }
     } catch (Exception e) {
       throw new BinlogException(String.format("open reader of file %s failed.", file),
