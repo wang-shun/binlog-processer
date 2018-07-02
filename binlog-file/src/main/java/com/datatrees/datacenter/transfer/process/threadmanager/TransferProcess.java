@@ -1,16 +1,22 @@
 package com.datatrees.datacenter.transfer.process.threadmanager;
 
+import com.datatrees.datacenter.core.task.TaskDispensor;
+import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.transfer.bean.*;
+import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.transfer.utility.FileUtil;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
+import com.datatrees.datacenter.transfer.utility.TimeUtil;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,10 +25,6 @@ import java.util.Map;
 public class TransferProcess {
     private static Logger LOG = LoggerFactory.getLogger(TransferProcess.class);
     private int checkInterval = 3000;
-    /**
-     * 文件信息
-     */
-    private TransInfo transInfo;
     /**
      * 开始位置
      */
@@ -38,9 +40,18 @@ public class TransferProcess {
 
     private FileUtil fileUtil = new FileUtil();
 
+    private String dest;
+    private String fileName;
+    private String instanceId;
+    private String src;
+
     public TransferProcess(TransInfo transInfo) {
-        this.transInfo = transInfo;
-        String filePath = transInfo.getDestPath() + File.separator + transInfo.getFileName();
+        this.fileName = transInfo.getFileName();
+        this.dest = transInfo.getDestPath();
+        this.instanceId = transInfo.getInstanceId();
+        this.src = transInfo.getSrcPath();
+
+        String filePath = dest + File.separator + fileName;
         try {
             if (HDFSFileUtility.fileSystem.exists(new Path(filePath))) {
                 firstDown = false;
@@ -52,7 +63,7 @@ public class TransferProcess {
         } catch (IOException e) {
             LOG.error(e.getMessage(),e);
         }
-        endPos = fileUtil.getFileSize(transInfo.getSrcPath());
+        endPos = fileUtil.getFileSize(src);
     }
 
     /**
@@ -61,7 +72,7 @@ public class TransferProcess {
     public void startTrans() {
         if (firstDown) {
             //文件长度
-            long fileLen = fileUtil.getFileSize(transInfo.getSrcPath());
+            long fileLen = fileUtil.getFileSize(src);
             if (fileLen == HttpAccessStatus.FILE_SIZE_NOT_KNOWN.getValue()) {
                 LOG.info("file size is no known");
                 return;
@@ -74,9 +85,9 @@ public class TransferProcess {
             }
         }
         if (startPos < endPos) {
-            LOG.info("begin download binlog file :" + "[" + transInfo.getSrcPath() + "]");
-            TransThread transThread = new TransThread(transInfo.getSrcPath(), transInfo.getDestPath(), startPos, endPos,
-                    transInfo.getFileName(),transInfo.getInstanceId());
+            LOG.info("begin download binlog file :" + "[" + src + "]");
+            TransThread transThread = new TransThread(src, dest, startPos, endPos,
+                    fileName, instanceId);
             LOG.info("start= " + startPos + ",  end= " + endPos);
             ThreadPoolInstance.getExecutors().execute(transThread);
             boolean stop = false;
@@ -85,26 +96,24 @@ public class TransferProcess {
                 if (!transThread.over) {
                     // 还存在未下载完成的线程
                     break;
-                }
-                else
-                {
-                    stop=true;
+                } else {
+                    stop = true;
                 }
             }
         } else {
-            Map<String,Object> whereMap=new HashMap<>();
-            whereMap.put(TableInfo.FILE_NAME,transInfo.getFileName());
-            whereMap.put(TableInfo.DB_INSTANCE,transInfo.getInstanceId());
-            whereMap.put(TableInfo.DOWN_STATUS,DownloadStatus.UNCOMPLETED.getValue());
-            Map<String,Object>valueMap=new HashMap<>();
-            valueMap.put(TableInfo.DOWN_STATUS,DownloadStatus.COMPLETE.getValue());
+            Map<String, Object> whereMap = new HashMap<>();
+            whereMap.put(TableInfo.FILE_NAME, fileName);
+            whereMap.put(TableInfo.DB_INSTANCE, instanceId);
+            whereMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
+            Map<String, Object> valueMap = new HashMap<>(1);
+            valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
             try {
-                DBUtil.update(TableInfo.BINLOG_TRANS_TABLE,valueMap,whereMap);
+                DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
             } catch (Exception e) {
-                LOG.error("update binlog file"+transInfo.getInstanceId()+"-"+transInfo.getFileName()+" status 0 to 1 failed");
+                LOG.error("update binlog file" + instanceId + "-" + fileName + " status 0 to 1 failed");
                 e.printStackTrace();
             }
-            LOG.info("binlog file :" + "[" + transInfo.getSrcPath() + "] has been finished!");
+            LOG.info("binlog file :" + "[" + src + "] has been finished!");
         }
     }
 
@@ -120,4 +129,6 @@ public class TransferProcess {
             LOG.error(e.getMessage(),e);
         }
     }
+
+
 }
