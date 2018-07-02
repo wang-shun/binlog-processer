@@ -112,10 +112,27 @@ public class TimeUtil {
         return date;
     }
 
+    /**
+     * 将时间戳转换为时间
+     */
+    public static Date stampToDate(long s){
+        String res;
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date(s);
+        System.out.println(date);
+        res = sf.format(date);
+        Date  newDate = null;
+        try {
+           newDate= sf.parse(res);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return newDate;
+    }
 
     public static void main(String[] args) {
-        //timeStamp2Date(1527165377);
-        dateToDate("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd HH:mm:ss", "2018-10-11T11:22:33Z");
-        timeStamp2DateStr(System.currentTimeMillis(), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+        long s=System.currentTimeMillis();
+        stampToDate(s);
     }
+
 }

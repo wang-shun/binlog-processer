@@ -2,12 +2,15 @@ package com.datatrees.datacenter.rawdata;
 
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
+import com.datatrees.datacenter.operate.OperateType;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,24 +20,34 @@ import java.util.List;
 import java.util.Map;
 
 public class AvroDataReader implements DataReader {
+    private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
     private final FileSystem fs = HDFSFileUtility.fileSystem;
-    private final String operatorField = "op";
 
     @Override
-    public void readBinLogData(String Path) {
+    public Map<String, List> readAllData(String path) {
         InputStream is;
-        try {
-            List<String> fileList = getFilesPath(Path);
-            if (fileList.size() > 0) {
-                for (String filePath : fileList) {
+        List<String> fileList = getFilesPath(path);
+        Map<String, List> opRecord = new HashMap<>();
+        if (fileList.size() > 0) {
+            List<Integer> createList = new ArrayList<>();
+            List<Map<Integer, Long>> upDateList = new ArrayList<>();
+            List<Integer> deleteList = new ArrayList<>();
+            for (String filePath : fileList) {
+                try {
                     is = fs.open(new Path(filePath));
-                    readFromAvro(is);
+                    Map<String, List> recordMap = readFromAvro(is);
+                    createList.addAll(recordMap.get(OperateType.Create.toString()));
+                    upDateList.addAll(recordMap.get(OperateType.Update.toString()));
+                    deleteList.addAll(recordMap.get(OperateType.Delete.toString()));
+                } catch (IOException e) {
+                    LOG.error("can't open HDFS file :" + filePath);
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            opRecord.put(OperateType.Create.toString(), createList);
+            opRecord.put(OperateType.Update.toString(), upDateList);
+            opRecord.put(OperateType.Delete.toString(), deleteList);
         }
-
+        return opRecord;
     }
 
     @Override
@@ -44,10 +57,17 @@ public class AvroDataReader implements DataReader {
         return fileList;
     }
 
-    private void readFromAvro(InputStream is) {
-        List<Integer> insertList = new ArrayList<>();
+    /**
+     * 读取Avro文件中的记录并根据事件分类
+     *
+     * @param is 输入文件流
+     * @return Avro中分类后的事件信息
+     */
+    private Map<String, List> readFromAvro(InputStream is) {
+        List<Integer> createList = new ArrayList<>();
         List<Map<Integer, Long>> upDateList = new ArrayList<>();
         List<Integer> deleteList = new ArrayList<>();
+        Map<String, List> opRecord = new HashMap<>(3);
         try {
             DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());
             for (Object o : reader) {
@@ -55,16 +75,12 @@ public class AvroDataReader implements DataReader {
 
                 JSONObject jsonObject = JSONObject.parseObject(r.get(1).toString());
                 int id = (Integer) jsonObject.get("Id");
-               // System.out.println("id===========" + id);
-
                 long lastUpdateTime = jsonObject.getLong("LastUpdatedDatetime");
-                System.out.println(lastUpdateTime);
 
                 String operator = r.get(2).toString();
-                System.out.println(r.get(2).toString());
                 switch (operator) {
                     case "Create":
-                        insertList.add(id);
+                        createList.add(id);
                         break;
                     case "Update":
                         Map<Integer, Long> idUpdateTime = new HashMap<>(1);
@@ -78,10 +94,14 @@ public class AvroDataReader implements DataReader {
                         break;
                 }
             }
+            opRecord.put(OperateType.Create.toString(), createList);
+            opRecord.put(OperateType.Update.toString(), upDateList);
+            opRecord.put(OperateType.Delete.toString(), deleteList);
             IOUtils.cleanup(null, is);
             IOUtils.cleanup(null, reader);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return opRecord;
     }
 }

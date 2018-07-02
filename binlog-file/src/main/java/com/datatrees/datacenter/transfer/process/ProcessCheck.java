@@ -6,6 +6,7 @@ import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
+import com.datatrees.datacenter.transfer.utility.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,8 +94,9 @@ public class ProcessCheck {
                             Map<String, Object> whereMap = new HashMap<>(2);
                             whereMap.put(TableInfo.DB_INSTANCE, instanceId);
                             whereMap.put(TableInfo.FILE_NAME, fileName);
-                            Map<String, Object> valueMap = new HashMap<>(1);
+                            Map<String, Object> valueMap = new HashMap<>(2);
                             valueMap.put(TableInfo.RETRY_TIMES, retryTimes);
+                            valueMap.put(TableInfo.PROCESS_START,TimeUtil.stampToDate(System.currentTimeMillis()));
                             DBUtil.update(TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
                             LOG.info("update t_binlog_process table, set " + identity + " retrys " + retryTimes);
                         }

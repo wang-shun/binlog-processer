@@ -50,7 +50,7 @@ public class HiveClientUtility {
     public static void getAll(String tableName) {
 
         conn=getConnnection();
-        String sql="select * from "+tableName+" limit 100";
+        String sql="select * from "+tableName;
         System.out.println(sql);
         try {
             ps=prepare(conn, sql);
