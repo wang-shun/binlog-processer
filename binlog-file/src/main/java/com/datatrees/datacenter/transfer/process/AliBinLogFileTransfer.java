@@ -94,7 +94,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             map.put(TableInfo.LOG_START_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logStartTime) + TIMESTAMP_DIFF, TableInfo.COMMON_FORMAT));
                             map.put(TableInfo.LOG_END_TIME, TimeUtil.timeStamp2DateStr(TimeUtil.utc2TimeStamp(logEndTime) + TIMESTAMP_DIFF, TableInfo.COMMON_FORMAT));
                             map.put(TableInfo.DOWN_LINK, binLogFile.getDownloadLink());
-                            map.put(TableInfo.REQUEST_START, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
+                            map.put(TableInfo.REQUEST_START, TimeUtil.stampToDate(System.currentTimeMillis()));
                             map.put(TableInfo.HOST, IPUtility.ipAddress());
                             map.put(TableInfo.DOWN_START_TIME, start);
                             map.put(TableInfo.DOWN_END_TIME, end);

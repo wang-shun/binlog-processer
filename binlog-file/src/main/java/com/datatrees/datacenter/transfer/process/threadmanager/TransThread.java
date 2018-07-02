@@ -135,7 +135,7 @@ public class TransThread implements Serializable, Runnable {
         Map<String, Object> whereMap = new HashMap<>(1);
         whereMap.put(TableInfo.FILE_NAME, fileName);
         Map<String, Object> valueMap = new HashMap<>(3);
-        valueMap.put(TableInfo.REQUEST_END, TimeUtil.timeStamp2DateStr(System.currentTimeMillis(), TableInfo.COMMON_FORMAT));
+        valueMap.put(TableInfo.REQUEST_END, TimeUtil.stampToDate(System.currentTimeMillis()));
         valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
         valueMap.put(TableInfo.DOWN_SIZE, HDFSFileUtility.getFileSize(dest + File.separator + fileName));
         try {
@@ -153,31 +153,29 @@ public class TransThread implements Serializable, Runnable {
         whereMap = new HashMap<>(2);
         whereMap.put(TableInfo.FILE_NAME, fileName);
         whereMap.put(TableInfo.DB_INSTANCE, instanceId);
+        // send to queue
+        try {
+            String path = dest + File.separator + fileName;
+            TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
+        } catch (Exception e) {
+            LOG.error("send " + fileName + " to queue failed");
+        }
         try {
             List<Map<String, Object>> processRecord = DBUtil.query(TableInfo.BINLOG_PROC_TABLE, whereMap);
             if (processRecord.size() == 0) {
-                long currentTime = System.currentTimeMillis();
-                String processStart = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
                 Map<String, Object> map = new HashMap<>(5);
                 map.put(TableInfo.FILE_NAME, fileName);
                 map.put(TableInfo.DB_INSTANCE, instanceId);
                 map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
-                map.put(TableInfo.PROCESS_START, TimeUtil.strToDate(processStart, TableInfo.UTC_FORMAT));
+                map.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
                 try {
                     DBUtil.insert(TableInfo.BINLOG_PROC_TABLE, map);
                 } catch (SQLException e) {
                     LOG.error("insert " + fileName + "to t_binlog_process failed");
                 }
-                // send to queue
-                try {
-                    String path = dest + File.separator + fileName;
-                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, instanceId + "_" + fileName, DBInstanceUtil.getConnectString(instanceId)));
-                } catch (Exception e) {
-                    LOG.error("send " + fileName + " to queue failed");
-                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("query from database error");
         }
     }
 

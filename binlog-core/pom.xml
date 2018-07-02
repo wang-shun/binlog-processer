@@ -14,6 +14,15 @@
         <mchange.version>0.9.2.1</mchange.version>
         <common.compress>1.14</common.compress>
     </properties>
+
+   <!-- <repositories>
+        <repository>
+            <id>cloudera</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+        </repository>
+    </repositories>-->
+
+
     <dependencies>
         <dependency>
             <groupId>redis.clients</groupId>
@@ -79,7 +88,22 @@
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-jdbc</artifactId>
-            <version>${hive.jdbc}</version>
+            <version>3.0.0</version>
         </dependency>
+       <!-- <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-jdbc</artifactId>
+            <version>1.1.0-cdh5.12.1</version>
+        </dependency>
+        <dependency>
+             <groupId>org.apache.hadoop</groupId>
+             <artifactId>hadoop-core</artifactId>
+             <version>2.6.0-mr1-cdh5.12.1</version>
+         </dependency>
+         <dependency>
+             <groupId>org.apache.hadoop</groupId>
+             <artifactId>hadoop-common</artifactId>
+             <version>2.6.0-cdh5.12.1</version>
+         </dependency>-->
     </dependencies>
 </project>
