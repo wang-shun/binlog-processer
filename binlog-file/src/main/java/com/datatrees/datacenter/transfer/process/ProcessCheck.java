@@ -96,9 +96,10 @@ public class ProcessCheck {
                             whereMap.put(TableInfo.FILE_NAME, fileName);
                             Map<String, Object> valueMap = new HashMap<>(2);
                             valueMap.put(TableInfo.RETRY_TIMES, retryTimes);
-                            valueMap.put(TableInfo.PROCESS_START,TimeUtil.stampToDate(System.currentTimeMillis()));
+                            Date process_start=TimeUtil.stampToDate(System.currentTimeMillis());
+                            valueMap.put(TableInfo.PROCESS_START,process_start);
                             DBUtil.update(TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
-                            LOG.info("update t_binlog_process table, set " + identity + " retrys " + retryTimes);
+                            LOG.info("update t_binlog_process table, set " + identity + " retry: " + retryTimes + " and process_start: "+process_start);
                         }
                     }
                 } catch (Exception e) {

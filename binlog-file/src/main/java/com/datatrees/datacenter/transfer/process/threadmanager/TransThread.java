@@ -77,7 +77,7 @@ public class TransThread implements Serializable, Runnable {
     @Override
     public void run() {
         LOG.info("the current thread is: " + Thread.currentThread().getName() + " begin to download file :" + fileName);
-        while (startPos < endPos && !over) {
+        while (startPos < endPos) {
             try {
                 URL srcUrl = new URL(src);
                 HttpURLConnection httpConnection = (HttpURLConnection) srcUrl.openConnection();
@@ -103,6 +103,7 @@ public class TransThread implements Serializable, Runnable {
                             startPos += minByte;
                             recovered = true;
                             percent = (100 * startPos) / endPos;
+                            statusInfo();
                         } catch (IOException e) {
                             if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
                                 try {
@@ -115,17 +116,45 @@ public class TransThread implements Serializable, Runnable {
                             }
                         }
                     }
-                    statusInfo();
                 }
                 input.close();
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
             }
         }
-        over = true;
-        // update a the record
         changeDownStatus();
-        insertBinlogProcess();
+        insertProcess();
+        over = true;
+    }
+
+
+    /**
+     * 进度条
+     */
+    private void statusInfo() {
+        long num = 0;
+        if (percent > num) {
+            LOG.info(fileName + "当前下载进度为：" + percent + "%");
+        }
+        if (percent > 100) {
+            delErrorFile();
+        }
+    }
+
+    private void delErrorFile() {
+        HDFSFileUtility.checkAndDel(dest + File.separator + fileName);
+        Map<String, Object> whereMap = new HashMap<>(2);
+        whereMap.put(TableInfo.FILE_NAME, fileName);
+        whereMap.put(TableInfo.DB_INSTANCE, instanceId);
+        Map<String, Object> valueMap = new HashMap<>(1);
+        valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
+        try {
+            DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+        } catch (SQLException e) {
+            LOG.error("reset down_status of file:" + fileName + " to 0 failed");
+        }
+        startPos = 0;
+        Thread.currentThread().interrupt();
     }
 
     /**
@@ -148,7 +177,7 @@ public class TransThread implements Serializable, Runnable {
     /**
      * 将下载完成的binlog文件记录写入t_binlog_process
      */
-    private void insertBinlogProcess() {
+    private void insertProcess() {
         Map<String, Object> whereMap;
         whereMap = new HashMap<>(2);
         whereMap.put(TableInfo.FILE_NAME, fileName);
@@ -177,35 +206,6 @@ public class TransThread implements Serializable, Runnable {
         } catch (Exception e) {
             LOG.error("query from database error");
         }
-    }
-
-    /**
-     * 进度条
-     */
-    public void statusInfo() {
-        long num = 0;
-        if (percent > num) {
-            LOG.info(fileName + "当前下载进度为：" + percent + "%");
-        }
-        if (percent > 100) {
-            delErrorFile();
-        }
-    }
-
-    private void delErrorFile() {
-        HDFSFileUtility.checkAndDel(dest + File.separator + fileName);
-        Map<String, Object> whereMap = new HashMap<>(2);
-        whereMap.put(TableInfo.FILE_NAME, fileName);
-        whereMap.put(TableInfo.DB_INSTANCE, instanceId);
-        Map<String, Object> valueMap = new HashMap<>(1);
-        valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
-        try {
-            DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
-        } catch (SQLException e) {
-            LOG.error("reset down_status of file:" + fileName + " to 0 failed");
-        }
-        startPos = 0;
-        Thread.currentThread().interrupt();
     }
 
 }

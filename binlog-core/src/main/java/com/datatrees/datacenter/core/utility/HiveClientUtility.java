@@ -6,9 +6,8 @@ public class HiveClientUtility {
 
     private static String driverName ="org.apache.hive.jdbc.HiveDriver";
 
-    //填写hive的IP，之前在配置文件中配置的IP
-
     private static String Url="jdbc:hive2://cloudera2:10000/tongdun";
+
     private static Connection conn;
 
     private static PreparedStatement ps;
@@ -76,7 +75,7 @@ public class HiveClientUtility {
             int columns=rs.getMetaData().getColumnCount();
             while(rs.next()) {
                 for(int i=1;i<=columns;i++) {
-                    System.out.print(rs.getString(i));
+                    System.out.print(rs.getString(i)+"\t");
                 }
                 System.out.println();
             }
@@ -86,8 +85,8 @@ public class HiveClientUtility {
     }
 
     public static void main(String[] args) {
-        String tablename="t_td_model_score_data";
-        getAll(tablename);
+        String tableName="t_td_model_score_data";
+        getAll(tableName);
     }
 
 }
