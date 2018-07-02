@@ -1,22 +1,19 @@
 package com.datatrees.datacenter.transfer.process.threadmanager;
 
-import com.datatrees.datacenter.core.task.TaskDispensor;
-import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.transfer.bean.*;
-import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import com.datatrees.datacenter.transfer.utility.FileUtil;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
-import com.datatrees.datacenter.transfer.utility.TimeUtil;
+import com.datatrees.datacenter.transfer.bean.DownloadStatus;
+import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
+import com.datatrees.datacenter.transfer.bean.TableInfo;
+import com.datatrees.datacenter.transfer.bean.TransInfo;
+import com.datatrees.datacenter.transfer.utility.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -84,13 +81,14 @@ public class TransferProcess {
                 endPos = fileLen;
             }
         }
-        if (startPos < endPos) {
+        boolean stop = false;
+        if (startPos < endPos && !stop) {
             LOG.info("begin download binlog file :" + "[" + src + "]");
             TransThread transThread = new TransThread(src, dest, startPos, endPos,
                     fileName, instanceId);
             LOG.info("start= " + startPos + ",  end= " + endPos);
             ThreadPoolInstance.getExecutors().execute(transThread);
-            boolean stop = false;
+
             while (!stop) {
                 sleep(checkInterval);
                 if (!transThread.over) {

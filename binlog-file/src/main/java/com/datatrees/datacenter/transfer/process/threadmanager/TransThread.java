@@ -90,33 +90,20 @@ public class TransThread implements Serializable, Runnable {
                 byte[] b = new byte[500 * BUFFER_SIZE];
                 int bytes;
                 int tries = 20;
-                boolean recovered = false;
                 Path dstPath = new Path(dest + File.separator + fileName);
                 if (!fs.exists(dstPath)) {
                     fs.create(dstPath).close();
                 }
-                while (!recovered && tries > 0) {
-                    while ((((bytes = input.read(b))) != -1) && (startPos < endPos)) {
-                        try (FSDataOutputStream out = fs.append(dstPath)) {
-                            int minByte = (int) Math.min(bytes, (endPos - startPos));
-                            out.write(b, 0, minByte);
-                            startPos += minByte;
-                            recovered = true;
-                            percent = (100 * startPos) / endPos;
-                            statusInfo();
-                        } catch (IOException e) {
-                            if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
-                                try {
-                                    LOG.info("sleep 1000 millis and retry to append data to HDFS");
-                                    Thread.sleep(3000);
-                                    tries--;
-                                } catch (InterruptedException e1) {
-                                    LOG.error(e1.getMessage(), e1);
-                                }
-                            }
-                        }
-                    }
+                while ((((bytes = input.read(b))) != -1) && (startPos < endPos)) {
+                    FSDataOutputStream out =getFsDataOutputStream(tries,dstPath);
+                    int minByte = (int) Math.min(bytes, (endPos - startPos));
+                    out.write(b, 0, minByte);
+                    out.flush();
+                    startPos += minByte;
+                    percent = (100 * startPos) / endPos;
+                    out.close();
                 }
+                statusInfo();
                 input.close();
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
@@ -125,6 +112,29 @@ public class TransThread implements Serializable, Runnable {
         changeDownStatus();
         insertProcess();
         over = true;
+    }
+
+    private FSDataOutputStream getFsDataOutputStream(int tries, Path dstPath) {
+        boolean recovered = false;
+        FSDataOutputStream out = null;
+        while (!recovered && tries > 0) {
+            try {
+                out = fs.append(dstPath);
+                recovered = true;
+            } catch (IOException e) {
+                if (e.getClass().getName().equals(RecoveryInProgressException.class.getName())) {
+                    try {
+                        LOG.info("sleep 1000 millis and retry to append data to HDFS");
+                        Thread.sleep(3000);
+                        tries--;
+                    } catch (InterruptedException e1) {
+                        LOG.error(e1.getMessage(), e1);
+                    }
+                }
+            }
+
+        }
+        return out;
     }
 
 
@@ -137,7 +147,8 @@ public class TransThread implements Serializable, Runnable {
             LOG.info(fileName + "当前下载进度为：" + percent + "%");
         }
         if (percent > 100) {
-            delErrorFile();
+            //delErrorFile();
+            System.gc();
         }
     }
 

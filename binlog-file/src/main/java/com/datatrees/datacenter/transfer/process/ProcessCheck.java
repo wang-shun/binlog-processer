@@ -96,18 +96,18 @@ public class ProcessCheck {
                             whereMap.put(TableInfo.FILE_NAME, fileName);
                             Map<String, Object> valueMap = new HashMap<>(2);
                             valueMap.put(TableInfo.RETRY_TIMES, retryTimes);
-                            Date process_start=TimeUtil.stampToDate(System.currentTimeMillis());
-                            valueMap.put(TableInfo.PROCESS_START,process_start);
+                            Date process_start = TimeUtil.stampToDate(System.currentTimeMillis());
+                            valueMap.put(TableInfo.PROCESS_START, process_start);
                             DBUtil.update(TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
-                            LOG.info("update t_binlog_process table, set " + identity + " retry: " + retryTimes + " and process_start: "+process_start);
+                            LOG.info("update t_binlog_process table, set " + identity + " retry: " + retryTimes + " and process_start: " + process_start);
                         }
                     }
                 } catch (Exception e) {
                     LOG.info("something error with queue or database");
                     e.printStackTrace();
                 }
-            }catch (Exception e) {
-                LOG.error(e.getMessage(),e);
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
             }
         };
 
