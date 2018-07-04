@@ -6,7 +6,7 @@ import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import com.datatrees.datacenter.transfer.utility.TimeUtil;
+import com.datatrees.datacenter.core.utility.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

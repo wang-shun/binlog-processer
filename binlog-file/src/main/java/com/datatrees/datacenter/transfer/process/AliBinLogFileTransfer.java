@@ -15,7 +15,7 @@ import com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstanc
 import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import com.datatrees.datacenter.transfer.utility.TimeUtil;
+import com.datatrees.datacenter.core.utility.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,11 +70,24 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 Map<String, Object> recordMap;
                 while (iterator.hasNext()) {
                     recordMap = iterator.next();
-                    String path = HDFS_PATH + File.separator + recordMap.get(TableInfo.DB_INSTANCE) + File.separator + recordMap.get(TableInfo.BAK_INSTANCE_ID) + File.separator + recordMap.get(TableInfo.FILE_NAME);
-                    String identity = recordMap.get(TableInfo.DB_INSTANCE) + "_"
-                            + recordMap.get(TableInfo.FILE_NAME);
-                    String mysqlURL = DBInstanceUtil.getConnectString((String) recordMap.get(TableInfo.DB_INSTANCE));
+                    String dbInstance = String.valueOf(recordMap.get(TableInfo.DB_INSTANCE));
+                    String fileName = String.valueOf(recordMap.get(TableInfo.FILE_NAME));
+                    String backInstanceId = DBInstanceUtil.getBackInstanceId(dbInstance);
+                    String path = HDFS_PATH + File.separator + dbInstance + File.separator + backInstanceId + File.separator + fileName;
+                    String identity = dbInstance + "_"
+                            + fileName;
+                    String mysqlURL = DBInstanceUtil.getConnectString(dbInstance);
                     TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                    Map<String, Object> map = new HashMap<>(5);
+                    map.put(TableInfo.FILE_NAME, fileName);
+                    map.put(TableInfo.DB_INSTANCE, dbInstance);
+                    map.put(TableInfo.BAK_INSTANCE_ID, backInstanceId);
+                    map.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
+                    try {
+                        DBUtil.insert(TableInfo.BINLOG_PROC_TABLE, map);
+                    } catch (SQLException e) {
+                        LOG.error("insert " + fileName + "to t_binlog_process failed");
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -127,6 +140,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             e.printStackTrace();
         }
     }
+
     /**
      * 下载单个实例binlog文件
      *

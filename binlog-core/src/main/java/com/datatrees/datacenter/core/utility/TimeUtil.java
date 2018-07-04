@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.transfer.utility;
+package com.datatrees.datacenter.core.utility;
 
 import java.text.DateFormat;
 import java.text.ParseException;

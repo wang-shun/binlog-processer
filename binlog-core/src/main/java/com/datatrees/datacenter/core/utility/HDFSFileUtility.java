@@ -151,13 +151,12 @@ public class HDFSFileUtility {
 
     public static List<String> getFilesPath(String path) {
         List<String> fileList = new ArrayList<>();
-        FileSystem fs = HDFSFileUtility.fileSystem;
         //从hdfs根路径开始
         try {
-            FileStatus[] files = fs.listStatus(new Path(path));
+            FileStatus[] files = fileSystem.listStatus(new Path(path));
             //开始调用打印函数
             for (FileStatus file : files) {
-                fileList.addAll(printHdfs(file, fs,fileList));
+                fileList.addAll(printHdfs(file, fileSystem,fileList));
             }
         } catch (IOException e) {
             e.printStackTrace();
