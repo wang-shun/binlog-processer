@@ -69,30 +69,30 @@
 
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-assembly-plugin </artifactId>
-                <configuration>
-                    <descriptors>
-                        <!-- 描述文件路径 -->
-                        <descriptor>/assembly/assembly.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <!--名字任意 -->
-                        <id>make-assembly</id>
-                        <!-- 绑定到package生命周期阶段上 -->
-                        <phase>package</phase>
-                        <goals>
-                            <!-- 只运行一次 -->
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+    <!--<build>-->
+        <!--<plugins>-->
+            <!--<plugin>-->
+                <!--<artifactId>maven-assembly-plugin </artifactId>-->
+                <!--<configuration>-->
+                    <!--<descriptors>-->
+                        <!--&lt;!&ndash; 描述文件路径 &ndash;&gt;-->
+                        <!--<descriptor>/assembly/assembly.xml</descriptor>-->
+                    <!--</descriptors>-->
+                <!--</configuration>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--&lt;!&ndash;名字任意 &ndash;&gt;-->
+                        <!--<id>make-assembly</id>-->
+                        <!--&lt;!&ndash; 绑定到package生命周期阶段上 &ndash;&gt;-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--&lt;!&ndash; 只运行一次 &ndash;&gt;-->
+                            <!--<goal>single</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
+        <!--</plugins>-->
+    <!--</build>-->
 
 </project>

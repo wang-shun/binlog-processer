@@ -4,6 +4,7 @@ import com.callfire.avro.AvroSchema;
 import com.callfire.avro.DbSchemaExtractor;
 import com.callfire.avro.SchemaGenerator;
 import com.callfire.avro.config.AvroConfig;
+import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
@@ -16,6 +17,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.apache.commons.lang3.StringUtils;
 import org.javatuples.KeyValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SchemaProviders {
 
+  public static String NULL = "null";
   /**
    * Triple<instanceId,database,table>
    */
@@ -38,16 +41,22 @@ public class SchemaProviders {
   private static Properties properties;
   private static LoadingCache<SecondaryCacheKey, KeyValue<String, String>> secondaryCache;
 
+  private static Long CACHE_TIMEOUT = 7L;
+
   static {
     properties = PropertiesUtility.defaultProperties();
-    secondaryCache = CacheBuilder.newBuilder().maximumSize(1000).
-      expireAfterAccess(10, TimeUnit.HOURS)
+    secondaryCache = CacheBuilder.newBuilder().maximumSize(10000).
+      expireAfterAccess(CACHE_TIMEOUT, TimeUnit.DAYS)
       .build(new CacheLoader<SecondaryCacheKey, KeyValue<String, String>>() {
         @Override
         public KeyValue<String, String> load(SecondaryCacheKey cacheKey) throws Exception {
           return getSchema(cacheKey.binlog, cacheKey.schema, cacheKey.table);
         }
       });
+  }
+
+  public static LoadingCache cache() {
+    return secondaryCache;
   }
 
   /**
@@ -59,9 +68,10 @@ public class SchemaProviders {
       return secondaryCache
         .get(SecondaryCacheKey.builder().binlog(binlog).schema(schema).table(table).build());
     } catch (ExecutionException e) {
-      logger.error(e.getMessage(), e);
-      throw new BinlogException("error to get local cache of" + schema + "-" + table,
-        e);
+      throw new BinlogException(
+        String.format("error to get cache schema of [%s-%s-%s] from %s.",
+          binlog.getInstanceId(), schema, table, binlog.getJdbcUrl()), Status.SCHEMAFAILED, e
+      );
     }
   }
 
@@ -71,15 +81,21 @@ public class SchemaProviders {
     final String patternTable = schemaNameMapper.apply(table);
 
     try {
-      String redisKey = String.format("%s.%s.%s", patternInstance, patternSchema, patternTable);
-      String namespace = String.format("%s.%s", patternInstance, patternSchema);
+      String redisKey =
+        String.format("%s:%s:%s", patternInstance, patternSchema, patternTable);
+      String nameSpace =
+        String.format("%s.%s", patternInstance, patternSchema);
 
       if (redis.exists(redisKey)) {
-        return KeyValue.with(namespace, redis.get(redisKey));
+        return KeyValue.with(nameSpace, redis.get(redisKey));
       }
 
-      dbSchemaExtractor = new DbSchemaExtractor(jdbcPort(binlog.getJdbcUrl()), user(), password());
-      AvroConfig config = new AvroConfig(String.format("%s.%s", patternInstance, patternSchema));
+      dbSchemaExtractor =
+        new DbSchemaExtractor(jdbcPort(binlog.getJdbcUrl()), user(), password());
+      AvroConfig config =
+        new AvroConfig(String.format("%s.%s", patternInstance, patternSchema));
+      config.setFieldNameMapper(r -> r.replaceAll("`", ""));
+      config.setSchemaNameMapper(r -> r.replaceAll("`", ""));
       List<AvroSchema> tableAvroSchema = dbSchemaExtractor.getForSchema(config, schema);
       String result = null;
       for (AvroSchema avroSchema : tableAvroSchema) {
@@ -87,15 +103,20 @@ public class SchemaProviders {
         if (patternTable.equalsIgnoreCase(avroSchema.getName())) {
           result = avroSchemaString;
         }
-        redis.set(String.format("%s.%s.%s", patternInstance, patternSchema, avroSchema.getName()),
-          avroSchemaString);
+        redis.
+          set(String.
+              format("%s:%s:%s", patternInstance, patternSchema, avroSchema.getName()),
+            avroSchemaString);
       }
-      return KeyValue.with(namespace, result);
+      if (StringUtils.isBlank(result)) {
+        redis.set(redisKey, NULL);
+      }
+
+      return KeyValue.with(nameSpace, result);
     } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("error to get schema of [%s-%s-%s] because of %s",
-        binlog.getInstanceId(), patternSchema, patternTable, e.getMessage(),
-        e)
+      throw new BinlogException(
+        String.format("error to get schema of [%s-%s-%s] from %s.",
+          binlog.getInstanceId(), schema, table, binlog.getJdbcUrl()), Status.SCHEMAFAILED, e
       );
     }
   }
@@ -112,7 +133,7 @@ public class SchemaProviders {
     return properties.getProperty("user");
   }
 
-  static class SecondaryCacheKey {
+  public static class SecondaryCacheKey {
 
     public Binlog binlog;
     public String schema;
@@ -128,7 +149,40 @@ public class SchemaProviders {
       return new CacheKeyBuilder();
     }
 
-    static class CacheKeyBuilder {
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof SecondaryCacheKey) {
+        SecondaryCacheKey other = (SecondaryCacheKey) obj;
+        return other.binlog.getInstanceId().equalsIgnoreCase(this.binlog.getInstanceId()) &&
+          other.schema.equalsIgnoreCase(this.schema) && other.table.equalsIgnoreCase(this.table);
+      } else {
+        return false;
+      }
+    }
+
+//    @Override
+//    public int hashCode() {
+//      final int prime = 31;
+//      int result = 1;
+//      result = prime * result + this.binlog.getInstanceId().length();
+//      result = prime * result + this.table.length(); // <= **this one shouldn't evaluated**
+//      result = prime * result + this.schema.length();
+//      return result;
+//    }
+
+
+    @Override
+    public int hashCode() {
+      return this.binlog.getInstanceId().hashCode() + this.schema.hashCode() + this.table
+        .hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s.%s.%s", this.binlog.getInstanceId(), this.schema, this.table);
+    }
+
+    public static class CacheKeyBuilder {
 
       public Binlog binlog;
       public String schema;

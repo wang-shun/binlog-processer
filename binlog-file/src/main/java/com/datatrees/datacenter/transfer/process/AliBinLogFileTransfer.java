@@ -255,7 +255,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
 
             resultList = DBUtil.query(sql.toString());
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
         return resultList;
     }

@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.resolver.domain;
+package com.datatrees.datacenter.core.domain;
 
 import com.github.shyiko.mysql.binlog.event.EventType;
 

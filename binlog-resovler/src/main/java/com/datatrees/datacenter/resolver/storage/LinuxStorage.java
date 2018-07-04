@@ -1,5 +1,6 @@
 package com.datatrees.datacenter.resolver.storage;
 
+import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import com.google.common.io.Files;
@@ -30,12 +31,14 @@ public class LinuxStorage implements FileStorage {
     return success;
   }
 
-  public OutputStream openWriter(String file) throws BinlogException {
+  public OutputStream openWriter(String filePath) throws BinlogException {
     try {
-      return Files.newOutputStreamSupplier(new File(file)).getOutput();
+      File file = new File(filePath);
+      file.getParentFile().mkdirs();
+      return Files.newOutputStreamSupplier(file).getOutput();
     } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("open reader of file %s failed.", file));
+      throw new BinlogException(String.format("open linux reader of file %s failed.", filePath),
+        Status.OPENFAILED, e);
     }
   }
 
@@ -43,8 +46,13 @@ public class LinuxStorage implements FileStorage {
     try {
       return Files.newInputStreamSupplier(new File(file)).getInput();
     } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-      throw new BinlogException(String.format("open reader of file %s failed.", file));
+      throw new BinlogException(String.format("open linux reader of file %s failed.", file),
+        Status.OPENFAILED, e);
     }
+  }
+
+  @Override
+  public Boolean exists(String file) {
+    return null;
   }
 }

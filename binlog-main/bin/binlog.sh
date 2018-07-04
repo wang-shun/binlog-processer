@@ -5,14 +5,15 @@ cd `dirname $0`
 BIN_DIR=`pwd`
 cd ..
 DEPLOY_DIR=`pwd`
+HADOOP_DIR=/etc/hadoop/conf
 CONF_DIR=${DEPLOY_DIR}/conf
 LOG_DIR=${DEPLOY_DIR}/logs
 LIB_DIR=${DEPLOY_DIR}/lib
 LIB_JARS=`ls ${LIB_DIR}|grep .jar|awk '{print "'${LIB_DIR}'/"$0}'|tr "\n" ":"`
 LIB_JARS=${LIB_JARS}
 LOG_FILE=${LOG_DIR}/binlogprocess.log
-APP_MAIN_CLASS=com.datatrees.datacenter.main.Main
-
+APP_MAIN_CLASS=com.datatrees.datacenter.main.BinlogMain
+export MALLOC_ARENA_MAX=4
 start()
 {
 
@@ -33,7 +34,7 @@ start()
                 echo "==========================="
         else
                 echo "binlog process is starting ..."
-                nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} > ${LOG_FILE} 2>&1 &
+                nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS}:${HADOOP_DIR} ${APP_MAIN_CLASS} > ${LOG_FILE} 2>&1 &
 #java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} dispense
                 checkpid
 

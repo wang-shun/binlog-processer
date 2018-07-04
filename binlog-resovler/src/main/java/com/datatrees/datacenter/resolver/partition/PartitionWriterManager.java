@@ -1,13 +1,17 @@
 package com.datatrees.datacenter.resolver.partition;
 
+import com.datatrees.datacenter.core.domain.Operator;
+import com.datatrees.datacenter.core.domain.Status;
+import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.resolver.domain.Operator;
+import com.datatrees.datacenter.resolver.DBbiz;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.LinkedHashMultimap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -23,16 +27,17 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PartitionWriterManager {
+public class PartitionWriterManager implements WriteResult {
 
-  private static String ROOT_PATH = "hdfs://dn0:8020/data/warehouse";
-  private static String TMP_ROOT_PATH = "hdfs://dn0:8020/data/temp";
+  private static String TMP_ROOT_PATH;
+  private static String WAREHOUSE_ROOT_PATH;
   private static Logger logger = LoggerFactory.getLogger(PartitionWriterManager.class);
   private static LoadingCache<CacheKey, PartitionWriter> caches;
 
   static {
     java.util.Properties value = PropertiesUtility.defaultProperties();
-    TMP_ROOT_PATH = value.getProperty("hdfs.temp.url");
+    TMP_ROOT_PATH = value.getProperty("temp.url");
+    WAREHOUSE_ROOT_PATH = value.getProperty("hdfs.warehouse.url");
     caches = CacheBuilder.newBuilder().
       maximumSize(10000).
       expireAfterAccess(12, TimeUnit.HOURS).
@@ -49,8 +54,15 @@ public class PartitionWriterManager {
   private HashMap<String, PartitionWriter> writerCache = new HashMap<>();
   private ImmutableSet<Partitioner> partitioners;
 
-  public PartitionWriterManager(FileStorage fileStorage) {
+  private HashMap<String, WriteResultValue> valueCacheByFile = new HashMap<>();
+  private LinkedHashMultimap<String, String> valueCacheByPartition = LinkedHashMultimap.create();
+//  private HashMap<String, AtomicInteger> valueCacheByPartition = new HashMap<>();
+
+  private Binlog file;
+
+  public PartitionWriterManager(FileStorage fileStorage, Binlog file) {
     this.fileStorage = fileStorage;
+    this.file = file;
     this.partitioners = ImmutableSet.<Partitioner>builder().add(new CreateDatePartitioner())
       .add(new UpdateDatePartitioner()).build();
     final Thread.UncaughtExceptionHandler uncaughtExceptionHandler =
@@ -80,19 +92,30 @@ public class PartitionWriterManager {
     }), 5, TimeUnit.MINUTES);
   }
 
+  public HashMap<String, WriteResultValue> getValueCacheByFile() {
+    return valueCacheByFile;
+  }
+
+  public LinkedHashMultimap<String, String> getValueCacheByPartition() {
+    return valueCacheByPartition;
+  }
+
   public void close() {
     writerCache.forEach((path, partitionWriter) -> {
       try {
         partitionWriter.close();
         String tempPath = path;
         String targetPath =
-          tempPath.replace("temp", "warehouse").
-            replace(tempPath.split("/")[6] + "/", "");
+          tempPath.replace(TMP_ROOT_PATH, WAREHOUSE_ROOT_PATH)
+            .replace(tempPath.split("/")[6] + "/", "");
         fileStorage.commit(tempPath, targetPath);
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        throw new BinlogException(String.format("error to commit avro data of %s", path),
+          Status.COMMITRECORDFAILED, e);
       }
     });
+    valueCacheByPartition.clear();
+    valueCacheByFile.clear();
   }
 
   private String createFullPath(String relativeFilePath, Partitioner partitioner, Binlog binlog,
@@ -116,7 +139,7 @@ public class PartitionWriterManager {
     return fullPath;
   }
 
-  public void write(Schema schema, Binlog binlog, Operator operator, Object result)
+  public void write(Schema schema, Operator operator, Object result)
     throws IOException {
     GenericData.Record record = null;
     switch (operator) {
@@ -137,7 +160,7 @@ public class PartitionWriterManager {
     if (record != null) {
       for (Partitioner partitioner : partitioners) {
         String relativeFilePath = partitioner.encodePartition(record);
-        String fullPath = createFullPath(relativeFilePath, partitioner, binlog, fullSchema,
+        String fullPath = createFullPath(relativeFilePath, partitioner, this.file, fullSchema,
           envelopSchema);
         if (writerCache.containsKey(fullPath)) {
           writer = writerCache.get(fullPath);
@@ -147,6 +170,23 @@ public class PartitionWriterManager {
           writerCache.put(fullPath, writer);
         }
         writer.write(result);
+
+        if (partitioner.getRoot().equalsIgnoreCase("create")) {
+          String key = String
+            .format("%s.%s.%s", fullSchema[0], fullSchema[1], envelopSchema.getName());
+          if (valueCacheByFile.containsKey(key)) {
+            WriteResultValue value = valueCacheByFile.get(key);
+            value.increment(operator, relativeFilePath);
+          } else {
+            WriteResultValue value = WriteResultValue.create();
+            value.increment(operator, relativeFilePath);
+            valueCacheByFile.put(key, value);
+          }
+
+          valueCacheByPartition.put(String.format("%s.%s.%s.%s", fullSchema[0], fullSchema[1],
+            envelopSchema.getName(), relativeFilePath),
+            String.format("%s.avro", file.getIdentity1().replace(".tar", "")));
+        }
       }
     }
   }
