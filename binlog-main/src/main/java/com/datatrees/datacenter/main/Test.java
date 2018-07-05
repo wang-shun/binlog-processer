@@ -1,15 +1,15 @@
 package com.datatrees.datacenter.main;
 
-import com.datatrees.datacenter.compare.DataCompare;
 import com.datatrees.datacenter.compare.HiveCompare;
-import com.datatrees.datacenter.rawdata.AvroDataReader;
+import com.datatrees.datacenter.datareader.AvroDataReader;
+import com.datatrees.datacenter.datareader.DataReader;
+import com.datatrees.datacenter.datareader.OrcDataReader;
 
 public class Test {
     public static void main(String[] args) {
-        //AvroDataReader reader=new AvroDataReader();
-        //reader.readAllData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");
-        HiveCompare dataCompare=new HiveCompare();
-        String sql="select * from t_td_model_score_data where id =151277852384964608";
-        dataCompare.query(sql);
+      /* AvroDataReader reader=new AvroDataReader();
+       reader.readData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
+       DataReader dataReader=new OrcDataReader();
+        ((OrcDataReader) dataReader).readDestData("/orc-test/part-00008-478c4d75-3839-461b-bcf4-83009ca3bbd0.snappy.orc");
     }
 }
