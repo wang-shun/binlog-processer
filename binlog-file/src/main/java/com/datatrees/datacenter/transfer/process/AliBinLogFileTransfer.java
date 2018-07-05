@@ -8,15 +8,13 @@ import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.IPUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.core.utility.TimeUtil;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
-import com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance;
 import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import com.datatrees.datacenter.core.utility.TimeUtil;
-import javafx.beans.binding.ObjectExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +23,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -62,32 +59,36 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     public void transfer() {
         int CurrentHour = LocalDateTime.now().getHour();
         System.out.println("当前时间小时：" + CurrentHour);
-        if (null != EXCLUDE_TIME_START && null != EXCLUDE_TIME_END) {
+        if (!"".equals(EXCLUDE_TIME_START) && !"".equals(EXCLUDE_TIME_END)) {
             int excludeStart = Integer.parseInt(EXCLUDE_TIME_START);
             int excludeEnd = Integer.parseInt(EXCLUDE_TIME_END);
             if (CurrentHour < excludeStart || CurrentHour > excludeEnd) {
-                // 创建API请求并设置参数
-                DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
-                binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
-                // 检查下载记录和处理记录是否一致
-                checkDataConsistency();
-                //重新下载未完成的数据
-                umCompleteProcess();
-                //开始正常下载,将上一次的结束时间设置未这一次的开始时间
-                binlogFilesRequest.setStartTime(startTime);
-                LOG.info("the start time of download: " + startTime);
-                endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
-                binlogFilesRequest.setEndTime(endTime);
-                LOG.info("the end time of download: " + endTime);
-                for (String instanceId : instanceIds) {
-                    instanceBinlogTrans(binlogFilesRequest, instanceId);
-                }
-                /* try {
-                    ThreadPoolInstance.getExecutors().awaitTermination(PERIOD, TimeUnit.MINUTES);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
+                transferAll();
             }
+        } else {
+            transferAll();
+        }
+    }
+
+    /**
+     * 记录检查、未完成任务继续、新任务下载
+     */
+    private void transferAll() {
+        // 创建API请求并设置参数
+        DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
+        binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
+        // 检查下载记录和处理记录是否一致
+        checkDataConsistency();
+        //重新下载未完成的数据
+        umCompleteProcess();
+        //开始正常下载,将上一次的结束时间设置未这一次的开始时间
+        binlogFilesRequest.setStartTime(startTime);
+        LOG.info("the start time of download: " + startTime);
+        endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
+        binlogFilesRequest.setEndTime(endTime);
+        LOG.info("the end time of download: " + endTime);
+        for (String instanceId : instanceIds) {
+            instanceBinlogTrans(binlogFilesRequest, instanceId);
         }
     }
 
@@ -112,7 +113,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String identity = dbInstance + "_"
                             + fileName;
                     String mysqlURL = DBInstanceUtil.getConnectString(dbInstance);
-                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
 
                     Map<String, Object> map = new HashMap<>(5);
                     map.put(TableInfo.FILE_NAME, fileName);

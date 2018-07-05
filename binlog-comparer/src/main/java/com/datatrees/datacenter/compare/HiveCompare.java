@@ -19,6 +19,7 @@ public class HiveCompare implements DataCompare {
     @Override
     public void binLogCompare(String src, String dest) {
         // TODO: 2018/7/4 补充通过路径获取文件名和分区信息
+
         AvroDataReader avroDataReader = new AvroDataReader();
         OrcDataReader orcDataReader = new OrcDataReader();
 

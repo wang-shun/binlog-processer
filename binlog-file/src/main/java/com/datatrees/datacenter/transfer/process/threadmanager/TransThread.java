@@ -3,13 +3,13 @@ package com.datatrees.datacenter.transfer.process.threadmanager;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.core.utility.TimeUtil;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.process.TransferTimerTask;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import com.datatrees.datacenter.core.utility.HDFSFileUtility;
-import com.datatrees.datacenter.core.utility.TimeUtil;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -21,7 +21,10 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 
 /**
