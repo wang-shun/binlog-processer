@@ -42,7 +42,6 @@ public class TransferTimerTask implements TaskRunner {
                 LOG.error(e.getMessage(), e);
             }
         };
-
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
         // 第二个参数为首次执行的延时时间，第三个参数为定时执行的间隔时间
         service.scheduleAtFixedRate(runnable, INITIAL_DELAY, PERIOD, TimeUnit.MINUTES);

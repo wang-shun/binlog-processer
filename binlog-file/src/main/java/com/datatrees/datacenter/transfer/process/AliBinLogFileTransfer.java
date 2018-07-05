@@ -16,6 +16,7 @@ import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.core.utility.TimeUtil;
+import javafx.beans.binding.ObjectExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,10 +61,11 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     @Override
     public void transfer() {
         int CurrentHour = LocalDateTime.now().getHour();
+        System.out.println("当前小时：" + CurrentHour);
         if (null != EXCLUDE_TIME_START && null != EXCLUDE_TIME_END) {
             int excludeStart = Integer.parseInt(EXCLUDE_TIME_START);
             int excludeEnd = Integer.parseInt(EXCLUDE_TIME_END);
-            if (CurrentHour > excludeStart && CurrentHour < excludeEnd) {
+            if (CurrentHour < excludeStart || CurrentHour > excludeEnd) {
                 // 创建API请求并设置参数
                 DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
                 binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
@@ -110,7 +112,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String identity = dbInstance + "_"
                             + fileName;
                     String mysqlURL = DBInstanceUtil.getConnectString(dbInstance);
-                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                    //TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
 
                     Map<String, Object> map = new HashMap<>(5);
                     map.put(TableInfo.FILE_NAME, fileName);
@@ -199,8 +201,9 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     whereMap.put(TableInfo.FILE_NAME, fileName);
                     try {
                         //判断这个binlog文件是否下载过
-                        int recordCount = DBUtil.query(TableInfo.BINLOG_TRANS_TABLE, whereMap).size();
-                        if (recordCount == 0) {
+                        List<Map<String, Object>> recordCount = DBUtil.query(TableInfo.BINLOG_TRANS_TABLE, whereMap);
+                        int count = recordCount.size();
+                        if (count == 0) {
                             Map<String, Object> map = new HashMap<>(7);
                             map.put(TableInfo.FILE_SIZE, binLogFile.getFileSize());
                             map.put(TableInfo.DB_INSTANCE, instanceId);
@@ -215,6 +218,11 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             map.put(TableInfo.DOWN_START_TIME, start);
                             map.put(TableInfo.DOWN_END_TIME, end);
                             DBUtil.insert(TableInfo.BINLOG_TRANS_TABLE, map);
+                        } else {
+                            int status = (int) recordCount.get(0).get(TableInfo.DOWN_STATUS);
+                            if (status == 1) {
+                                break;
+                            }
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -231,6 +239,9 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         TransferTimerTask.processingSet.add(fileName);
                         TransferProcess transferProcess = new TransferProcess(transInfo);
                         transferProcess.startTrans();
+                        LOG.info("******************************");
+                        LOG.info("the set size after add:" + TransferTimerTask.processingSet.size());
+                        LOG.info("******************************");
                     }
                 }
             } else {

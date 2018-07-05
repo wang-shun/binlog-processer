@@ -6,6 +6,7 @@ import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
+import com.datatrees.datacenter.transfer.process.TransferTimerTask;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.core.utility.TimeUtil;
@@ -95,7 +96,7 @@ public class TransThread implements Serializable, Runnable {
                     fs.create(dstPath).close();
                 }
                 while ((((bytes = input.read(b))) != -1) && (startPos < endPos)) {
-                    FSDataOutputStream out =getFsDataOutputStream(tries,dstPath);
+                    FSDataOutputStream out = getFsDataOutputStream(tries, dstPath);
                     int minByte = (int) Math.min(bytes, (endPos - startPos));
                     out.write(b, 0, minByte);
                     out.flush();
@@ -111,6 +112,10 @@ public class TransThread implements Serializable, Runnable {
         }
         changeDownStatus();
         insertProcess();
+        TransferTimerTask.processingSet.remove(fileName);
+        LOG.info("******************************");
+        LOG.info("the set size after delete:" + TransferTimerTask.processingSet.size());
+        LOG.info("******************************");
         over = true;
     }
 

@@ -98,7 +98,6 @@ public class TransferProcess {
                     break;
                 } else {
                     stop = true;
-                    TransferTimerTask.processingSet.remove(fileName);
                 }
             }
         } else {
