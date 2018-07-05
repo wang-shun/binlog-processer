@@ -36,18 +36,20 @@ import java.util.stream.Collectors;
 public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
     private Properties properties = PropertiesUtility.defaultProperties();
-    private String REGEX_PATTERN = properties.getProperty("REGEX_PATTERN");
-    private String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
-    private String HDFS_PATH = properties.getProperty("HDFS_PATH");
-    private long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
-    private long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
-    private long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
-    private long TIMEHOURS_DIFF = -8L;
+    private final String REGEX_PATTERN = properties.getProperty("REGEX_PATTERN");
+    private final String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
+    private final String HDFS_PATH = properties.getProperty("HDFS_PATH");
+    private final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
+    private final long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
+    private final long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
+    private final long TIMEHOURS_DIFF = -8L;
     private long currentTime = System.currentTimeMillis() - TIMESTAMP_DIFF;
     private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60 * 1000, TableInfo.UTC_FORMAT);
-    private String endTime;
     private List<String> instanceIds = DBInstanceUtil.getAllPrimaryInstanceId();
     private String instanceStr = DBInstanceUtil.getInstancesString(instanceIds);
+    private final String EXCLUDE_TIME_START = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.start");
+    private final String EXCLUDE_TIME_END = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.end");
+    private String endTime;
 
 
     @Override
@@ -57,10 +59,40 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
 
     @Override
     public void transfer() {
-        // 创建API请求并设置参数
-        DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
-        binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
-        // 检查下载记录和处理记录是否一致
+        int CurrentHour = LocalDateTime.now().getHour();
+        if (null != EXCLUDE_TIME_START && null != EXCLUDE_TIME_END) {
+            int excludeStart = Integer.parseInt(EXCLUDE_TIME_START);
+            int excludeEnd = Integer.parseInt(EXCLUDE_TIME_END);
+            if (CurrentHour > excludeStart && CurrentHour < excludeEnd) {
+                // 创建API请求并设置参数
+                DescribeBinlogFilesRequest binlogFilesRequest = new DescribeBinlogFilesRequest();
+                binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
+                // 检查下载记录和处理记录是否一致
+                checkDataConsistency();
+                //重新下载未完成的数据
+                umCompleteProcess();
+                //开始正常下载,将上一次的结束时间设置未这一次的开始时间
+                binlogFilesRequest.setStartTime(startTime);
+                LOG.info("the start time of download: " + startTime);
+                endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
+                binlogFilesRequest.setEndTime(endTime);
+                LOG.info("the end time of download: " + endTime);
+                for (String instanceId : instanceIds) {
+                    instanceBinlogTrans(binlogFilesRequest, instanceId);
+                }
+                try {
+                    ThreadPoolInstance.getExecutors().awaitTermination(PERIOD, TimeUnit.MINUTES);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * 检查下载表中是否有下载完但没有发往处理表中的数据
+     */
+    private void checkDataConsistency() {
         String sql = "select r.id,r.db_instance,r.file_name,r.bak_instance_id from " + TableInfo.BINLOG_TRANS_TABLE + " as r left join " + TableInfo.BINLOG_PROC_TABLE + " as p on r.db_instance=p.db_instance and r.file_name=p.file_name where p.id is null and r.status=1";
         List<Map<String, Object>> sendFailedRecord;
         try {
@@ -78,6 +110,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             + fileName;
                     String mysqlURL = DBInstanceUtil.getConnectString(dbInstance);
                     TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+
                     Map<String, Object> map = new HashMap<>(5);
                     map.put(TableInfo.FILE_NAME, fileName);
                     map.put(TableInfo.DB_INSTANCE, dbInstance);
@@ -93,7 +126,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         } catch (SQLException e) {
             LOG.error(e.getMessage(), e);
         }
-        //重新下载未完成的数据
+    }
+
+    /**
+     * 接着处理为下载完的数据
+     */
+    private void umCompleteProcess() {
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
         if (unCompleteList.size() > 0) {
             processUnComplete(unCompleteList);
@@ -124,20 +162,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             } catch (SQLException e) {
                 LOG.error("can't get down_end from :" + TableInfo.BINLOG_TRANS_TABLE);
             }
-        }
-        //开始正常下载,将上一次的结束时间设置未这一次的开始时间
-        binlogFilesRequest.setStartTime(startTime);
-        LOG.info("the start time of download: " + startTime);
-        endTime = TimeUtil.timeStamp2DateStr(currentTime, TableInfo.UTC_FORMAT);
-        binlogFilesRequest.setEndTime(endTime);
-        LOG.info("the end time of download: " + endTime);
-        for (String instanceId : instanceIds) {
-            instanceBinlogTrans(binlogFilesRequest, instanceId);
-        }
-        try {
-            ThreadPoolInstance.getExecutors().awaitTermination(PERIOD, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 

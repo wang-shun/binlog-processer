@@ -5,6 +5,7 @@ import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,8 +24,8 @@ public class TransferTimerTask implements TaskRunner {
     ProcessCheck processCheck;
 
     public TransferTimerTask() {
-        processCheck = new ProcessCheck();
-        processCheck.process();
+            processCheck = new ProcessCheck();
+            processCheck.process();
     }
 
     @Override

@@ -31,18 +31,13 @@ public class Test {
         Set<Map.Entry<String, Long>> set1Copy = new HashSet<>(map1.entrySet());
         Set<Map.Entry<String, Long>> set2 = map2.entrySet();
         System.out.println("map pairs that are in set 1 but not in set 2");
-        if (set1.removeAll(set2)) {
-            for (Map.Entry entry : set1) {
-                System.out.println(entry.getKey() + "=" + entry.getValue());
-            }
-        }
         if (set1.containsAll(set2)) {
             System.out.println("Map2 is a subset of Map1");
         }
         else {
             // expected result is key = E and value = G
             System.out.println("map pairs that are in set 1 but not in set 2");
-            if(set1.removeAll(set2)){
+            if(set1.retainAll(set2)){
                 for(Map.Entry entry : set1){
                     System.out.println(entry.getKey() + "=" + entry.getValue());
                 }
