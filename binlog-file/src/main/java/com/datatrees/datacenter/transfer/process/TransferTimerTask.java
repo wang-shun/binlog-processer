@@ -5,8 +5,9 @@ import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ public class TransferTimerTask implements TaskRunner {
     private long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
 
     ProcessCheck processCheck;
+    public  static Set<String> processingSet;
 
     public TransferTimerTask() {
             processCheck = new ProcessCheck();
@@ -30,6 +32,7 @@ public class TransferTimerTask implements TaskRunner {
 
     @Override
     public void process() {
+        processingSet=new HashSet<>();
         Runnable runnable = () -> {
             try {
                 ServerTypeFactory factory = new ServerTypeFactory();

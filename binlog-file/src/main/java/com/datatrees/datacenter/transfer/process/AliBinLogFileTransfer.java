@@ -80,11 +80,11 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 for (String instanceId : instanceIds) {
                     instanceBinlogTrans(binlogFilesRequest, instanceId);
                 }
-                try {
+                /* try {
                     ThreadPoolInstance.getExecutors().awaitTermination(PERIOD, TimeUnit.MINUTES);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
+                }*/
             }
         }
     }
@@ -130,12 +130,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     }
 
     /**
-     * 接着处理为下载完的数据
+     * 检查是否有未下载完的数据并设置下次下载的开始时间
      */
     private void umCompleteProcess() {
         List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
         if (unCompleteList.size() > 0) {
-            processUnComplete(unCompleteList);
+            reDownload(unCompleteList);
             Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
             //设置下次下载的时间下载完成的结束时间
             Timestamp timestamp = (Timestamp) lastTime.get(TableInfo.DOWN_END_TIME);
@@ -155,7 +155,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         .append(TableInfo.DOWN_END_TIME)
                         .append(" desc limit 1");
                 List<Map<String, Object>> lastDownEnd = DBUtil.query(endTimeSql.toString());
-                if (lastDownEnd.size() == 1) {
+                if (!lastDownEnd.isEmpty()) {
                     //设置下载开始时间为上次结束时间
                     Timestamp timestamp = (Timestamp) lastDownEnd.get(0).get(TableInfo.DOWN_END_TIME);
                     startTime = TimeUtil.dateToStr(Timestamp.valueOf(timestamp.toLocalDateTime().plusHours(TIMEHOURS_DIFF)), TableInfo.UTC_FORMAT);
@@ -226,8 +226,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             hostInstanceId;
                     TransInfo transInfo = new TransInfo(binLogFile.getDownloadLink(), filePath,
                             fileName, instanceId);
-                    TransferProcess transferProcess = new TransferProcess(transInfo);
-                    transferProcess.startTrans();
+                    boolean processed = TransferTimerTask.processingSet.contains(fileName);
+                    if (!processed) {
+                        TransferTimerTask.processingSet.add(fileName);
+                        TransferProcess transferProcess = new TransferProcess(transInfo);
+                        transferProcess.startTrans();
+                    }
                 }
             } else {
                 LOG.info("no binlog backed in the back instance : " + bakInstanceId);
@@ -287,7 +291,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     /**
      * 处理未下载完成的的binlog文件
      */
-    private void processUnComplete(List<Map<String, Object>> uncompleted) {
+    private void reDownload(List<Map<String, Object>> uncompleted) {
         for (Map<String, Object> info : uncompleted) {
             Timestamp startTs = (Timestamp) info.get(TableInfo.DOWN_START_TIME);
             Timestamp endTs = (Timestamp) info.get(TableInfo.DOWN_END_TIME);

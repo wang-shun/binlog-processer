@@ -6,6 +6,7 @@ import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
+import com.datatrees.datacenter.transfer.process.TransferTimerTask;
 import com.datatrees.datacenter.transfer.utility.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ public class TransferProcess {
                 startPos = 0;
             }
         } catch (IOException e) {
-            LOG.error(e.getMessage(),e);
+            LOG.error(e.getMessage(), e);
         }
         endPos = fileUtil.getFileSize(src);
     }
@@ -87,6 +88,7 @@ public class TransferProcess {
             TransThread transThread = new TransThread(src, dest, startPos, endPos,
                     fileName, instanceId);
             LOG.info("start= " + startPos + ",  end= " + endPos);
+
             ThreadPoolInstance.getExecutors().execute(transThread);
 
             while (!stop) {
@@ -96,6 +98,7 @@ public class TransferProcess {
                     break;
                 } else {
                     stop = true;
+                    TransferTimerTask.processingSet.remove(fileName);
                 }
             }
         } else {
@@ -124,7 +127,7 @@ public class TransferProcess {
         try {
             Thread.sleep(mills);
         } catch (Exception e) {
-            LOG.error(e.getMessage(),e);
+            LOG.error(e.getMessage(), e);
         }
     }
 
