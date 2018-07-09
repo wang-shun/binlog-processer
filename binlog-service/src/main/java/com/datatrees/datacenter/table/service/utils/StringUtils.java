@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.schema.service.utils;
+package com.datatrees.datacenter.table.service.utils;
 
 public class StringUtils {
     public static boolean isEmpty(String s){

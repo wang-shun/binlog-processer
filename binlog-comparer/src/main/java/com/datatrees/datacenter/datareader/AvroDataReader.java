@@ -3,6 +3,7 @@ package com.datatrees.datacenter.datareader;
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.operate.OperateType;
+import com.datatrees.datacenter.table.FieldNameOp;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -23,8 +24,8 @@ import java.util.Map;
 public class AvroDataReader extends DataReader {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
     private final FileSystem fs = HDFSFileUtility.fileSystem;
-    private final String RECORD_ID = "id";
-    private final String RECORD_LAST_UPDATE_TIME = "LastUpdatedDatetime";
+    private List<String> idList = FieldNameOp.getConfigField("id");
+    private List<String> createTimeList = FieldNameOp.getConfigField("update");
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
@@ -38,7 +39,9 @@ public class AvroDataReader extends DataReader {
             for (String file : fileList) {
                 try {
                     is = fs.open(new Path(file));
-                    Map<String, Map<String, Long>> recordMap = readFromAvro(is);
+                    // TODO: 2018/7/9  tableName
+                    String tableName = "";
+                    Map<String, Map<String, Long>> recordMap = readFromAvro(tableName, is);
                     createMap.putAll(recordMap.get(OperateType.Create.toString()));
                     upDateMap.putAll(recordMap.get(OperateType.Update.toString()));
                     deleteMap.putAll(recordMap.get(OperateType.Delete.toString()));
@@ -59,7 +62,9 @@ public class AvroDataReader extends DataReader {
      * @param is 输入文件流
      * @return Avro中分类后的事件信息
      */
-    private Map<String, Map<String, Long>> readFromAvro(InputStream is) {
+    private Map<String, Map<String, Long>> readFromAvro(String tableName, InputStream is) {
+        String RECORD_ID = FieldNameOp.getFieldName(tableName, idList);
+        String RECORD_LAST_UPDATE_TIME = FieldNameOp.getFieldName(tableName, createTimeList);
         Map<String, Long> createMap = new HashMap<>();
         Map<String, Long> upDateMap = new HashMap<>();
         Map<String, Long> deleteMap = new HashMap<>();
@@ -68,19 +73,27 @@ public class AvroDataReader extends DataReader {
             DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());
             for (Object o : reader) {
                 GenericRecord r = (GenericRecord) o;
-                JSONObject jsonObject = JSONObject.parseObject(r.get(1).toString());
-                String id = String.valueOf(jsonObject.get(RECORD_ID));
-                long lastUpdateTime = jsonObject.getLong(RECORD_LAST_UPDATE_TIME);
-
                 String operator = r.get(2).toString();
+                JSONObject jsonObject;
+                String id;
+                long lastUpdateTime;
                 switch (operator) {
                     case "Create":
+                        jsonObject = JSONObject.parseObject(r.get(1).toString());
+                        id = String.valueOf(jsonObject.get(RECORD_ID));
+                        lastUpdateTime = jsonObject.getLong(RECORD_LAST_UPDATE_TIME);
                         createMap.put(id, lastUpdateTime);
                         break;
                     case "Update":
+                        jsonObject = JSONObject.parseObject(r.get(1).toString());
+                        id = String.valueOf(jsonObject.get(RECORD_ID));
+                        lastUpdateTime = jsonObject.getLong(RECORD_LAST_UPDATE_TIME);
                         upDateMap.put(id, lastUpdateTime);
                         break;
                     case "Delete":
+                        jsonObject = JSONObject.parseObject(r.get(0).toString());
+                        id = String.valueOf(jsonObject.get(RECORD_ID));
+                        lastUpdateTime = jsonObject.getLong(RECORD_LAST_UPDATE_TIME);
                         deleteMap.put(id, lastUpdateTime);
                         break;
                     default:
@@ -99,7 +112,7 @@ public class AvroDataReader extends DataReader {
             mapList.add(deleteMap);
             Map<String, Long> allDataMap = new HashMap<>();
             mapList.forEach(allDataMap::putAll);
-            recordMap.put(OperateType.Unique.toString(),allDataMap);
+            recordMap.put(OperateType.Unique.toString(), allDataMap);
 
         } catch (IOException e) {
             e.printStackTrace();

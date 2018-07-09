@@ -1,7 +1,7 @@
-package com.datatrees.datacenter.schema.service.repository;
+package com.datatrees.datacenter.table.service.repository;
 
-import com.datatrees.datacenter.schema.api.SchemaRequest;
-import com.datatrees.datacenter.schema.service.utils.SchemaConvertor;
+import com.datatrees.datacenter.table.api.SchemaRequest;
+import com.datatrees.datacenter.table.service.utils.SchemaConvertor;
 import io.debezium.config.Configuration;
 import io.debezium.relational.TableId;
 import io.debezium.relational.TableSchema;
@@ -24,7 +24,7 @@ public class SchemaRepository {
         this.builder = new SchemaBuilder(Configuration.create().build());
     }
 
-    public void addSchema(com.datatrees.datacenter.schema.service.loader.HistoryRecord record) {
+    public void addSchema(com.datatrees.datacenter.table.service.loader.HistoryRecord record) {
         Map<TableId, TableSchema> tableSchemas = builder.buildSchema(record);
         if (null == tableSchemas) {
             return;

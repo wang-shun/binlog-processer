@@ -43,6 +43,12 @@ public class HiveCompare extends DataCompare {
         // TODO: 2018/7/4  每次检查完，修改检查过的数据的状态（t_binlog_process_log）
     }
 
+    /**
+     * find the key-value that in avroMap but not int orcMap
+     * @param avroMap
+     * @param orcMap
+     * @return
+     */
     private Map<String, Long> diffCompare(Map<String, Long> avroMap, Map<String, Long> orcMap) {
 
         Set<Map.Entry<String, Long>> avroEntry = new HashSet<>(avroMap.entrySet());
@@ -50,29 +56,30 @@ public class HiveCompare extends DataCompare {
 
         Set<Map.Entry<String, Long>> avroSet = avroMap.entrySet();
         Set<Map.Entry<String, Long>> orcSet = orcMap.entrySet();
-        System.out.println("map pairs that are in set 1 but not in set 2");
         Map<String, Long> diffMaps = null;
         if (avroSet.removeAll(orcSet)) {
             diffMaps = new HashMap<>();
             for (Map.Entry entry : avroSet) {
-                System.out.println(entry.getKey() + "=" + entry.getValue());
                 diffMaps.put(entry.getKey().toString(), Long.valueOf(entry.getValue().toString()));
             }
         }
         return diffMaps;
     }
 
-
+    /**
+     * find the key-value that both in Map1 and Map2
+     * @param Map1
+     * @param Map2
+     * @return
+     */
     private Map<String, Long> retainCompare(Map<String, Long> Map1, Map<String, Long> Map2) {
 
         Set<Map.Entry<String, Long>> set1 = Map1.entrySet();
         Set<Map.Entry<String, Long>> set2 = Map2.entrySet();
-        System.out.println("map pairs that are both in set 1 and set 2");
         Map<String, Long> diffMaps = null;
         if (set1.retainAll(set2)) {
             diffMaps = new HashMap<>();
             for (Map.Entry entry : set1) {
-                System.out.println(entry.getKey() + "=" + entry.getValue());
                 diffMaps.put(entry.getKey().toString(), Long.valueOf(entry.getValue().toString()));
             }
         }

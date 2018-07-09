@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.schema.service.rpc;
+package com.datatrees.datacenter.table.service.rpc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

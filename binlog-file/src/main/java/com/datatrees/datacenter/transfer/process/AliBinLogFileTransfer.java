@@ -5,16 +5,15 @@ import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.task.domain.Binlog;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.IPUtility;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.core.utility.TimeUtil;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
 import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
+import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
+import org.omg.CORBA.OBJ_ADAPTER;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +78,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         binlogFilesRequest.setActionName(BINLOG_ACTION_NAME);
         // 检查下载记录和处理记录是否一致
         checkDataConsistency();
+        //处理下载错误文件
+        String fileSizeError = "select * from " + TableInfo.BINLOG_TRANS_TABLE + " where down_size is not null and file_size<>down_size";
+        processErrorFile(fileSizeError);
+        //处理解析错误文件
+        String resolveError = "select * from " + TableInfo.BINLOG_PROC_TABLE + " where status<>1 and status<>0";
+        processErrorFile(resolveError);
         //重新下载未完成的数据
         umCompleteProcess();
         //开始正常下载,将上一次的结束时间设置未这一次的开始时间
@@ -321,4 +326,35 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         }
     }
 
+    /**
+     * 对解析或者下载错误的文件重新下载
+     */
+    private void processErrorFile(String sql) {
+        try {
+            List<Map<String, Object>> errorData = DBUtil.query(sql);
+            if (!errorData.isEmpty()) {
+                for (Map<String, Object> objectMap : errorData) {
+                    String fileName = (String) objectMap.get(TableInfo.FILE_NAME);
+                    String dbInstance = (String) objectMap.get(TableInfo.DB_INSTANCE);
+                    String bakInstanceId = (String) objectMap.get(TableInfo.BAK_INSTANCE_ID);
+                    String path = HDFS_PATH + File.separator + dbInstance + File.separator + bakInstanceId + File.separator + fileName;
+                    boolean status = HDFSFileUtility.checkAndDel(path);
+                    if (status) {
+                        LOG.info("delete file: " + fileName + " from HDFS success");
+                        Map<String, Object> whereMap = new HashMap<>();
+                        whereMap.put(TableInfo.FILE_NAME, fileName);
+                        whereMap.put(TableInfo.DB_INSTANCE, dbInstance);
+                        DBUtil.delete(TableInfo.BINLOG_PROC_TABLE, whereMap);
+                        Map<String, Object> valueMap = new HashMap<>();
+                        valueMap.put(TableInfo.DOWN_STATUS, 0);
+                        valueMap.put(TableInfo.DOWN_SIZE, null);
+                        valueMap.put(TableInfo.REQUEST_END, null);
+                        DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOG.error(e.getSQLState(), e);
+        }
+    }
 }

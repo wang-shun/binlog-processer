@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.schema.service.repository;
+package com.datatrees.datacenter.table.service.repository;
 
 public class TableDefinition {
 

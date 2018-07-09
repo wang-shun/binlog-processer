@@ -94,7 +94,8 @@ public class HDFSFileUtility {
             if (fileSystem.exists(dstPath)) {
                 fileSystem.delete(dstPath, true);
             } else {
-                return false;
+                LOG.info("file: " + path + " does not exist");
+                return true;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -124,7 +125,7 @@ public class HDFSFileUtility {
         }
     }
 
-    private static List<String> printHdfs(FileStatus file, FileSystem fs,List<String> fileList) {
+    private static List<String> printHdfs(FileStatus file, FileSystem fs, List<String> fileList) {
         //如果为文件夹，则打印其hdfs路
         if (file.isDirectory()) {
             System.out.println(file.getPath());
@@ -134,7 +135,7 @@ public class HDFSFileUtility {
                 //如果该路径下仍然有文件，则递归调用打印函数
                 if (files.length > 0) {
                     for (FileStatus f : files) {
-                        printHdfs(f, fs,fileList);
+                        printHdfs(f, fs, fileList);
                     }
                 }
             } catch (IOException e) {
@@ -156,7 +157,7 @@ public class HDFSFileUtility {
             FileStatus[] files = fileSystem.listStatus(new Path(path));
             //开始调用打印函数
             for (FileStatus file : files) {
-                fileList.addAll(printHdfs(file, fileSystem,fileList));
+                fileList.addAll(printHdfs(file, fileSystem, fileList));
             }
         } catch (IOException e) {
             e.printStackTrace();

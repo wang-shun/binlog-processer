@@ -1,6 +1,6 @@
-import com.datatrees.datacenter.schema.api.RpcClient;
-import com.datatrees.datacenter.schema.api.SchemaRequest;
-import com.datatrees.datacenter.schema.api.SchemaResponse;
+import com.datatrees.datacenter.table.api.RpcClient;
+import com.datatrees.datacenter.table.api.SchemaRequest;
+import com.datatrees.datacenter.table.api.SchemaResponse;
 
 public class RpcTest {
 

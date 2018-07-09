@@ -1,6 +1,6 @@
-package com.datatrees.datacenter.schema.service.repository;
+package com.datatrees.datacenter.table.service.repository;
 
-import com.datatrees.datacenter.schema.service.loader.HistoryRecord;
+import com.datatrees.datacenter.table.service.loader.HistoryRecord;
 import io.debezium.config.Configuration;
 import io.debezium.connector.mysql.MySqlConnectorConfig;
 import io.debezium.connector.mysql.MySqlDdlParser;

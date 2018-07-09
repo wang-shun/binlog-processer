@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.schema.api;
+package com.datatrees.datacenter.table.api;
 
 import com.google.gson.Gson;
 import org.slf4j.Logger;

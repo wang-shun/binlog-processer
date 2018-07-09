@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.schema.api;
+package com.datatrees.datacenter.table.api;
 
 import org.apache.avro.Schema;
 

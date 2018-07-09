@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.schema.service.repository;
+package com.datatrees.datacenter.table.service.repository;
 
 public interface Constants {
     public static final String CONF_DIR = System.getProperty("app.conf.dir");

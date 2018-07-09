@@ -1,9 +1,8 @@
-package com.datatrees.datacenter.schema.service.loader;
+package com.datatrees.datacenter.table.service.loader;
 
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.schema.service.repository.Constants;
-import com.datatrees.datacenter.schema.service.repository.SchemaRepository;
-import com.datatrees.datacenter.schema.service.utils.StringUtils;
+import com.datatrees.datacenter.table.service.repository.Constants;
+import com.datatrees.datacenter.table.service.repository.SchemaRepository;
 import io.debezium.document.DocumentReader;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -11,16 +10,13 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static com.datatrees.datacenter.schema.service.repository.Constants.*;
+import static com.datatrees.datacenter.table.service.repository.Constants.*;
 
 public class HistoryLoader {
 

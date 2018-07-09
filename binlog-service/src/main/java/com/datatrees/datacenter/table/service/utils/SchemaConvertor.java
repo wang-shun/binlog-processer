@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.schema.service.utils;
+package com.datatrees.datacenter.table.service.utils;
 
 import org.apache.avro.Schema;
 import org.apache.kafka.connect.data.*;

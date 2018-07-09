@@ -1,9 +1,9 @@
-package com.datatrees.datacenter.schema.service.rpc;
+package com.datatrees.datacenter.table.service.rpc;
 
-import com.datatrees.datacenter.schema.api.ResultCode;
-import com.datatrees.datacenter.schema.api.SchemaRequest;
-import com.datatrees.datacenter.schema.api.SchemaResponse;
-import com.datatrees.datacenter.schema.service.repository.SchemaRepository;
+import com.datatrees.datacenter.table.api.ResultCode;
+import com.datatrees.datacenter.table.api.SchemaRequest;
+import com.datatrees.datacenter.table.api.SchemaResponse;
+import com.datatrees.datacenter.table.service.repository.SchemaRepository;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

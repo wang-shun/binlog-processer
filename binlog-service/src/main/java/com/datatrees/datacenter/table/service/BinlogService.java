@@ -1,10 +1,9 @@
-package com.datatrees.datacenter.schema.service;
+package com.datatrees.datacenter.table.service;
 
 import com.datatrees.datacenter.core.task.TaskRunner;
-import com.datatrees.datacenter.schema.service.loader.HistoryLoader;
-import com.datatrees.datacenter.schema.service.repository.SchemaRepository;
-import com.datatrees.datacenter.schema.service.rpc.RpcService;
-import io.debezium.config.Configuration;
+import com.datatrees.datacenter.table.service.loader.HistoryLoader;
+import com.datatrees.datacenter.table.service.repository.SchemaRepository;
+import com.datatrees.datacenter.table.service.rpc.RpcService;
 
 public class BinlogService implements TaskRunner {
 

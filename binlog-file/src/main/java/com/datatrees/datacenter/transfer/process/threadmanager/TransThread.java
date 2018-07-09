@@ -155,8 +155,8 @@ public class TransThread implements Serializable, Runnable {
             LOG.info(fileName + "当前下载进度为：" + percent + "%");
         }
         if (percent > 100) {
-            //delErrorFile();
-            System.gc();
+            delErrorFile();
+            //System.gc();
         }
     }
 

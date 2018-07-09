@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.schema.service.rpc;
+package com.datatrees.datacenter.table.service.rpc;
 
 import java.nio.ByteBuffer;
 

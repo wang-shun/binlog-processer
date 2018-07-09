@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package com.datatrees.datacenter.schema.service.loader;
+package com.datatrees.datacenter.table.service.loader;
 
 import io.debezium.document.Document;
 
