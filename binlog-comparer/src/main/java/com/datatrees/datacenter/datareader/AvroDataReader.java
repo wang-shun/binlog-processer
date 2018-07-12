@@ -2,12 +2,12 @@ package com.datatrees.datacenter.datareader;
 
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.FieldNameOp;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
@@ -15,17 +15,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class AvroDataReader extends DataReader {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
-    private final FileSystem fs = HDFSFileUtility.fileSystem;
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
+    private String dataBase;
+    private String tableName;
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
@@ -34,23 +32,25 @@ public class AvroDataReader extends DataReader {
         Map<String, Long> createMap = new HashMap<>();
         Map<String, Long> upDateMap = new HashMap<>();
         Map<String, Long> deleteMap = new HashMap<>();
+        Map<String, Long> uniqueMap = new HashMap<>();
+        // TODO: 2018/7/11 同一张表的数据可以一次读取
         if (fileList.size() > 0) {
             InputStream is;
             for (String file : fileList) {
                 try {
-                    is = fs.open(new Path(file));
-                    // TODO: 2018/7/9  tableName
-                    String tableName = "";
-                    Map<String, Map<String, Long>> recordMap = readFromAvro(tableName, is);
+                    is = HDFSFileUtility.getFileSystem(file).open(new Path(file));
+                    Map<String, Map<String, Long>> recordMap = readFromAvro(dataBase, tableName, is);
                     createMap.putAll(recordMap.get(OperateType.Create.toString()));
                     upDateMap.putAll(recordMap.get(OperateType.Update.toString()));
                     deleteMap.putAll(recordMap.get(OperateType.Delete.toString()));
+                    uniqueMap.putAll(recordMap.get(OperateType.Unique.toString()));
                 } catch (IOException e) {
                     LOG.error("can't open HDFS file :" + filePath);
                 }
                 operateMap.put(OperateType.Create.toString(), createMap);
                 operateMap.put(OperateType.Update.toString(), upDateMap);
                 operateMap.put(OperateType.Delete.toString(), deleteMap);
+                operateMap.put(OperateType.Unique.toString(),uniqueMap);
             }
         }
         return operateMap;
@@ -62,9 +62,11 @@ public class AvroDataReader extends DataReader {
      * @param is 输入文件流
      * @return Avro中分类后的事件信息
      */
-    private Map<String, Map<String, Long>> readFromAvro(String tableName, InputStream is) {
-        String RECORD_ID = FieldNameOp.getFieldName(tableName, idList);
-        String RECORD_LAST_UPDATE_TIME = FieldNameOp.getFieldName(tableName, createTimeList);
+    private Map<String, Map<String, Long>> readFromAvro(String dataBase, String tableName, InputStream is) {
+        // TODO: 2018/7/11
+        String RECORD_ID = FieldNameOp.getFieldName(dataBase, tableName, idList);
+        String RECORD_LAST_UPDATE_TIME = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
+
         Map<String, Long> createMap = new HashMap<>();
         Map<String, Long> upDateMap = new HashMap<>();
         Map<String, Long> deleteMap = new HashMap<>();
@@ -118,5 +120,21 @@ public class AvroDataReader extends DataReader {
             e.printStackTrace();
         }
         return recordMap;
+    }
+
+    public String getDataBase() {
+        return dataBase;
+    }
+
+    public void setDataBase(String dataBase) {
+        this.dataBase = dataBase;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 }

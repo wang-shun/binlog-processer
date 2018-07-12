@@ -2,10 +2,7 @@ package com.datatrees.datacenter.transfer.process.threadmanager;
 
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.HDFSFileUtility;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.core.utility.TimeUtil;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.process.TransferTimerTask;
@@ -34,7 +31,8 @@ public class TransThread implements Serializable, Runnable {
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static final int BUFFER_SIZE = Integer.parseInt(properties.getProperty("BUFFER_SIZE"));
     private static Logger LOG = LoggerFactory.getLogger(TransThread.class);
-    private FileSystem fs = HDFSFileUtility.fileSystem;
+    private FileSystem fs;
+    private String dataBase=properties.getProperty("jdbc.database");
     /**
      * 文件所在src
      */
@@ -76,6 +74,7 @@ public class TransThread implements Serializable, Runnable {
         this.startPos = startPos;
         this.endPos = endPos;
         this.instanceId = instanceId;
+        this.fs= HDFSFileUtility.getFileSystem(dest);
     }
 
     @Override
@@ -168,7 +167,7 @@ public class TransThread implements Serializable, Runnable {
         Map<String, Object> valueMap = new HashMap<>(1);
         valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
         try {
-            DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+            DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
         } catch (SQLException e) {
             LOG.error("reset down_status of file:" + fileName + " to 0 failed");
         }
@@ -187,7 +186,7 @@ public class TransThread implements Serializable, Runnable {
         valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
         valueMap.put(TableInfo.DOWN_SIZE, HDFSFileUtility.getFileSize(dest + File.separator + fileName));
         try {
-            DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+            DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -209,7 +208,7 @@ public class TransThread implements Serializable, Runnable {
             LOG.error("send " + fileName + " to queue failed");
         }
         try {
-            List<Map<String, Object>> processRecord = DBUtil.query(TableInfo.BINLOG_PROC_TABLE, whereMap);
+            List<Map<String, Object>> processRecord = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_PROC_TABLE, whereMap);
             if (processRecord.size() == 0) {
                 Map<String, Object> map = new HashMap<>(5);
                 map.put(TableInfo.FILE_NAME, fileName);
@@ -217,7 +216,7 @@ public class TransThread implements Serializable, Runnable {
                 map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
                 map.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
                 try {
-                    DBUtil.insert(TableInfo.BINLOG_PROC_TABLE, map);
+                    DBUtil.insert(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_PROC_TABLE, map);
                 } catch (SQLException e) {
                     LOG.error("insert " + fileName + "to t_binlog_process failed");
                 }

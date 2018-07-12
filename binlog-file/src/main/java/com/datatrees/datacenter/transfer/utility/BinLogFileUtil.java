@@ -41,6 +41,7 @@ public class BinLogFileUtil {
         Matcher matcher = pattern.matcher(link);
         if (matcher.find()) {
             fileName = matcher.group();
+            LOG.info("fileName :"+fileName);
         } else {
             LOG.info("no fileName get from the link,please check the url or the regex pattern");
         }

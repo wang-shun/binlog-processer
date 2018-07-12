@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.iq80.leveldb.DB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +23,6 @@ import org.slf4j.LoggerFactory;
  * @author personalc
  */
 public class DBUtil {
-
     /**
      * the pattern of limit
      */
@@ -38,7 +38,7 @@ public class DBUtil {
      * @return 影响的行数
      * @throws SQLException SQL异常
      */
-    public static int insert(String tableName, Map<String, Object> valueMap) throws SQLException {
+    public static int insert(DBConnectionPool.DBInfo dbInfo, String dataBase, String tableName, Map<String, Object> valueMap) throws SQLException {
 
         //获取数据库插入的Map的键值对的值
         Set<String> keySet = valueMap.keySet();
@@ -68,7 +68,7 @@ public class DBUtil {
         sql.append(" )  VALUES (");
         sql.append(unknownMarkSql);
         sql.append(" )");
-        return executeUpdate(sql.toString(), bindArgs);
+        return executeUpdate(dbInfo, dataBase, sql.toString(), bindArgs);
     }
 
     /**
@@ -79,7 +79,7 @@ public class DBUtil {
      * @return 影响的行数
      * @throws SQLException SQL异常
      */
-    public static int insertAll(String tableName, List<Map<String, Object>> datas)
+    public static int insertAll(DBConnectionPool.DBInfo dbInfo, String dataBase, String tableName, List<Map<String, Object>> datas)
             throws SQLException {
         //影响的行数
         int affectRowCount;
@@ -87,8 +87,8 @@ public class DBUtil {
         PreparedStatement preparedStatement = null;
         try {
             //从数据库连接池中获取数据库连接
-            connection = DBConnectionPool.getInstance().getConnection();
-
+            DBConnectionPool dbConnectionPool = new DBConnectionPool(dbInfo);
+            dbConnectionPool.getInstance().getConnection(dataBase);
             Map<String, Object> valueMap = datas.get(0);
             //获取数据库插入的Map的键值对的值
             Set<String> keySet = valueMap.keySet();
@@ -133,10 +133,10 @@ public class DBUtil {
             int[] arr = preparedStatement.executeBatch();
             connection.commit();
             affectRowCount = arr.length;
-            System.out.println("成功了插入了" + affectRowCount + "行");
+            LOG.info("成功了插入了" + affectRowCount + "行");
             System.out.println();
         } catch (Exception e) {
-            LOG.error("error to insertall", e);
+            LOG.error("error to insert all", e);
             if (connection != null) {
                 connection.rollback();
             }
@@ -161,7 +161,7 @@ public class DBUtil {
      * @return 影响的行数
      * @throws SQLException SQL异常
      */
-    public static int update(String tableName, Map<String, Object> valueMap,
+    public static int update(DBConnectionPool.DBInfo dbInfo, String dataBase, String tableName, Map<String, Object> valueMap,
                              Map<String, Object> whereMap) throws SQLException {
         //获取数据库插入的Map的键值对的值
         Set<String> keySet = valueMap.keySet();
@@ -200,7 +200,7 @@ public class DBUtil {
             }
             sql.append(whereSql);
         }
-        return executeUpdate(sql.toString(), objects.toArray());
+        return executeUpdate(dbInfo, dataBase, sql.toString(), objects.toArray());
     }
 
     /**
@@ -211,7 +211,7 @@ public class DBUtil {
      * @return 影响的行数
      * @throws SQLException SQL执行异常
      */
-    public static int delete(String tableName, Map<String, Object> whereMap) throws SQLException {
+    public static int delete(DBConnectionPool.DBInfo dbInfo, String dataBase, String tableName, Map<String, Object> whereMap) throws SQLException {
         //准备删除的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ");
@@ -236,7 +236,7 @@ public class DBUtil {
             }
             sql.append(whereSql);
         }
-        return executeUpdate(sql.toString(), bindArgs);
+        return executeUpdate(dbInfo, dataBase, sql.toString(), bindArgs);
     }
 
     /**
@@ -247,19 +247,20 @@ public class DBUtil {
      * @return 影响的行数
      * @throws SQLException SQL异常
      */
-    public static int executeUpdate(String sql, Object[] bindArgs) throws SQLException {
+    public static int executeUpdate(DBConnectionPool.DBInfo dbInfo, String dataBase, String sql, Object[] bindArgs) throws SQLException {
         //影响的行数
         int affectRowCount = -1;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try {
             //从数据库连接池中获取数据库连接
-            connection = DBConnectionPool.getInstance().getConnection();
+            DBConnectionPool dbConnectionPool = new DBConnectionPool(dbInfo);
+            connection = dbConnectionPool.getInstance().getConnection(dataBase);
             //执行SQL预编译
             preparedStatement = connection.prepareStatement(sql);
             //设置不自动提交，以便于在出现异常的时候数据库回滚
             connection.setAutoCommit(false);
-            System.out.println(getExecSQL(sql, bindArgs));
+            LOG.info(getExecSQL(sql, bindArgs));
             if (bindArgs != null) {
                 //绑定参数设置sql占位符中的值
                 for (int i = 0; i < bindArgs.length; i++) {
@@ -277,7 +278,7 @@ public class DBUtil {
             } else {
                 operate = "修改";
             }
-            System.out.println("成功" + operate + "了" + affectRowCount + "行");
+            LOG.info("成功" + operate + "了" + affectRowCount + "行");
             System.out.println();
         } catch (Exception e) {
             if (connection != null) {
@@ -302,8 +303,8 @@ public class DBUtil {
      *
      * @return 查询的数据集合
      */
-    public static List<Map<String, Object>> query(String sql) throws SQLException {
-        return executeQuery(sql, null);
+    public static List<Map<String, Object>> query(DBConnectionPool.DBInfo dbInfo, String dataBase, String sql) throws SQLException {
+        return executeQuery(dbInfo, dataBase, sql, null);
     }
 
     /**
@@ -311,9 +312,9 @@ public class DBUtil {
      *
      * @param tableName 表名
      * @param whereMap  where条件
-     * @return List<Map       <       String       ,       Object>>
+     * @return List<Map < String , Object>>
      */
-    public static List<Map<String, Object>> query(String tableName,
+    public static List<Map<String, Object>> query(DBConnectionPool.DBInfo dbInfo, String dataBase, String tableName,
                                                   Map<String, Object> whereMap) throws Exception {
         String whereClause = "";
         Object[] whereArgs = null;
@@ -329,7 +330,7 @@ public class DBUtil {
                 i++;
             }
         }
-        return query(tableName, false, null, whereClause, whereArgs, null, null, null, null);
+        return query(dbInfo, dataBase, tableName, false, null, whereClause, whereArgs, null, null, null, null);
     }
 
     /**
@@ -338,12 +339,12 @@ public class DBUtil {
      * @param tableName   表名
      * @param whereClause where条件的sql
      * @param whereArgs   where条件中占位符中的值
-     * @return List<Map       <       String       ,       Object>>
+     * @return List<Map < String , Object>>
      */
-    public static List<Map<String, Object>> query(String tableName,
+    public static List<Map<String, Object>> query(DBConnectionPool.DBInfo dbInfo, String dataBase, String tableName,
                                                   String whereClause,
                                                   String[] whereArgs) throws SQLException {
-        return query(tableName, false, null, whereClause, whereArgs, null, null, null, null);
+        return query(dbInfo, dataBase, tableName, false, null, whereClause, whereArgs, null, null, null, null);
     }
 
     /**
@@ -358,9 +359,9 @@ public class DBUtil {
      * @param having        筛选
      * @param orderBy       排序
      * @param limit         分页
-     * @return List<Map       <       String       ,       Object>>
+     * @return List<Map < String , Object>>
      */
-    public static List<Map<String, Object>> query(String tableName,
+    public static List<Map<String, Object>> query(DBConnectionPool.DBInfo dbInfo, String dataBase, String tableName,
                                                   boolean distinct,
                                                   String[] columns,
                                                   String selection,
@@ -371,7 +372,7 @@ public class DBUtil {
                                                   String limit) throws SQLException {
         String sql = buildQueryString(distinct, tableName, columns, selection, groupBy, having, orderBy,
                 limit);
-        return executeQuery(sql, selectionArgs);
+        return executeQuery(dbInfo, dataBase, sql, selectionArgs);
 
     }
 
@@ -380,10 +381,10 @@ public class DBUtil {
      *
      * @param sql      要执行的sql语句
      * @param bindArgs 绑定的参数
-     * @return List<Map       < String , Object>>结果集对象
+     * @return List<Map < String , Object>>结果集对象
      * @throws SQLException SQL执行异常
      */
-    private static List<Map<String, Object>> executeQuery(String sql, Object[] bindArgs)
+    private static List<Map<String, Object>> executeQuery(DBConnectionPool.DBInfo dbInfo, String dataBase, String sql, Object[] bindArgs)
             throws SQLException {
         List<Map<String, Object>> datas;
         Connection connection = null;
@@ -392,7 +393,8 @@ public class DBUtil {
 
         try {
             //获取数据库连接池中的连接
-            connection = DBConnectionPool.getInstance().getConnection();
+            DBConnectionPool dbConnectionPool = new DBConnectionPool(dbInfo);
+            connection = dbConnectionPool.getInstance().getConnection(dataBase);
             preparedStatement = connection.prepareStatement(sql);
             if (bindArgs != null) {
                 //设置sql占位符中的值
@@ -400,7 +402,7 @@ public class DBUtil {
                     preparedStatement.setObject(i + 1, bindArgs[i]);
                 }
             }
-            System.out.println(getExecSQL(sql, bindArgs));
+            LOG.info(getExecSQL(sql, bindArgs));
             //执行sql语句，获取结果集
             resultSet = preparedStatement.executeQuery();
             datas = getDatas(resultSet);
@@ -438,7 +440,7 @@ public class DBUtil {
             }
             datas.add(rowMap);
         }
-        System.out.println("成功查询到了" + datas.size() + "行数据");
+        LOG.info("成功查询到了" + datas.size() + "行数据");
         for (int i = 0; i < datas.size(); i++) {
             Map<String, Object> map = datas.get(i);
             System.out.println("第" + (i + 1) + "行：" + map);
@@ -566,5 +568,4 @@ public class DBUtil {
         }
         return sb.toString();
     }
-
 }

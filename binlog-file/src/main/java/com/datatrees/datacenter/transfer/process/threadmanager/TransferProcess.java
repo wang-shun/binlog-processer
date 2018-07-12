@@ -1,7 +1,6 @@
 package com.datatrees.datacenter.transfer.process.threadmanager;
 
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.HDFSFileUtility;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
@@ -15,12 +14,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author personalc
  */
 public class TransferProcess {
     private static Logger LOG = LoggerFactory.getLogger(TransferProcess.class);
+    private Properties  properties=PropertiesUtility.defaultProperties();
+    private String dataBase=properties.getProperty("jdbc.database");
     private int checkInterval = 3000;
     /**
      * 开始位置
@@ -50,7 +52,7 @@ public class TransferProcess {
 
         String filePath = dest + File.separator + fileName;
         try {
-            if (HDFSFileUtility.fileSystem.exists(new Path(filePath))) {
+            if (HDFSFileUtility.getFileSystem(filePath).exists(new Path(filePath))) {
                 firstDown = false;
                 startPos = HDFSFileUtility.getFileSize(filePath);
                 LOG.info("the file size of : " + filePath + " is : " + startPos);
@@ -106,7 +108,7 @@ public class TransferProcess {
             Map<String, Object> valueMap = new HashMap<>(1);
             valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
             try {
-                DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+                DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
             } catch (Exception e) {
                 LOG.error("update binlog file" + instanceId + "-" + fileName + " status 0 to 1 failed");
                 e.printStackTrace();

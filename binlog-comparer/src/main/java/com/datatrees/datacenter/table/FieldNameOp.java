@@ -1,7 +1,6 @@
 package com.datatrees.datacenter.table;
 
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.core.utility.*;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -12,15 +11,10 @@ import static java.util.Arrays.asList;
 
 
 public class FieldNameOp {
-    private String id;
-    private String create;
-    private String upDate;
-    private String tableName;
-
-    public static String getFieldName(String tableName, List<String> configField) {
-
+    // TODO: 2018/7/11 修改返回记录，在方法调用处解析id、lastUpatetime等
+    public static String getFieldName(String dataBase,String tableName, List<String> configField) {
         try {
-            List<Map<String, Object>> mapList = DBUtil.query("select * from " + tableName + " limit 1");
+            List<Map<String, Object>> mapList = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.TIDB.toString()),dataBase,"select * from " + tableName + " limit 1");
             if (!mapList.isEmpty()) {
                 Map<String, Object> firstRecord = mapList.get(0);
                 Set<String> keySets = firstRecord.keySet();
@@ -42,35 +36,4 @@ public class FieldNameOp {
         return asList(allName.split(","));
     }
 
-    public String getId() {
-        return getFieldName(tableName, getConfigField("id"));
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getTableName() {
-        return tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
-    public String getCreate() {
-        return getFieldName(tableName, getConfigField("create"));
-    }
-
-    public void setCreate(String create) {
-        this.create = create;
-    }
-
-    public String getUpDate() {
-        return getFieldName(tableName, getConfigField("update"));
-    }
-
-    public void setUpDate(String upDate) {
-        this.upDate = upDate;
-    }
 }

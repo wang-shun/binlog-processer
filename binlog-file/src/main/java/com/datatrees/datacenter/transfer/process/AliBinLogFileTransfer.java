@@ -37,7 +37,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private final String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
     private final String HDFS_PATH = properties.getProperty("HDFS_PATH");
     private final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
-    private final long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
+    private int RETRY_TIMES = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
     private final long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
     private final long TIMEHOURS_DIFF = -8L;
     private long currentTime = System.currentTimeMillis() - TIMESTAMP_DIFF;
@@ -47,6 +47,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private final String EXCLUDE_TIME_START = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.start");
     private final String EXCLUDE_TIME_END = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.end");
     private String endTime;
+    private String dataBase = properties.getProperty("jdbc.database");
 
 
     @Override
@@ -82,7 +83,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         String fileSizeError = "select * from " + TableInfo.BINLOG_TRANS_TABLE + " where down_size is not null and file_size<>down_size";
         processErrorFile(fileSizeError);
         //处理解析错误文件
-        String resolveError = "select * from " + TableInfo.BINLOG_PROC_TABLE + " where status<>1 and status<>0";
+        String resolveError = "select * from " + TableInfo.BINLOG_PROC_TABLE + " where status<>1 and status<>0 and retry_times=" + RETRY_TIMES;
         processErrorFile(resolveError);
         //重新下载未完成的数据
         umCompleteProcess();
@@ -104,7 +105,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         String sql = "select r.id,r.db_instance,r.file_name,r.bak_instance_id from " + TableInfo.BINLOG_TRANS_TABLE + " as r left join " + TableInfo.BINLOG_PROC_TABLE + " as p on r.db_instance=p.db_instance and r.file_name=p.file_name where p.id is null and r.status=1";
         List<Map<String, Object>> sendFailedRecord;
         try {
-            sendFailedRecord = DBUtil.query(sql);
+            sendFailedRecord = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, sql);
             if (sendFailedRecord.size() > 0) {
                 Iterator<Map<String, Object>> iterator = sendFailedRecord.iterator();
                 Map<String, Object> recordMap;
@@ -118,7 +119,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String identity = dbInstance + "_"
                             + fileName;
                     String mysqlURL = DBInstanceUtil.getConnectString(dbInstance);
-                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
+                   // TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
 
                     Map<String, Object> map = new HashMap<>(5);
                     map.put(TableInfo.FILE_NAME, fileName);
@@ -126,7 +127,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     map.put(TableInfo.BAK_INSTANCE_ID, backInstanceId);
                     map.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
                     try {
-                        DBUtil.insert(TableInfo.BINLOG_PROC_TABLE, map);
+                        DBUtil.insert(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, TableInfo.BINLOG_PROC_TABLE, map);
                     } catch (SQLException e) {
                         LOG.error("insert " + fileName + "to t_binlog_process failed");
                     }
@@ -162,7 +163,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         .append(" order by ")
                         .append(TableInfo.DOWN_END_TIME)
                         .append(" desc limit 1");
-                List<Map<String, Object>> lastDownEnd = DBUtil.query(endTimeSql.toString());
+                List<Map<String, Object>> lastDownEnd = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, endTimeSql.toString());
                 if (!lastDownEnd.isEmpty()) {
                     //设置下载开始时间为上次结束时间
                     Timestamp timestamp = (Timestamp) lastDownEnd.get(0).get(TableInfo.DOWN_END_TIME);
@@ -207,7 +208,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     whereMap.put(TableInfo.FILE_NAME, fileName);
                     try {
                         //判断这个binlog文件是否下载过
-                        List<Map<String, Object>> recordCount = DBUtil.query(TableInfo.BINLOG_TRANS_TABLE, whereMap);
+                        List<Map<String, Object>> recordCount = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, TableInfo.BINLOG_TRANS_TABLE, whereMap);
                         int count = recordCount.size();
                         if (count == 0) {
                             Map<String, Object> map = new HashMap<>(7);
@@ -223,7 +224,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                             map.put(TableInfo.HOST, IPUtility.ipAddress());
                             map.put(TableInfo.DOWN_START_TIME, start);
                             map.put(TableInfo.DOWN_END_TIME, end);
-                            DBUtil.insert(TableInfo.BINLOG_TRANS_TABLE, map);
+                            DBUtil.insert(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, TableInfo.BINLOG_TRANS_TABLE, map);
                         } else {
                             int status = (int) recordCount.get(0).get(TableInfo.DOWN_STATUS);
                             if (status == 1) {
@@ -233,12 +234,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    String filePath = HDFS_PATH +
+                    String dest = HDFS_PATH +
                             File.separator +
                             instanceId +
                             File.separator +
                             hostInstanceId;
-                    TransInfo transInfo = new TransInfo(binLogFile.getDownloadLink(), filePath,
+                    TransInfo transInfo = new TransInfo(binLogFile.getDownloadLink(), dest,
                             fileName, instanceId);
                     boolean processed = TransferTimerTask.processingSet.contains(fileName);
                     if (!processed) {
@@ -297,7 +298,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     .append(" ")
                     .append(TableInfo.DOWN_START_TIME);
 
-            resultList = DBUtil.query(sql.toString());
+            resultList = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, sql.toString());
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
@@ -331,7 +332,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
      */
     private void processErrorFile(String sql) {
         try {
-            List<Map<String, Object>> errorData = DBUtil.query(sql);
+            List<Map<String, Object>> errorData = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, sql);
             if (!errorData.isEmpty()) {
                 for (Map<String, Object> objectMap : errorData) {
                     String fileName = (String) objectMap.get(TableInfo.FILE_NAME);
@@ -344,12 +345,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         Map<String, Object> whereMap = new HashMap<>();
                         whereMap.put(TableInfo.FILE_NAME, fileName);
                         whereMap.put(TableInfo.DB_INSTANCE, dbInstance);
-                        DBUtil.delete(TableInfo.BINLOG_PROC_TABLE, whereMap);
+                        DBUtil.delete(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, TableInfo.BINLOG_PROC_TABLE, whereMap);
                         Map<String, Object> valueMap = new HashMap<>();
                         valueMap.put(TableInfo.DOWN_STATUS, 0);
                         valueMap.put(TableInfo.DOWN_SIZE, null);
                         valueMap.put(TableInfo.REQUEST_END, null);
-                        DBUtil.update(TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+                        DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
                     }
                 }
             }

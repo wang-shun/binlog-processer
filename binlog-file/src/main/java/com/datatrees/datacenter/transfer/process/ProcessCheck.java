@@ -2,9 +2,7 @@ package com.datatrees.datacenter.transfer.process;
 
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.core.utility.TimeUtil;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import org.slf4j.Logger;
@@ -23,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class ProcessCheck {
     private static final Logger LOG = LoggerFactory.getLogger(ProcessCheck.class);
     private Properties properties = PropertiesUtility.defaultProperties();
+    private String dataBase=properties.getProperty("jdbc.database");
     private String DEST = properties != null ? properties.getProperty("HDFS_PATH") : null;
     private int interval = Integer.parseInt(properties.getProperty("process.check.interval"));
     private String TIME_SCALE = properties.getProperty("process.check.time.scale");
@@ -74,7 +73,7 @@ public class ProcessCheck {
                             .append(" ")
                             .append(TIME_SCALE);
 
-                    resultList = DBUtil.query(sql.toString());
+                    resultList = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,sql.toString());
                     if (resultList.size() > 0) {
                         Iterator<Map<String, Object>> iterator = resultList.iterator();
                         while (iterator.hasNext()) {
@@ -86,7 +85,7 @@ public class ProcessCheck {
                             String filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                             String identity = instanceId + "_" + fileName;
                             String mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
-                            TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
+                            //TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
                             LOG.info("send " + identity + " to massage queue");
 
                             //update t_binlog_process table
@@ -98,7 +97,7 @@ public class ProcessCheck {
                             valueMap.put(TableInfo.RETRY_TIMES, retryTimes);
                             Date process_start = TimeUtil.stampToDate(System.currentTimeMillis());
                             valueMap.put(TableInfo.PROCESS_START, process_start);
-                            DBUtil.update(TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
+                            DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
                             LOG.info("update t_binlog_process table, set " + identity + " retry: " + retryTimes + " and process_start: " + process_start);
                         }
                     }

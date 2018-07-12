@@ -13,11 +13,7 @@ public class compareTask implements TaskRunner {
                     @Override
                     public void onMessageReceived(String desc) {
                         DataCompare compare = new TiDBCompare();
-                        // TODO: 2018/7/9  
-                        String src = "";
-                        String dest = "";
-                        compare.binLogCompare(src, dest);
-
+                        compare.binLogCompare(desc);
                     }
                 }).process();
     }

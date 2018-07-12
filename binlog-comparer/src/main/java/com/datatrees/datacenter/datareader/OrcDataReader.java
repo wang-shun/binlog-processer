@@ -1,6 +1,8 @@
 package com.datatrees.datacenter.datareader;
 
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.table.FieldNameOp;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.io.orc.OrcFile;
@@ -17,13 +19,15 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author personalc
  */
 public class OrcDataReader extends DataReader {
     private static Logger LOG = LoggerFactory.getLogger(OrcDataReader.class);
-
+    private Properties properties = PropertiesUtility.defaultProperties();
+    private final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
     @Override
     public Map<String, Long> readDestData(String filePath) {
         List<String> fileList = HDFSFileUtility.getFilesPath(filePath);
@@ -45,7 +49,7 @@ public class OrcDataReader extends DataReader {
     private Map<String, Long> readOrcData(String filePath) {
         Map<String, Long> dataMap = null;
         try {
-            Reader reader = OrcFile.createReader(HDFSFileUtility.fileSystem, new Path(filePath));
+            Reader reader = OrcFile.createReader(HDFSFileUtility.getFileSystem(filePath), new Path(filePath));
             StructObjectInspector inspector = (StructObjectInspector) reader.getObjectInspector();
             RecordReader records = reader.rows();
             Object row = null;

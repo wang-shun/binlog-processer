@@ -17,10 +17,7 @@ import java.util.Properties;
  */
 public class HDFSFileUtility {
     private static Logger LOG = LoggerFactory.getLogger(HDFSFileUtility.class);
-    private static Properties properties = PropertiesUtility.defaultProperties();
     public static Configuration conf = null;
-    public static FileSystem fileSystem = null;
-    public static String hdfsPath = properties.getProperty("HDFS_PATH");
 
     static {
         if (null == conf) {
@@ -33,14 +30,6 @@ public class HDFSFileUtility {
             conf.setInt(DFSConfigKeys.DFS_HEARTBEAT_INTERVAL_KEY, 1);
             conf.setInt(DFSConfigKeys.DFS_CLIENT_SOCKET_TIMEOUT_KEY, 5000);
         }
-        if (null == fileSystem) {
-            try {
-                fileSystem = FileSystem.get(URI.create(hdfsPath), conf);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
     }
 
     /**
@@ -52,8 +41,9 @@ public class HDFSFileUtility {
      * @return 上传是否成功
      */
     public static boolean put2HDFS(String src, String des, Configuration conf) {
-        Path desPath = new Path(des);
         try {
+            FileSystem fileSystem = FileSystem.get(URI.create(des), conf);
+            Path desPath = new Path(des);
             fileSystem.copyFromLocalFile(false, new Path(src), desPath);
 
         } catch (IOException ie) {
@@ -72,8 +62,9 @@ public class HDFSFileUtility {
      * @return 下载是否成功
      */
     public static boolean getFromHDFS(String src, String dst, Configuration conf) {
-        Path dstPath = new Path(dst);
         try {
+            FileSystem fileSystem = FileSystem.get(URI.create(dst), conf);
+            Path dstPath = new Path(dst);
             fileSystem.copyToLocalFile(false, new Path(src), dstPath);
         } catch (IOException ie) {
             ie.printStackTrace();
@@ -89,8 +80,10 @@ public class HDFSFileUtility {
      * @return 检测及删除结果
      */
     public static boolean checkAndDel(String path) {
-        Path dstPath = new Path(path);
+
         try {
+            FileSystem fileSystem = FileSystem.get(URI.create(path), conf);
+            Path dstPath = new Path(path);
             if (fileSystem.exists(dstPath)) {
                 fileSystem.delete(dstPath, true);
             } else {
@@ -111,8 +104,9 @@ public class HDFSFileUtility {
      * @return filesize
      */
     public static long getFileSize(String path) {
-        Path dstPath = new Path(path);
         try {
+            FileSystem fileSystem = FileSystem.get(URI.create(path), conf);
+            Path dstPath = new Path(path);
             if (fileSystem.exists(dstPath)) {
                 ContentSummary contentSummary = fileSystem.getContentSummary(dstPath);
                 return contentSummary.getLength();
@@ -154,14 +148,30 @@ public class HDFSFileUtility {
         List<String> fileList = new ArrayList<>();
         //从hdfs根路径开始
         try {
-            FileStatus[] files = fileSystem.listStatus(new Path(path));
+            FileSystem fs = FileSystem.get(URI.create(path), conf);
+            FileStatus[] files = fs.listStatus(new Path(path));
             //开始调用打印函数
             for (FileStatus file : files) {
-                fileList.addAll(printHdfs(file, fileSystem, fileList));
+                String filePath=file.getPath().toString();
+                if(fs.isFile(file.getPath())){
+                    fileList.add(filePath);
+                }
+                else {
+                    fileList.addAll(printHdfs(file, fs, fileList));
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         return fileList;
+    }
+    public static FileSystem getFileSystem(String path){
+        FileSystem fs = null;
+        try {
+           fs = FileSystem.get(URI.create(path),conf);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return fs;
     }
 }
