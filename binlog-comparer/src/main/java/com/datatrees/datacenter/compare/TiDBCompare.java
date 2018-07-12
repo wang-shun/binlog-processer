@@ -3,9 +3,10 @@ package com.datatrees.datacenter.compare;
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.core.utility.TimeUtil;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.operate.OperateType;
-import com.datatrees.datacenter.table.CompareTable;
+import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,53 +57,130 @@ public class TiDBCompare extends DataCompare {
                 if (uniqueData.size() > 0) {
                     List<Map.Entry<String, Long>> sampleData = dataSample(uniqueData);
                     // TODO: 2018/7/11 这两处可以缓存起来不用每次都去取
-                    String id = FieldNameOp.getFieldName(dataBase, tableName, FieldNameOp.getConfigField("id"));
-                    String lastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, FieldNameOp.getConfigField("update"));
+                    int sampleDataSize = sampleData.size();
+                    System.out.println(sampleDataSize);
+
+                    Map<String, Long> checkDataMap;
+                    checkDataMap = batchCheckData(dataBase, tableName, sampleData);
 
                     Map<String, Long> afterComp;
-                    Map<String, Long> checkDataMap = new HashMap<>();
-                    List<Map<String, Object>> resultMap = new ArrayList<>();
-                    for (Map.Entry record : sampleData) {
-                        Map<String, Object> whereMap = new HashMap<>();
-                        whereMap.put(id, record.getKey());
-                        whereMap.put("UNIX_TIMESTAMP("+lastUpdateTime+")",  ((Long)record.getValue()+1000)/1000);
-                        String sql="select "+id+","+lastUpdateTime+" from "+tableName+" where "+id+"=";
-
-                        List<Map<String, Object>> resultList;
-                        try {
-                            resultList = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.TIDB.toString()), dataBase, tableName, whereMap);
-                            if (resultList.isEmpty()) {
-                                checkDataMap.put((String) record.getKey(), (Long) record.getValue());
-                                LOG.info("**********" + record.getKey() + "*************" + record.getValue() + "******** no find in dataBase:" + dataBase + "****** tableName:" + tableName);
-                            }
-                        } catch (Exception e) {
-                            LOG.info(e.getMessage(), e);
-                        }
-                    }
-                    afterComp = retainCompare(checkDataMap, deleteRecord);
-                    if (afterComp != null) {
-                        Iterator<Map.Entry<String, Long>> it = afterComp.entrySet().iterator();
-                        while (it.hasNext()) {
-                            Map.Entry<String, Long> entry = it.next();
-                            Map<String, Object> dataMap = new HashMap<>();
-                            dataMap.put(CompareTable.OLD_ID, entry.getKey());
-                            dataMap.put(CompareTable.FILE_NAME, fileName);
-                            dataMap.put(CompareTable.DB_INSTANCE, db_instance);
-                            dataMap.put(CompareTable.DATA_BASE, dataBase);
-                            dataMap.put(CompareTable.TABLE_NAME, tableName);
-                            dataMap.put(CompareTable.FILE_PARTITION, partition);
-                            dataMap.put(CompareTable.LAST_UPDATE_TIME, entry.getKey());
-                            resultMap.add(dataMap);
-                        }
-                    }
-                    if (resultMap.size() > 0) {
-                        try {
-                            DBUtil.insertAll(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()), binLogDataBase, CompareTable.TABLE_NAME, resultMap);
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    afterComp = retainCompare(createRecord, checkDataMap);
+                    insertPartitionBatch(fileName, dataBase, tableName, partition, db_instance, afterComp);
                 }
+            }
+        }
+    }
+
+    /**
+     * 对一批数据进行查询检测
+     *
+     * @param dataBase   数据库
+     * @param tableName  表
+     * @param sampleData 采样后的数据
+     */
+    private Map<String, Long> batchCheckData(String dataBase, String tableName, List<Map.Entry<String, Long>> sampleData) {
+        Map<String, Long> checkDataMap = null;
+        String id = FieldNameOp.getFieldName(dataBase, tableName, FieldNameOp.getConfigField("id"));
+        String lastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, FieldNameOp.getConfigField("update"));
+        int sampleDataSize = sampleData.size();
+        StringBuilder sql = new StringBuilder();
+        for (int i = 0; i < sampleDataSize; i++) {
+            Map.Entry record = sampleData.get(i);
+            if (i < sampleDataSize - 1) {
+                sql.append("select ")
+                        .append(id)
+                        .append(" , ")
+                        .append("UNIX_TIMESTAMP(")
+                        .append(lastUpdateTime)
+                        .append(")")
+                        .append(" as time_stamp ")
+                        .append(" from ")
+                        .append(tableName)
+                        .append(" where ")
+                        .append(id)
+                        .append("=")
+                        .append(record.getKey())
+                        .append(" and ")
+                        .append("UNIX_TIMESTAMP(")
+                        .append(lastUpdateTime)
+                        .append(")")
+                        .append("=")
+                        .append((Long) record.getValue() / 1000)
+                        .append(" union ");
+            } else {
+                sql.append("select ")
+                        .append(id)
+                        .append(" , ")
+                        .append("UNIX_TIMESTAMP(")
+                        .append(lastUpdateTime)
+                        .append(")")
+                        .append(" as time_stamp ")
+                        .append(" from ")
+                        .append(tableName)
+                        .append(" where ")
+                        .append(id)
+                        .append("=")
+                        .append(record.getKey())
+                        .append(" and ")
+                        .append("UNIX_TIMESTAMP(")
+                        .append(lastUpdateTime)
+                        .append(")")
+                        .append("=")
+                        .append((Long) record.getValue() / 1000);
+            }
+        }
+        List<Map<String, Object>> resultList;
+        try {
+            resultList = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.TIDB.toString()), dataBase, sql.toString());
+            if (!resultList.isEmpty()) {
+                checkDataMap=new HashMap<>();
+                for (int i = 0; i < resultList.size(); i++) {
+                    Map<String, Object> errorRecord = resultList.get(i);
+                    Long recordId = (long) errorRecord.get(id);
+                    long lastTime = (long) errorRecord.get("time_stamp") * 1000;
+                    checkDataMap.put(String.valueOf(recordId), lastTime);
+                    LOG.info("**********" + recordId + "*************" + lastUpdateTime + "******** no find in dataBase:" + dataBase + "****** tableName:" + tableName);
+                }
+            }
+        } catch (Exception e) {
+            LOG.info(e.getMessage(), e);
+        }
+        return checkDataMap;
+    }
+
+    /**
+     * 将一张表某个分区文件检测结果批量插入到数据库
+     *
+     * @param fileName    文件名
+     * @param dataBase    数据库
+     * @param tableName   表名
+     * @param partition   分区
+     * @param db_instance 实例名
+     * @param afterComp   检车结果
+     */
+    private void insertPartitionBatch(String fileName, String dataBase, String tableName, String partition, String db_instance, Map<String, Long> afterComp) {
+        List<Map<String, Object>> resultMap = null;
+        if (afterComp != null) {
+            resultMap=new ArrayList<>();
+            Iterator<Map.Entry<String, Long>> it = afterComp.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, Long> entry = it.next();
+                Map<String, Object> dataMap = new HashMap<>();
+                dataMap.put(CheckTable.OLD_ID, entry.getKey());
+                dataMap.put(CheckTable.FILE_NAME, fileName);
+                dataMap.put(CheckTable.DB_INSTANCE, db_instance);
+                dataMap.put(CheckTable.DATA_BASE, dataBase);
+                dataMap.put(CheckTable.TABLE_NAME, tableName);
+                dataMap.put(CheckTable.FILE_PARTITION, partition);
+                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()));
+                resultMap.add(dataMap);
+            }
+        }
+        if (resultMap.size() > 0) {
+            try {
+                DBUtil.insertAll(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()), binLogDataBase, CheckTable.BINLOG_CHECK_TABLE, resultMap);
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
     }

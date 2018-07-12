@@ -1,7 +1,7 @@
 package com.datatrees.datacenter.table;
 
-public class CompareTable {
-    public static final String BINLOG_COMPARE_TABLE = "t_binlog_compare";
+public class CheckTable {
+    public static final String BINLOG_CHECK_TABLE = "t_binlog_check";
     public static final String ID = "id";
     public static final String OLD_ID = "old_id";
     public static final String FILE_NAME = "file_name";

@@ -64,9 +64,8 @@ public abstract class DataCompare implements DataCheck {
 
         Set<Map.Entry<String, Long>> set1 = Map1.entrySet();
         Set<Map.Entry<String, Long>> set2 = Map2.entrySet();
-        Map<String, Long> diffMaps = null;
+        Map<String, Long> diffMaps=new HashMap<>();
         if (set1.retainAll(set2)) {
-            diffMaps = new HashMap<>();
             for (Map.Entry entry : set1) {
                 diffMaps.put(entry.getKey().toString(), Long.valueOf(entry.getValue().toString()));
             }

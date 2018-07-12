@@ -88,7 +88,7 @@ public class DBUtil {
         try {
             //从数据库连接池中获取数据库连接
             DBConnectionPool dbConnectionPool = new DBConnectionPool(dbInfo);
-            dbConnectionPool.getInstance().getConnection(dataBase);
+            connection=dbConnectionPool.getInstance().getConnection(dataBase);
             Map<String, Object> valueMap = datas.get(0);
             //获取数据库插入的Map的键值对的值
             Set<String> keySet = valueMap.keySet();

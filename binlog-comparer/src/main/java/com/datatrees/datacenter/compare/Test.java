@@ -17,7 +17,7 @@ public class Test {
         map1.put("C", 2L);
         map1.put("E", 3L);
         map1.put("E", 4L);
-        map1.put("H", 5L);
+        map1.put("G", 5L);
         System.out.println(map1.size());
 
         Map<String, Long> map2 = new HashMap<String, Long>();
@@ -30,7 +30,6 @@ public class Test {
         Set<Map.Entry<String, Long>> set1 = map1.entrySet();
         Set<Map.Entry<String, Long>> set1Copy = new HashSet<>(map1.entrySet());
         Set<Map.Entry<String, Long>> set2 = map2.entrySet();
-        System.out.println("map pairs that are in set 1 but not in set 2");
         if (set1.containsAll(set2)) {
             System.out.println("Map2 is a subset of Map1");
         }
@@ -42,19 +41,20 @@ public class Test {
                     System.out.println(entry.getKey() + "=" + entry.getValue());
                 }
             }
+            System.out.println("**********");
         }
 
         if (set2.containsAll(set1)) {
             System.out.println("Map1 is a subset of Map2");
         }
         else {
-            System.out.println("map pairs that are in set 2 but not in set 1");
             // expected result is key=F, value=F and key=G, value=G
             if(set2.removeAll(set1Copy)){
                 for(Map.Entry entry : set2){
                     System.out.println(entry.getKey() + ":" + entry.getValue());
                 }
             }
+            System.out.println("map pairs that are in set 2 but not in set 1");
         }
     }
 }
