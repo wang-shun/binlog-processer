@@ -19,7 +19,6 @@ public abstract class DataCompare implements DataCheck {
     public void binLogCompare(String dest) {
     }
 
-    @Override
     public List<Map<String, Object>> getCurrentPartitionInfo(String fileName) {
         List<Map<String, Object>> partitionInfo = null;
         String sql = "select db_instance,database_name,table_name,file_partitions,count(file_name) as file_cnt,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_name) as files " +
@@ -48,16 +47,16 @@ public abstract class DataCompare implements DataCheck {
     /**
      * find the key-value that in avroMap but not int orcMap
      *
-     * @param avroMap
-     * @param orcMap
+     * @param srcMap
+     * @param destMap
      * @return
      */
-    public Map<String, Long> diffCompare(Map<String, Long> avroMap, Map<String, Long> orcMap) {
+    public Map<String, Long> diffCompare(Map<String, Long> srcMap, Map<String, Long> destMap) {
 
-        Set<Map.Entry<String, Long>> avroSet = avroMap.entrySet();
-        Set<Map.Entry<String, Long>> orcSet = orcMap.entrySet();
+        Set<Map.Entry<String, Long>> avroSet = srcMap.entrySet();
+        Set<Map.Entry<String, Long>> orcSet = destMap.entrySet();
         Map<String, Long> diffMaps = null;
-        if (null != avroMap && null != orcMap) {
+        if (srcMap.size()>0  && destMap.size()>0) {
             if (avroSet.removeAll(orcSet)) {
                 diffMaps = new HashMap<>();
                 for (Map.Entry entry : avroSet) {
@@ -65,8 +64,8 @@ public abstract class DataCompare implements DataCheck {
                 }
             }
         } else {
-            if (null != avroMap) {
-                return avroMap;
+            if (srcMap.size()>0) {
+                return srcMap;
             } else {
                 return null;
             }

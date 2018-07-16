@@ -28,21 +28,20 @@ public class TiDBCompare extends DataCompare {
 
     @Override
     public void binLogCompare(String fileName) {
-        List<Map<String, Object>> partitionInfo = getCurrentTableInfo(fileName);
-        if (null != partitionInfo) {
-            for (Map<String, Object> recordMap : partitionInfo) {
+        List<Map<String, Object>> TableInfo = getCurrentTableInfo(fileName);
+        if (null != TableInfo) {
+            for (Map<String, Object> recordMap : TableInfo) {
                 String dataBase = String.valueOf(recordMap.get("database_name"));
                 String tableName = String.valueOf(recordMap.get("table_name"));
                 String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
                 String db_instance = String.valueOf(recordMap.get("db_instance"));
-                AvroDataReader avroDataReader = new AvroDataReader();
-                CheckResult checkResult = new CheckResult();
                 RECORD_ID = FieldNameOp.getFieldName(dataBase, tableName, idList);
                 RECORD_LAST_UPDATE_TIME = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
                 if (null != RECORD_ID && null != RECORD_LAST_UPDATE_TIME) {
                     if (partitions.length > 0) {
                         Map<String, Long> allUniqueData = new HashMap<>();
                         Map<String, Long> allDeleteData = new HashMap<>();
+                        AvroDataReader avroDataReader = new AvroDataReader();
                         for (String partition : partitions) {
                             avroDataReader.setDataBase(dataBase);
                             avroDataReader.setTableName(tableName);
@@ -73,25 +72,31 @@ public class TiDBCompare extends DataCompare {
                             }
                         }
                         Map<String, Long> filterDeleteMap = diffCompare(allUniqueData, allDeleteData);
-                        insertErrorData(fileName, dataBase, tableName, db_instance, checkResult, filterDeleteMap);
-                        insertErrorData(fileName, dataBase, tableName, db_instance, checkResult, allDeleteData);
+                        CheckResult checkResult = new CheckResult();
+                        checkResult.setDataBase(dataBase);
+                        checkResult.setTableName(tableName);
+                        checkResult.setFileName(fileName);
+                        checkResult.setDbInstance(db_instance);
+                        checkResult.setOpType(OperateType.Unique.toString());
+                        insertErrorData(checkResult, filterDeleteMap, OperateType.Unique);
+                        checkResult.setOpType(OperateType.Delete.toString());
+                        insertErrorData(checkResult, allDeleteData, OperateType.Delete);
                     }
                 }
             }
         }
     }
 
-    private void insertErrorData(String fileName, String dataBase, String tableName, String db_instance, CheckResult checkResult, Map<String, Long> allDeleteData) {
-        if (null != allDeleteData) {
-            //delete事件
-            List<Map.Entry<String, Long>> sampleDeleteData = dataSample(allDeleteData);
-            int sampleDeleteSize = sampleDeleteData.size();
-            System.out.println(sampleDeleteSize);
-            List<String> deleteCheck = batckCheck(dataBase, tableName, sampleDeleteData, OperateType.Delete);
-            checkResult.setDataBase(dataBase);
-            checkResult.setTableName(tableName);
-            checkResult.setFileName(fileName);
-            checkResult.setDbInstance(db_instance);
+    /**
+     * 将查询得到的错误数据记录到数据库
+     *
+     * @param checkResult
+     * @param dataMap
+     */
+    private void insertErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op) {
+        if (null != dataMap) {
+            List<Map.Entry<String, Long>> sampleDeleteData = dataSample(dataMap);
+            List<String> deleteCheck = batckCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleDeleteData, op);
             insertPartitionBatch(checkResult, deleteCheck);
         }
     }
@@ -129,7 +134,7 @@ public class TiDBCompare extends DataCompare {
         if (null != sampleData && sampleData.size() > 0) {
             int sampleDataSize = sampleData.size();
             switch (op) {
-                case Create:
+                case Unique:
                     for (int i = 0; i < sampleDataSize; i++) {
                         Map.Entry record = sampleData.get(i);
                         sql.append("select ")
@@ -150,7 +155,7 @@ public class TiDBCompare extends DataCompare {
                                 .append(RECORD_LAST_UPDATE_TIME)
                                 .append(")")
                                 .append("<")
-                                .append(((Long) record.getValue() + 1000) / 1000);
+                                .append((Long) record.getValue() / 1000);
                         if (i < sampleDataSize - 1) {
                             sql.append(" union ");
                         }

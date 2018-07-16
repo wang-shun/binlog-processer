@@ -1,7 +1,8 @@
 package com.datatrees.datacenter.table;
 
-import com.datatrees.datacenter.compare.TiDBCompare;
-import com.datatrees.datacenter.core.utility.*;
+import com.datatrees.datacenter.core.utility.DBServer;
+import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
