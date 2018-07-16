@@ -38,7 +38,7 @@ public class HiveCompare extends DataCompare {
         Map<String, Long> fromDelete = retainCompare(deleteRecord, diffList);
         // TODO: 2018/7/3 找出各种事件
         //查看当前binlog解析出来的文件分区文件数目和文件条数是否达到了数量要求
-        List<Map<String, Object>> test = getCurrentPartitinInfo(avroPath);
+        List<Map<String, Object>> test = getCurrentPartitionInfo(avroPath);
         List<Map<String, Object>> testFilter = test.stream().filter(line -> !"hell0".equalsIgnoreCase(String.valueOf(line.get("hello")) + String.valueOf(line.get("kugou")))).collect(Collectors.toList());
         // TODO: 2018/7/4  每次检查完，修改检查过的数据的状态（t_binlog_process_log）
     }

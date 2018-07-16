@@ -2,6 +2,8 @@ package com.datatrees.datacenter.core.utility;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
@@ -14,6 +16,7 @@ import java.sql.SQLException;
  */
 
 public class DBConnectionPool {
+    private static Logger logger = LoggerFactory.getLogger(DBConnectionPool.class);
 
     private static volatile DBConnectionPool dbConnection;
     private ComboPooledDataSource cpds;
@@ -75,13 +78,13 @@ public class DBConnectionPool {
                     dbConnection = new DBConnectionPool(dbInfo);
                 }
             }
-        }
-        else {
-            String lastUrl=dbConnection.dbInfo.getUrl();
+        } else {
+            String lastUrl = dbConnection.dbInfo.getUrl();
             System.out.println(lastUrl);
-            if(!lastUrl.equalsIgnoreCase(dbInfo.url)) {
-                dbConnection.finalize();
-                dbConnection=new DBConnectionPool(dbInfo);
+            System.out.println(dbInfo.url);
+            if (!lastUrl.equalsIgnoreCase(dbInfo.url)) {
+                //dbConnection.finalize();
+                dbConnection = new DBConnectionPool(dbInfo);
             }
         }
         return dbConnection;
@@ -93,11 +96,17 @@ public class DBConnectionPool {
      * @return 数据库连接
      */
 
-    public final synchronized Connection getConnection(String dataBase) throws SQLException {
+    public final synchronized Connection getConnection(String dataBase) {
         String url = cpds.getJdbcUrl();
         String subUrl = url.substring(url.lastIndexOf("/") + 1, url.lastIndexOf("?"));
         cpds.setJdbcUrl(url.replace(subUrl, dataBase));
-        return cpds.getConnection();
+        Connection connection=null;
+        try {
+            connection= cpds.getConnection();
+        } catch (SQLException e) {
+            logger.info(e.getMessage(),e);
+        }
+        return connection;
     }
 
     /**
@@ -105,7 +114,7 @@ public class DBConnectionPool {
      */
 
     @Override
-    protected void finalize()  {
+    protected void finalize() {
         try {
             DataSources.destroy(cpds);
             super.finalize();

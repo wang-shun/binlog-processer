@@ -6,5 +6,6 @@ import java.util.Map;
 public interface DataCheck {
     void binLogCompare(String dest);
 
-    List<Map<String, Object>> getCurrentPartitinInfo(String fileName);
+    List<Map<String, Object>> getCurrentPartitionInfo(String fileName);
+
 }

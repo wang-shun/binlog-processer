@@ -119,7 +119,6 @@ public class TimeUtil {
         String res;
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = new Date(s);
-        System.out.println(date);
         res = sf.format(date);
         Date  newDate = null;
         try {

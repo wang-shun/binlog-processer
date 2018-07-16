@@ -27,7 +27,6 @@ public class DBServer {
             username = properties.getProperty("tidb.username");
             password = properties.getProperty("tidb.password");
         }
-        // TODO: 2018/7/11 可否将URL判断放至此处
         dbInfo.setDriver(driverClassName);
         dbInfo.setUrl(url);
         dbInfo.setUsername(username);
