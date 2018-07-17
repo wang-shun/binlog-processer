@@ -10,7 +10,7 @@ public class DBServer {
         TIDB
     }
 
-    public static DBConnectionPool.DBInfo getDBInfo(String dbServer) {
+   /* public static DBConnectionPool.DBInfo getDBInfo(String dbServer) {
         DBConnectionPool.DBInfo dbInfo = new DBConnectionPool.DBInfo();
         String driverClassName;
         String url;
@@ -27,11 +27,10 @@ public class DBServer {
             username = properties.getProperty("tidb.username");
             password = properties.getProperty("tidb.password");
         }
-        // TODO: 2018/7/11 可否将URL判断放至此处
         dbInfo.setDriver(driverClassName);
         dbInfo.setUrl(url);
         dbInfo.setUsername(username);
         dbInfo.setPassword(password);
         return dbInfo;
-    }
+    }*/
 }
