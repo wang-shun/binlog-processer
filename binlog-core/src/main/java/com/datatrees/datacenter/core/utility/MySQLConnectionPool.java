@@ -7,8 +7,8 @@ public class MySQLConnectionPool extends DBConnectionPool{
     /**
      * 在构造函数初始化的时候获取数据库连接
      */
-    public MySQLConnectionPool(DBInfo dbInfo) {
-        super(dbInfo);
+    public MySQLConnectionPool(String dbType) {
+        super(dbType);
 
     }
 }

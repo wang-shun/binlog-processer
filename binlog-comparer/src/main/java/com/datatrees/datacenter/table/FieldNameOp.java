@@ -20,7 +20,7 @@ public class FieldNameOp {
     // TODO: 2018/7/11 修改返回记录，在方法调用处解析id、lastUpatetime等
     public static String getFieldName(String dataBase, String tableName, List<String> configField) {
         try {
-            List<Map<String, Object>> mapList = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.TIDB.toString()), dataBase, "select * from " + tableName + " limit 1");
+            List<Map<String, Object>> mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, "select * from " + tableName + " limit 1");
             if (null != mapList) {
                 Map<String, Object> firstRecord = mapList.get(0);
                 Set<String> keySets = firstRecord.keySet();

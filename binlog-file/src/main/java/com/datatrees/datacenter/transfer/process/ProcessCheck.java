@@ -73,7 +73,7 @@ public class ProcessCheck {
                             .append(" ")
                             .append(TIME_SCALE);
 
-                    resultList = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,sql.toString());
+                    resultList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(),dataBase,sql.toString());
                     if (resultList.size() > 0) {
                         Iterator<Map<String, Object>> iterator = resultList.iterator();
                         while (iterator.hasNext()) {
@@ -85,7 +85,7 @@ public class ProcessCheck {
                             String filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                             String identity = instanceId + "_" + fileName;
                             String mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
-                            //TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
+                            TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
                             LOG.info("send " + identity + " to massage queue");
 
                             //update t_binlog_process table
@@ -97,7 +97,7 @@ public class ProcessCheck {
                             valueMap.put(TableInfo.RETRY_TIMES, retryTimes);
                             Date process_start = TimeUtil.stampToDate(System.currentTimeMillis());
                             valueMap.put(TableInfo.PROCESS_START, process_start);
-                            DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
+                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(),dataBase,TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
                             LOG.info("update t_binlog_process table, set " + identity + " retry: " + retryTimes + " and process_start: " + process_start);
                         }
                     }

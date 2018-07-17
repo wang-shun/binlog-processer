@@ -14,6 +14,7 @@ public abstract class DataCompare implements DataCheck {
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static String dataBase = properties.getProperty("jdbc.database");
     private static String processLogTable = CheckTable.BINLOG_PROCESS_LOG_TABLE;
+    public final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
 
     @Override
     public void binLogCompare(String dest) {
@@ -24,7 +25,7 @@ public abstract class DataCompare implements DataCheck {
         String sql = "select db_instance,database_name,table_name,file_partitions,count(file_name) as file_cnt,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_name) as files " +
                 "from (select * from " + processLogTable + " where file_name='" + fileName + "') as temp group by db_instance,database_name,table_name,file_partitions having file_cnt>" + fileNum + " and sum_cnt>" + recordNum;
         try {
-            partitionInfo = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()), dataBase, sql);
+            partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (SQLException e1) {
             e1.printStackTrace();
         }
@@ -37,7 +38,7 @@ public abstract class DataCompare implements DataCheck {
         String sql = "select db_instance,database_name,table_name,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_partitions) as partitions from " +
                 " (select * from " + processLogTable + " where file_name= '" + fileName + "') as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
         try {
-            partitionInfo = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()), dataBase, sql);
+            partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (SQLException e1) {
             e1.printStackTrace();
         }

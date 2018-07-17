@@ -10,7 +10,7 @@ public class DBServer {
         TIDB
     }
 
-    public static DBConnectionPool.DBInfo getDBInfo(String dbServer) {
+   /* public static DBConnectionPool.DBInfo getDBInfo(String dbServer) {
         DBConnectionPool.DBInfo dbInfo = new DBConnectionPool.DBInfo();
         String driverClassName;
         String url;
@@ -32,5 +32,5 @@ public class DBServer {
         dbInfo.setUsername(username);
         dbInfo.setPassword(password);
         return dbInfo;
-    }
+    }*/
 }

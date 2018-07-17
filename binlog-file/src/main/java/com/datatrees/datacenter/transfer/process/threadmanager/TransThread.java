@@ -167,7 +167,7 @@ public class TransThread implements Serializable, Runnable {
         Map<String, Object> valueMap = new HashMap<>(1);
         valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.UNCOMPLETED.getValue());
         try {
-            DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+            DBUtil.update(DBServer.DBServerType.MYSQL.toString(),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
         } catch (SQLException e) {
             LOG.error("reset down_status of file:" + fileName + " to 0 failed");
         }
@@ -186,7 +186,7 @@ public class TransThread implements Serializable, Runnable {
         valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
         valueMap.put(TableInfo.DOWN_SIZE, HDFSFileUtility.getFileSize(dest + File.separator + fileName));
         try {
-            DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+            DBUtil.update(DBServer.DBServerType.MYSQL.toString(),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -208,7 +208,7 @@ public class TransThread implements Serializable, Runnable {
             LOG.error("send " + fileName + " to queue failed");
         }
         try {
-            List<Map<String, Object>> processRecord = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_PROC_TABLE, whereMap);
+            List<Map<String, Object>> processRecord = DBUtil.query(DBServer.DBServerType.MYSQL.toString(),dataBase,TableInfo.BINLOG_PROC_TABLE, whereMap);
             if (processRecord.size() == 0) {
                 Map<String, Object> map = new HashMap<>(5);
                 map.put(TableInfo.FILE_NAME, fileName);
@@ -216,7 +216,7 @@ public class TransThread implements Serializable, Runnable {
                 map.put(TableInfo.BAK_INSTANCE_ID, DBInstanceUtil.getBackInstanceId(instanceId));
                 map.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
                 try {
-                    DBUtil.insert(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_PROC_TABLE, map);
+                    DBUtil.insert(DBServer.DBServerType.MYSQL.toString(),dataBase,TableInfo.BINLOG_PROC_TABLE, map);
                 } catch (SQLException e) {
                     LOG.error("insert " + fileName + "to t_binlog_process failed");
                 }

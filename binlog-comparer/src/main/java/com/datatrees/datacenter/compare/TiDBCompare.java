@@ -18,7 +18,6 @@ import java.util.*;
 public class TiDBCompare extends DataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
     private Properties properties = PropertiesUtility.defaultProperties();
-    private final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
     private final int factor = 400;
     private String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
@@ -47,8 +46,8 @@ public class TiDBCompare extends DataCompare {
                             avroDataReader.setTableName(tableName);
                             avroDataReader.setRECORD_ID(RECORD_ID);
                             avroDataReader.setRECORD_LAST_UPDATE_TIME(RECORD_LAST_UPDATE_TIME);
-                            System.out.println(partition);
-                            String filePath = AVRO_HDFS_PATH +
+
+                            String filePath = super.AVRO_HDFS_PATH +
                                     File.separator +
                                     db_instance +
                                     File.separator +
@@ -58,8 +57,8 @@ public class TiDBCompare extends DataCompare {
                                     File.separator +
                                     partition +
                                     File.separator +
-                                    fileName.replace("tar", "") +
-                                    "avro";
+                                    fileName.replace(".tar", "") +
+                                    ".avro";
 
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                             Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
@@ -114,7 +113,7 @@ public class TiDBCompare extends DataCompare {
         String sql = assembleSql(sampleData, op, tableName);
         if (sql.length() > 0) {
             try {
-                resultList = DBUtil.query(DBServer.getDBInfo(DBServer.DBServerType.TIDB.toString()), dataBase, sql);
+                resultList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sql);
                 if (null != resultList) {
                     checkDataList = new ArrayList<>();
                     for (Map<String, Object> errorRecord : resultList) {
@@ -195,13 +194,13 @@ public class TiDBCompare extends DataCompare {
                 dataMap.put(CheckTable.OP_TYPE, result.getOpType());
                 resultMap.add(dataMap);
             }
-        }
-        if (resultMap.size() > 0) {
             try {
-                DBUtil.insertAll(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()), binLogDataBase, CheckTable.BINLOG_CHECK_TABLE, resultMap);
+                DBUtil.insertAll(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_CHECK_TABLE, resultMap);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        } else {
+            LOG.info("no error record find from file: " + result.getFileName());
         }
     }
 

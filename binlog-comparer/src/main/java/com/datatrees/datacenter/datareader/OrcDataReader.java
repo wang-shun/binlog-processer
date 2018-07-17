@@ -26,8 +26,6 @@ import java.util.Properties;
  */
 public class OrcDataReader extends DataReader {
     private static Logger LOG = LoggerFactory.getLogger(OrcDataReader.class);
-    private Properties properties = PropertiesUtility.defaultProperties();
-    private final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
     @Override
     public Map<String, Long> readDestData(String filePath) {
         List<String> fileList = HDFSFileUtility.getFilesPath(filePath);
@@ -66,29 +64,6 @@ public class OrcDataReader extends DataReader {
             LOG.error(e.getMessage(), e);
         }
         return dataMap;
-    }
-
-    /**
-     * 返回orc文件行数
-     *
-     * @param fs    HDFS files system
-     * @param fName 文件名
-     * @return 文件行数
-     */
-    private long getRowCount(FileSystem fs, String fName) {
-        long tempCount = 0;
-        Reader rdr = null;
-        try {
-            rdr = OrcFile.createReader(fs, new Path(fName));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        StructObjectInspector insp = (StructObjectInspector) rdr.getObjectInspector();
-        List<StripeInformation> iterable = rdr.getStripes();
-        for (StripeInformation stripe : iterable) {
-            tempCount = tempCount + stripe.getNumberOfRows();
-        }
-        return tempCount;
     }
 
 }

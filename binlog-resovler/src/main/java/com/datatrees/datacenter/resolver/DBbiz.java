@@ -33,7 +33,7 @@ public class DBbiz {
                 builder.put("process_end", DateTime.now().toDate());
             }
 
-            DBUtil.update(DBServer.getDBInfo(DBType),dataBase,"t_binlog_process",
+            DBUtil.update(DBType,dataBase,"t_binlog_process",
                     builder.put("processor_ip", IPUtility.ipAddress())
                             .put("remarks", remarks == null ? "null" : remarks)
                             .put("status", status.getValue()).build(),
@@ -47,10 +47,10 @@ public class DBbiz {
     public static void updateLog(String file, HashMap<String, WriteResultValue> valueHashMap) {
         try {
             if (valueHashMap.size() > 0) {
-                DBUtil.delete(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase, "t_binlog_process_log",
+                DBUtil.delete(DBType,dataBase, "t_binlog_process_log",
                         ImmutableMap.<String, Object>builder().put("file_name", file).build());
                 DBUtil
-                        .insertAll(DBServer.getDBInfo(DBType),dataBase, "t_binlog_process_log",
+                        .insertAll(DBType,dataBase, "t_binlog_process_log",
                                 newArrayList(valueHashMap.entrySet().iterator()).stream()
                                         .map(r -> ImmutableMap.<String, Object>builder().put("file_name", file)
                                                 .put("db_instance", r.getKey().split("\\.")[0])
@@ -79,10 +79,10 @@ public class DBbiz {
                         .put("table_name", v.getKey().split("\\.")[2])
                         .put("file_partitions", v.getKey().split("\\.")[3])
                         .put("avrofile", v.getValue()).build();
-                DBUtil.delete(DBServer.getDBInfo(DBType),dataBase,
+                DBUtil.delete(DBType,dataBase,
                         "t_binlog_partitions", parameters
                 );
-                DBUtil.insert(DBServer.getDBInfo(DBType),dataBase,
+                DBUtil.insert(DBType,dataBase,
                         "t_binlog_partitions", parameters)
                 ;
             } catch (Exception e) {
@@ -97,7 +97,7 @@ public class DBbiz {
                               int mps, int sap,
                               int sql) {
         try {
-            DBUtil.insert(DBServer.getDBInfo(DBType),dataBase,"t_binlog_process_report",
+            DBUtil.insert(DBType,dataBase,"t_binlog_process_report",
                     ImmutableMap.<String, Object>builder()
                             .put("topic", topic)
                             .put("local_queue_size", lqs)

@@ -108,7 +108,7 @@ public class TransferProcess {
             Map<String, Object> valueMap = new HashMap<>(1);
             valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
             try {
-                DBUtil.update(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
+                DBUtil.update(DBServer.DBServerType.MYSQL.toString(),dataBase,TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
             } catch (Exception e) {
                 LOG.error("update binlog file" + instanceId + "-" + fileName + " status 0 to 1 failed");
                 e.printStackTrace();

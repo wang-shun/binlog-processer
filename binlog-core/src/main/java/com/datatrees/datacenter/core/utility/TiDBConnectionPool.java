@@ -8,7 +8,7 @@ public class TiDBConnectionPool extends DBConnectionPool {
     /**
      * 在构造函数初始化的时候获取数据库连接
      */
-    public TiDBConnectionPool(DBInfo dbInfo) {
-        super(dbInfo);
+    public TiDBConnectionPool(String dbType) {
+        super(dbType);
     }
 }
