@@ -1,9 +1,5 @@
 package com.datatrees.datacenter.resolver.reader;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Slf4jReporter;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.ganglia.GangliaReporter;
 import com.datatrees.datacenter.core.domain.Operator;
 import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
@@ -26,7 +22,8 @@ import com.github.shyiko.mysql.binlog.event.deserialization.EventDataDeserializa
 import com.github.shyiko.mysql.binlog.event.deserialization.EventDeserializer;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
-import info.ganglia.gmetric4j.gmetric.GMetric;
+import io.prometheus.client.Counter;
+import io.prometheus.client.Gauge;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -36,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.avro.Schema;
 import org.slf4j.Logger;
@@ -45,12 +41,26 @@ import org.slf4j.LoggerFactory;
 public final class BinlogFileReader implements Runnable {
 
   private static Logger logger = LoggerFactory.getLogger(BinlogFileReader.class);
-  private GMetric ganglia;
-  private MetricRegistry metrics;
-  private Timer requests;
-  private Slf4jReporter reporter;
-  private GangliaReporter reporter2;
-  private ThreadLocal<AtomicInteger> readEventError = new ThreadLocal<>();
+  private static Counter counter = Counter
+    .build("binlog_resolve_event_count", "单个binlog文件处理crud事件")
+    .labelNames("filename", "type")
+    .register();
+
+  private static Gauge histogram = Gauge
+    .build("binlog_resolve_event_elapse", "单个binlog文件处理单个事件的时间")
+    .labelNames("filename")
+    .register();
+
+  private static Gauge totalHistogram = Gauge
+    .build("binlog_resolve_file_elapse", "单个binlog文件处理时间")
+    .register();
+
+  //  private GMetric ganglia;
+//  private MetricRegistry metrics;
+//  private Timer requests;
+//  private Slf4jReporter reporter;
+//  private GangliaReporter reporter2;
+//  private ThreadLocal<AtomicInteger> readEventError = new ThreadLocal<>();
   private EnumMap<EventType, EventConsumer<Event>> consumerCache;
   /**
    * Map<SimpleEntry<Binlog, Status>  binlog 和最终处理状态 Map<Operator, AtomicLong> 处理文件个数
@@ -64,7 +74,6 @@ public final class BinlogFileReader implements Runnable {
   private ConcurrentHashMap<Long, SimpleEntry> tableMapCache;
   private SchemaData schemaUtility;
   private Status currentStatus;
-
   private ExceptionHandler exceptionHandler;
   private Runnable callback;
   /**
@@ -200,6 +209,11 @@ public final class BinlogFileReader implements Runnable {
     for (Serializable[] rows : writeRows) {
       consumeBufferRecord(Operator.Create, writeRowsEventData.getTableId(), null, rows);
     }
+    try {
+      counter.labels(this.binlog.getIdentity1(), "insert").inc();
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
   }
 
   private void handleUpdateRow(Event event) {
@@ -209,6 +223,11 @@ public final class BinlogFileReader implements Runnable {
       consumeBufferRecord(Operator.Update, updateRowsEventData.getTableId(), rows.getKey(),
         rows.getValue());
     }
+    try {
+      counter.labels(this.binlog.getIdentity1(), "update").inc();
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
   }
 
   private void handleDeleteRow(Event event) {
@@ -217,11 +236,18 @@ public final class BinlogFileReader implements Runnable {
     for (Serializable[] rows : deleteRows) {
       consumeBufferRecord(Operator.Delete, deleteRowsEventData.getTableId(), rows, null);
     }
+    try {
+      counter.labels(this.binlog.getIdentity1(), "delete").inc();
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
   }
 
   @Override
   public void run() {
     logger.info("start to read binlog file {} of instance.", this.binlog);
+
+    Gauge.Timer timer = totalHistogram.startTimer();
     try {
       onStart();
       try {
@@ -229,6 +255,11 @@ public final class BinlogFileReader implements Runnable {
         while (true) {
           try {
             event = reader.readEvent();
+            try {
+              counter.labels(binlog.getIdentity1(), "total").inc();
+            } catch (Exception e) {
+              logger.error(e.getMessage(), e);
+            }
           } catch (EventDataDeserializationException e2) {
             throw new BinlogException(e2.getMessage(), Status.SERIALIZEEVENTFAILED, e2);
           } catch (Exception e) {
@@ -243,33 +274,38 @@ public final class BinlogFileReader implements Runnable {
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
         if (e instanceof BinlogException) {
-          exceptionHandler.handle(this.binlog.getIdentity1(), (BinlogException) e);
+          exceptionHandler.handle(binlog.getIdentity1(), (BinlogException) e);
           currentStatus = ((BinlogException) e).getStatus();
         } else {
-          exceptionHandler.handle(this.binlog.getIdentity1(),
+          exceptionHandler.handle(binlog.getIdentity1(),
             new BinlogException(e.getMessage(), Status.OTHER, e));
           currentStatus = Status.OTHER;
         }
       }
     } finally {
       if (currentStatus == Status.SUCCESS) {
-        DBbiz.updateLog(this.binlog.getIdentity1(), this.consumer.result().getValueCacheByFile());
-        DBbiz.updatePartitions(this.consumer.result().getValueCacheByPartition());
-        DBbiz.update(this.binlog.getIdentity1(), "success", Status.SUCCESS);
+        DBbiz
+          .updateLog(binlog.getIdentity1(), consumer.result().getValueCacheByFile());
+        DBbiz.updatePartitions(consumer.result().getValueCacheByPartition());
+        DBbiz.update(binlog.getIdentity1(), "success", Status.SUCCESS);
       }
       onFinished();
+      timer.setDuration();
     }
     logger.info("end to read binlog file {} of instance.", this.binlog);
   }
 
-  private void consume(Event event) {
+  private void consume(final Event event) {
     final EventHeader eventHeader = event.getHeader();
     final EventType eventType = eventHeader.getEventType();
     EventConsumer<Event> eventBinlogEventConsumer = consumerCache
       .getOrDefault(eventType, this::idle);
+    Gauge.Timer timer = histogram.labels(this.binlog.getIdentity1()).startTimer();
     eventBinlogEventConsumer.consume(event);
+    timer.setDuration();
   }
 
   private void idle(Event e) {
   }
+
 }

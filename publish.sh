@@ -4,7 +4,7 @@ mvn clean package -Dmaven.test.skip=true;
 
 
 BROKERS="application1 application2 application3 application4 application5"
-BINLOG_PROCESS_HOME="/data0/application/binlog-process"
+BINLOG_PROCESS_HOME="/data1/application/binlog-process"
 
 cd binlog-main/target/binlog-main-1.0-SNAPSHOT/lib;
 

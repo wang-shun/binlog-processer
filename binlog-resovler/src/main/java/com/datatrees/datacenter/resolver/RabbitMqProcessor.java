@@ -1,5 +1,7 @@
 package com.datatrees.datacenter.resolver;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 import com.alibaba.fastjson.JSON;
 import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
@@ -10,7 +12,11 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import io.prometheus.client.Collector;
+import io.prometheus.client.GaugeMetricFamily;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -28,6 +34,7 @@ public class RabbitMqProcessor extends TaskProcessor {
   private Queue<String> taskQueue;
   private ThreadPoolExecutor threadPoolExecutor;
   private ScheduledExecutorService scheduledExecutorService;
+  private TaskQueueCollector taskQueueCollector;
 
   public RabbitMqProcessor() {
     factory = new ConnectionFactory();
@@ -45,7 +52,11 @@ public class RabbitMqProcessor extends TaskProcessor {
       TimeUnit.MILLISECONDS,
       new LinkedBlockingQueue<Runnable>());
     scheduledExecutorService = Executors.newScheduledThreadPool(10);
-    scheduledExecutorService.scheduleAtFixedRate(this::report, 10, 10, TimeUnit.MINUTES);
+    scheduledExecutorService.scheduleAtFixedRate(this::report, 5, 5, TimeUnit.MINUTES);
+    scheduledExecutorService.scheduleAtFixedRate(this::releaseAll, 20, 20, TimeUnit.MINUTES);
+
+    taskQueueCollector = new TaskQueueCollector(semaphore, threadPoolExecutor, taskQueue);
+    taskQueueCollector.register();
     super.taskProcessorListner = this::onMessageReceived;
   }
 
@@ -75,12 +86,24 @@ public class RabbitMqProcessor extends TaskProcessor {
     }
   }
 
+  private void releaseAll() {
+    logger.info("start to check semaphore.");
+    if (semaphore.availablePermits() == 0) {
+      logger.info("start to release semaphore.");
+      semaphore.release(MAX_THREAD_BINLOG_THREAD);
+      logger
+        .info("end to release semaphore  and current available is " + semaphore.availablePermits());
+    }
+  }
+
   private void report() {
-    DBbiz.report(this.topic, taskQueue.size(), threadPoolExecutor.getTaskCount(),
-      threadPoolExecutor.getCompletedTaskCount(), threadPoolExecutor.getPoolSize(),
-      threadPoolExecutor.getCorePoolSize(), threadPoolExecutor.getActiveCount(),
-      threadPoolExecutor.getMaximumPoolSize(), semaphore.availablePermits(),
-      semaphore.getQueueLength());
+    DBbiz
+      .report(StringUtils.isEmpty(this.topic) ? properties.getProperty("queue.topic") : this.topic,
+        taskQueue.size(), threadPoolExecutor.getTaskCount(),
+        threadPoolExecutor.getCompletedTaskCount(), threadPoolExecutor.getPoolSize(),
+        threadPoolExecutor.getCorePoolSize(), threadPoolExecutor.getActiveCount(),
+        threadPoolExecutor.getMaximumPoolSize(), semaphore.availablePermits(),
+        semaphore.getQueueLength());
   }
 
   private void acquireSemaphore() {
@@ -98,7 +121,13 @@ public class RabbitMqProcessor extends TaskProcessor {
 
   private void releaseSemaphore() {
     try {
+      logger.
+        info("current available permits before release : " +
+          semaphore.availablePermits());
       semaphore.release();
+      logger.
+        info("current available permits after release : " +
+          semaphore.availablePermits());
     } catch (Exception e) {
       logger.error("error to release.");
     }
@@ -164,6 +193,51 @@ public class RabbitMqProcessor extends TaskProcessor {
     } finally {
       Thread localThread = new Thread(this::processTaskQueue);
       localThread.start();
+    }
+  }
+
+  class TaskQueueCollector extends Collector {
+
+    Semaphore semaphore;
+    ThreadPoolExecutor threadPoolExecutor;
+    Queue queue;
+
+    public TaskQueueCollector(Semaphore semaphore, ThreadPoolExecutor poolExecutor, Queue queue) {
+      this.semaphore = semaphore;
+      this.threadPoolExecutor = poolExecutor;
+      this.queue = queue;
+    }
+
+    @Override
+    public List<MetricFamilySamples> collect() {
+      List<MetricFamilySamples> mfs = new ArrayList<MetricFamilySamples>();
+      try {
+        GaugeMetricFamily gaugeMetricFamily = new GaugeMetricFamily("binlog_local_pool_size",
+          "Summary of the local thread pool", newArrayList("type"));
+        gaugeMetricFamily.addMetric(newArrayList("taskQueueSize"), taskQueue.size());
+        gaugeMetricFamily
+          .addMetric(newArrayList("poolTaskCount"), threadPoolExecutor.getTaskCount());
+        gaugeMetricFamily
+          .addMetric(newArrayList("poolCompletedTaskCount"),
+            threadPoolExecutor.getCompletedTaskCount());
+        gaugeMetricFamily
+          .addMetric(newArrayList("poolSize"), threadPoolExecutor.getPoolSize());
+        gaugeMetricFamily
+          .addMetric(newArrayList("corePoolSize"), threadPoolExecutor.getCorePoolSize());
+        gaugeMetricFamily
+          .addMetric(newArrayList("poolActiveCount"), threadPoolExecutor.getActiveCount());
+        gaugeMetricFamily
+          .addMetric(newArrayList("maxPoolSize"), threadPoolExecutor.getMaximumPoolSize());
+        gaugeMetricFamily
+          .addMetric(newArrayList("semAvailablePermits"), semaphore.availablePermits());
+        gaugeMetricFamily
+          .addMetric(newArrayList("semQueueLength"), semaphore.getQueueLength());
+        gaugeMetricFamily.addMetric(newArrayList("localQueueSize"), queue.size());
+        mfs.add(gaugeMetricFamily);
+      } catch (Exception e) {
+        logger.error(e.getMessage(), e);
+      }
+      return mfs;
     }
   }
 }

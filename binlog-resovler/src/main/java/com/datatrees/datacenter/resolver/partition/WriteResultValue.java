@@ -8,7 +8,6 @@ public class WriteResultValue {
   AtomicInteger insert;
   AtomicInteger update;
   AtomicInteger delete;
-  String partitions;
 
   public WriteResultValue() {
     this.insert = new AtomicInteger(0);
@@ -20,7 +19,7 @@ public class WriteResultValue {
     return new WriteResultValue();
   }
 
-  public void increment(Operator operator, String partition) {
+  public void increment(Operator operator) {
     switch (operator) {
       case Update:
         this.getUpdate().incrementAndGet();
@@ -33,13 +32,6 @@ public class WriteResultValue {
         break;
       default:
         break;
-    }
-
-    if (StringUtils.isNotBlank(this.partitions) && (!this.partitions.contains(partition))) {
-      this.partitions = this.partitions + "," + partition;
-    }
-    if (StringUtils.isBlank(this.partitions)) {
-      this.partitions = partition;
     }
   }
 
@@ -65,13 +57,5 @@ public class WriteResultValue {
 
   public void setDelete(AtomicInteger delete) {
     this.delete = delete;
-  }
-
-  public String getPartitions() {
-    return partitions;
-  }
-
-  public void setPartitions(String partitions) {
-    this.partitions = partitions;
   }
 }

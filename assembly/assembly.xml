@@ -51,6 +51,10 @@
             <useTransitiveDependencies>true</useTransitiveDependencies>
             <!--是否解压 -->
             <unpack>false</unpack>
+            <!--<excludes>-->
+                <!--<exclude>org.apache.httpcomponents:httpclient</exclude>-->
+                <!--<exclude>org.apache.httpcomponents:httpcore</exclude>-->
+            <!--</excludes>-->
             <outputDirectory>lib</outputDirectory>
         </dependencySet>
     </dependencySets>

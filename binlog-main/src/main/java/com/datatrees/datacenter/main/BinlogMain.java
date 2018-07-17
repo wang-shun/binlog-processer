@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.core.task.TaskRunner;
+import com.datatrees.datacenter.core.utility.PrometheusMetrics;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.core.utility.ReflectUtility;
 import com.datatrees.datacenter.resolver.TaskProcessor;
@@ -12,6 +13,7 @@ public class BinlogMain {
 
   private static TaskRunner taskRunner;
 
+  private static PrometheusMetrics prometheusMetrics = new PrometheusMetrics();
   private static Logger logger = LoggerFactory.getLogger(BinlogMain.class);
 
   public static void main(String[] args) {
@@ -24,6 +26,7 @@ public class BinlogMain {
       }
       taskRunner.process();
 
+      prometheusMetrics.start();
 //      TaskProcessor.defaultProcessor().setTopic("local_topic").registerListner(
 //        new TaskProcessorListner() {
 //          @Override

@@ -175,7 +175,7 @@ public class Main2 {
 //        }).start();
 
         new Thread(() -> {
-            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.002312.tar", "rm-bp101325tnut8me53_1529811602-mysql-bin.002312.tar", "rulesplatform-second.mysql.rds.aliyuncs.com");
+            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000203.tar", "rm-bp101325tnut8me53_1529811602-mysql-bin.000203.tar", "basisdataoperator3.mysql.rds.aliyuncs.com");
             TaskDispensor.defaultDispensor().dispense(binlog);
         }).start();
 

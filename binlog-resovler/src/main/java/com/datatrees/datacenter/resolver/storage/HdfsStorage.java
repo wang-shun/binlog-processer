@@ -3,7 +3,6 @@ package com.datatrees.datacenter.resolver.storage;
 import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
-import com.datatrees.datacenter.core.utility.ArchiveUtility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -70,7 +69,8 @@ public class HdfsStorage implements FileStorage {
     try {
       FileSystem fs = path.getFileSystem(conf);
       if (fs.exists(path)) {
-        return ArchiveUtility.unArchive(file, fs.open(path));
+//        return ArchiveUtility.unArchive(file, fs.open(path));
+        return fs.open(path);
       } else {
         throw new BinlogException(
           String.format("open reader of file %s failed because file is null.", file),
