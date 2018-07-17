@@ -18,10 +18,10 @@ public class Test {
     public static void main(String[] args) {
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
-        DataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1530705854-mysql-bin.000533.tar");
+        //DataCompare dataCompare = new TiDBCompare();
+        //dataCompare.binLogCompare("1530705854-mysql-bin.000533.tar");
         //1530494870-mysql-bin.001132.tar,1530496380-mysql-bin.000811.tar
-        LOG.info("compare finished");
+        //LOG.info("compare finished");
       /* DataReader dataReader=new OrcDataReader();
         ((OrcDataReader) dataReader).readDestData("/orc-test/part-00008-478c4d75-3839-461b-bcf4-83009ca3bbd0.snappy.orc");*/
       /*  try {
@@ -33,5 +33,6 @@ public class Test {
         } catch (SQLException e) {
             e.printStackTrace();
         }*/
+
     }
 }
