@@ -6,5 +6,4 @@ project/*
 
 logs/
 binlogprocess.log
-binlog.properties
 
