@@ -6,7 +6,7 @@ import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.resolver.TaskProcessor;
 import com.datatrees.datacenter.resolver.TaskProcessorListner;
 
-public class compareTask implements TaskRunner {
+public class CompareTask implements TaskRunner {
     public void startCheck() {
         TaskProcessor.defaultProcessor().setTopic("local_topic").registerListner(
                 new TaskProcessorListner() {
