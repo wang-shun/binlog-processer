@@ -5,12 +5,11 @@ import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.core.utility.ReflectUtility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class TaskDispensor {
@@ -40,8 +39,9 @@ public class TaskDispensor {
     }
   }
 
-  public void setTopic(String topic) {
+  public TaskDispensor setTopic(String topic) {
     this.topic = topic;
+    return this;
   }
 
   public void dispense(Binlog binlog) {

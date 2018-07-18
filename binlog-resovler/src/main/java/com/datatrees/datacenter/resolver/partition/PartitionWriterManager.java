@@ -6,7 +6,6 @@ import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.FileStorage;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.resolver.DBbiz;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -173,13 +172,14 @@ public class PartitionWriterManager implements WriteResult {
 
         if (partitioner.getRoot().equalsIgnoreCase("create")) {
           String key = String
-            .format("%s.%s.%s", fullSchema[0], fullSchema[1], envelopSchema.getName());
+            .format("%s.%s.%s.%s", fullSchema[0], fullSchema[1], envelopSchema.getName(),
+              relativeFilePath);
           if (valueCacheByFile.containsKey(key)) {
             WriteResultValue value = valueCacheByFile.get(key);
-            value.increment(operator, relativeFilePath);
+            value.increment(operator);
           } else {
             WriteResultValue value = WriteResultValue.create();
-            value.increment(operator, relativeFilePath);
+            value.increment(operator);
             valueCacheByFile.put(key, value);
           }
 

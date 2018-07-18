@@ -136,7 +136,6 @@ public class TaskProcessor implements TaskRunner, Runnable {
         info("start to read task desc step2:" + task.toString());
       InputStream file = fileStorage.openReader(task.getPath());
       logger.
-
         info("success to open task desc step3:" + task.toString() + " file:" + file);
       BinlogFileReader binlogFileReader = new BinlogFileReader(task, file,
         new DefaultEventListner.InnerEventListner(fileStorage, task), null, exceptionHandler, r);
