@@ -35,6 +35,7 @@ public abstract class DataCompare implements DataCheck {
 
     public List<Map<String, Object>> getCurrentTableInfo(String fileName) {
         List<Map<String, Object>> partitionInfo = null;
+        fileName.replace("\"","");
         //String maxLen="SET GLOBAL group_concat_max_len = 102400";
         String sql = "select db_instance,database_name,table_name,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_partitions) as partitions from " +
                 " (select * from " + processLogTable + " where file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;

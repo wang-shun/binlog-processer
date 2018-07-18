@@ -19,7 +19,7 @@ public class Test {
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
         DataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1531874689-mysql-bin.000318");
+        dataCompare.binLogCompare("1531901399-mysql-bin.000270");
         //1530494870-mysql-bin.001132.tar,1530496380-mysql-bin.000811.tar
         //LOG.info("compare finished");
       /* DataReader dataReader=new OrcDataReader();
