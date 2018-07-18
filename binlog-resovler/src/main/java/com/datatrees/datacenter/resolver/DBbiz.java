@@ -34,7 +34,7 @@ public class DBbiz {
         builder.put("process_end", DateTime.now().toDate());
       }
 
-      DBUtil.update(DBServer.getDBInfo(DBType), dataBase, "t_binlog_process",
+      DBUtil.update(DBType, dataBase, "t_binlog_process",
         builder.put("processor_ip", IPUtility.ipAddress())
           .put("remarks", remarks == null ? "null" : remarks)
           .put("status", status.getValue()).build(),
@@ -79,9 +79,7 @@ public class DBbiz {
         .put("file_partitions", v.getKey().split("\\.")[3])
         .build();
       try {
-        DBUtil.delete(DBServer.getDBInfo(DBServer.DBServerType.MYSQL.toString()), dataBase,
-          "t_binlog_process_log", parameters
-        );
+        DBUtil.delete(DBType, dataBase, "t_binlog_process_log", parameters);
         Map<String, Object> values = ImmutableMap.<String, Object>builder()
           .put("file_name", file)
           .put("db_instance", v.getKey().split("\\.")[0])
@@ -91,7 +89,7 @@ public class DBbiz {
           .put("insert_cnt", v.getValue().getInsert().intValue())
           .put("update_cnt", v.getValue().getUpdate().intValue())
           .put("delete_cnt", v.getValue().getDelete().intValue()).build();
-        DBUtil.insert(DBServer.getDBInfo(DBType), dataBase, "t_binlog_process_log", values);
+        DBUtil.insert(DBType, dataBase, "t_binlog_process_log", values);
       } catch (Exception e) {
         logger.error(e.getMessage(), e);
       }
@@ -107,8 +105,8 @@ public class DBbiz {
           .put("table_name", v.getKey().split("\\.")[2])
           .put("file_partitions", v.getKey().split("\\.")[3])
           .put("avrofile", v.getValue()).build();
-        DBUtil.delete(DBServer.getDBInfo(DBType), dataBase, "t_binlog_partitions", parameters);
-        DBUtil.insert(DBServer.getDBInfo(DBType), dataBase, "t_binlog_partitions", parameters);
+        DBUtil.delete(DBType, dataBase, "t_binlog_partitions", parameters);
+        DBUtil.insert(DBType, dataBase, "t_binlog_partitions", parameters);
       } catch (Exception e) {
         logger.error(String
           .format("error to updatePartitions for %s because of %s", v.getKey().split("\\.")[2],
@@ -121,7 +119,7 @@ public class DBbiz {
     int mps, int sap,
     int sql) {
     try {
-      DBUtil.insert(DBServer.getDBInfo(DBType), dataBase, "t_binlog_process_report",
+      DBUtil.insert(DBType, dataBase, "t_binlog_process_report",
         ImmutableMap.<String, Object>builder()
           .put("topic", topic == null ? "null" : topic)
           .put("local_queue_size", lqs)

@@ -4,6 +4,7 @@ import com.datatrees.datacenter.core.domain.Operator;
 import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.EventConsumer;
+import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.resolver.DBbiz;
 import com.datatrees.datacenter.resolver.handler.ExceptionHandler;
@@ -288,9 +289,15 @@ public final class BinlogFileReader implements Runnable {
           .updateLog(binlog.getIdentity1(), consumer.result().getValueCacheByFile());
         DBbiz.updatePartitions(consumer.result().getValueCacheByPartition());
         DBbiz.update(binlog.getIdentity1(), "success", Status.SUCCESS);
+        /**
+         * for compare
+         */
+        TaskDispensor.defaultDispensor().dispense("local_topic", binlog.getIdentity1());
       }
       onFinished();
       timer.setDuration();
+      removeMetricsLabel();
+
     }
     logger.info("end to read binlog file {} of instance.", this.binlog);
   }
@@ -308,4 +315,10 @@ public final class BinlogFileReader implements Runnable {
   private void idle(Event e) {
   }
 
+  private void removeMetricsLabel() {
+    histogram.remove(this.binlog.getIdentity1());
+    counter.remove(this.binlog.getIdentity1(), "insert");
+    counter.remove(this.binlog.getIdentity1(), "update");
+    counter.remove(this.binlog.getIdentity1(), "delete");
+  }
 }
