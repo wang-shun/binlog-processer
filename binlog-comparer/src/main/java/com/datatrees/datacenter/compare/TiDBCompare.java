@@ -18,7 +18,7 @@ import java.util.*;
 public class TiDBCompare extends DataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
     private Properties properties = PropertiesUtility.defaultProperties();
-    private final int factor = 400;
+    private final int factor = Integer.valueOf(properties.getProperty("SAMPLE_FACTOR"));
     private String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
@@ -46,7 +46,6 @@ public class TiDBCompare extends DataCompare {
                             avroDataReader.setTableName(tableName);
                             avroDataReader.setRECORD_ID(RECORD_ID);
                             avroDataReader.setRECORD_LAST_UPDATE_TIME(RECORD_LAST_UPDATE_TIME);
-
                             String filePath = super.AVRO_HDFS_PATH +
                                     File.separator +
                                     db_instance +

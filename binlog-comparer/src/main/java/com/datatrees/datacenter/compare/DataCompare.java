@@ -9,9 +9,10 @@ import java.sql.SQLException;
 import java.util.*;
 
 public abstract class DataCompare implements DataCheck {
-    private final int fileNum = 0;
-    private final int recordNum = 2000;
+
     private static Properties properties = PropertiesUtility.defaultProperties();
+    private final int fileNum = Integer.valueOf(properties.getProperty("FILE_NUM"));
+    private final int recordNum = Integer.valueOf(properties.getProperty("RECORD_NUM"));
     private static String dataBase = properties.getProperty("jdbc.database");
     private static String processLogTable = CheckTable.BINLOG_PROCESS_LOG_TABLE;
     public final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
