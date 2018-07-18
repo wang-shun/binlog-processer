@@ -12,10 +12,14 @@ import com.datatrees.datacenter.transfer.bean.TransInfo;
 import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -194,13 +198,13 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                 LOG.info("the batch_id of this download batch is :" + start + "_" + end);
                 for (BinLogFile binLogFile : fileList) {
                     LOG.info("the real size of file [ " + binLogFile.getDownloadLink() + " ] is:" + binLogFile.getFileSize());
-                    String hostInstanceId = binLogFile.getHostInstanceID();
 
+                    String hostInstanceId = binLogFile.getHostInstanceID();
                     String logEndTime = binLogFile.getLogEndTime();
                     String logStartTime = binLogFile.getLogBeginTime();
-
                     Long logEndTimeStamp = TimeUtil.utc2TimeStamp(logEndTime) + TIMESTAMP_DIFF;
                     String fileName = logEndTimeStamp / 1000 + "-" + BinLogFileUtil.getFileNameFromUrl(binLogFile.getDownloadLink(), REGEX_PATTERN);
+
                     Map<String, Object> whereMap = new HashMap<>(4);
                     whereMap.put(TableInfo.DB_INSTANCE, instanceId);
                     whereMap.put(TableInfo.FILE_NAME, fileName);
@@ -338,7 +342,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     String bakInstanceId = (String) objectMap.get(TableInfo.BAK_INSTANCE_ID);
                     String path = HDFS_PATH + File.separator + dbInstance + File.separator + bakInstanceId + File.separator + fileName;
                     boolean status = HDFSFileUtility.checkAndDel(path);
-                    if (status) {
+                    boolean fileExists = HDFSFileUtility.getFileSystem(path).exists(new Path(path));
+                    if (status||fileExists) {
                         LOG.info("delete file: " + fileName + " from HDFS success");
                         Map<String, Object> whereMap = new HashMap<>();
                         whereMap.put(TableInfo.FILE_NAME, fileName);
@@ -354,6 +359,8 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
             }
         } catch (SQLException e) {
             LOG.error(e.getSQLState(), e);
+        } catch (IOException e) {
+            LOG.error(e.getMessage(),e);
         }
     }
 }
