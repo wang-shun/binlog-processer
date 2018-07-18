@@ -62,6 +62,7 @@ public class DBConnectionPool {
         // 但是数据源仍有效的保留, 并在下次调用getConnection() 的时候继续尝试获取连接.如果设为true,
         // 那么尝试获取连接失败后该数据源将申明已经断开并永久关闭.默认为false
         cpds.setBreakAfterAcquireFailure(true);
+        cpds.setAutoCommitOnClose(true);
     }
 
     /**

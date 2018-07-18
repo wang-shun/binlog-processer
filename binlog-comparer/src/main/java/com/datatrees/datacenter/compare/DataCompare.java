@@ -24,7 +24,7 @@ public abstract class DataCompare implements DataCheck {
     public List<Map<String, Object>> getCurrentPartitionInfo(String fileName) {
         List<Map<String, Object>> partitionInfo = null;
         String sql = "select db_instance,database_name,table_name,file_partitions,count(file_name) as file_cnt,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_name) as files " +
-                "from (select * from " + processLogTable + " where file_name='" + fileName + "') as temp group by db_instance,database_name,table_name,file_partitions having file_cnt>" + fileNum + " and sum_cnt>" + recordNum;
+                "from (select * from " + processLogTable + " where file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name,file_partitions having file_cnt>" + fileNum + " and sum_cnt>" + recordNum;
         try {
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (SQLException e1) {
@@ -37,7 +37,7 @@ public abstract class DataCompare implements DataCheck {
         List<Map<String, Object>> partitionInfo = null;
         //String maxLen="SET GLOBAL group_concat_max_len = 102400";
         String sql = "select db_instance,database_name,table_name,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_partitions) as partitions from " +
-                " (select * from " + processLogTable + " where file_name= '" + fileName + "') as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
+                " (select * from " + processLogTable + " where file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
         try {
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (SQLException e1) {
@@ -58,7 +58,7 @@ public abstract class DataCompare implements DataCheck {
         Set<Map.Entry<String, Long>> avroSet = srcMap.entrySet();
         Set<Map.Entry<String, Long>> orcSet = destMap.entrySet();
         Map<String, Long> diffMaps = null;
-        if (srcMap.size()>0  && destMap.size()>0) {
+        if (srcMap.size() > 0 && destMap.size() > 0) {
             if (avroSet.removeAll(orcSet)) {
                 diffMaps = new HashMap<>();
                 for (Map.Entry entry : avroSet) {
@@ -66,7 +66,7 @@ public abstract class DataCompare implements DataCheck {
                 }
             }
         } else {
-            if (srcMap.size()>0) {
+            if (srcMap.size() > 0) {
                 return srcMap;
             } else {
                 return null;
