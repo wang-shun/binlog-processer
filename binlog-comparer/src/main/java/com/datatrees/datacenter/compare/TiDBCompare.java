@@ -152,7 +152,7 @@ public class TiDBCompare extends DataCompare {
                                 .append("UNIX_TIMESTAMP(")
                                 .append(RECORD_LAST_UPDATE_TIME)
                                 .append(")")
-                                .append("=")
+                                .append("<")
                                 .append((Long) record.getValue() / 1000);
                         if (i < sampleDataSize - 1) {
                             sql.append(" union ");
