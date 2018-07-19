@@ -287,7 +287,6 @@ public final class BinlogFileReader implements Runnable {
       if (currentStatus == Status.SUCCESS) {
         DBbiz
           .updateLog(binlog.getIdentity1(), consumer.result().getValueCacheByFile());
-        DBbiz.updatePartitions(consumer.result().getValueCacheByPartition());
         DBbiz.update(binlog.getIdentity1(), "success", Status.SUCCESS);
         /**
          * for compare

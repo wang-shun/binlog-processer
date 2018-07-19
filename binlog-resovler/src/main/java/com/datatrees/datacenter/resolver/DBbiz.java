@@ -1,5 +1,8 @@
 package com.datatrees.datacenter.resolver;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static java.util.stream.Collectors.toList;
+
 import com.datatrees.datacenter.core.domain.Status;
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
@@ -10,6 +13,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.LinkedHashMultimap;
 import io.prometheus.client.Counter;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -70,30 +74,30 @@ public class DBbiz {
   }
 
   public static void updateLog(String file, HashMap<String, WriteResultValue> valueHashMap) {
-    valueHashMap.entrySet().forEach(v -> {
-      Map<String, Object> parameters = ImmutableMap.<String, Object>builder()
-        .put("file_name", file)
-        .put("db_instance", v.getKey().split("\\.")[0])
-        .put("database_name", v.getKey().split("\\.")[1])
-        .put("table_name", v.getKey().split("\\.")[2])
-        .put("file_partitions", v.getKey().split("\\.")[3])
-        .build();
-      try {
-        DBUtil.delete(DBType, dataBase, "t_binlog_process_log", parameters);
-        Map<String, Object> values = ImmutableMap.<String, Object>builder()
-          .put("file_name", file)
-          .put("db_instance", v.getKey().split("\\.")[0])
-          .put("database_name", v.getKey().split("\\.")[1])
-          .put("table_name", v.getKey().split("\\.")[2])
-          .put("file_partitions", v.getKey().split("\\.")[3])
-          .put("insert_cnt", v.getValue().getInsert().intValue())
-          .put("update_cnt", v.getValue().getUpdate().intValue())
-          .put("delete_cnt", v.getValue().getDelete().intValue()).build();
-        DBUtil.insert(DBType, dataBase, "t_binlog_process_log", values);
-      } catch (Exception e) {
-        logger.error(e.getMessage(), e);
-      }
-    });
+
+    try {
+      DBUtil.delete(DBType, dataBase, "t_binlog_process_log", ImmutableMap.<String, Object>builder()
+        .put("file_name", file).build());
+    } catch (SQLException e) {
+      logger.error(e.getMessage(), e);
+    }
+    try {
+      DBUtil
+        .insertAll(DBType, dataBase, "t_binlog_process_log",
+          newArrayList(valueHashMap.entrySet().iterator()).stream()
+            .map(r -> ImmutableMap.<String, Object>builder().put("file_name", file)
+              .put("type", r.getKey().split("\\.")[0])
+              .put("db_instance", r.getKey().split("\\.")[1])
+              .put("database_name", r.getKey().split("\\.")[2])
+              .put("table_name", r.getKey().split("\\.")[3])
+              .put("file_partitions", r.getKey().split("\\.")[4])
+              .put("insert_cnt", r.getValue().getInsert().intValue())
+              .put("update_cnt", r.getValue().getUpdate().intValue())
+              .put("delete_cnt", r.getValue().getDelete().intValue()).build()
+            ).collect(toList()));
+    } catch (SQLException e) {
+      logger.error(e.getMessage(), e);
+    }
   }
 
   public static void updatePartitions(LinkedHashMultimap<String, String> valueHashMap) {

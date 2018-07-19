@@ -10,7 +10,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.LinkedHashMultimap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -54,8 +53,6 @@ public class PartitionWriterManager implements WriteResult {
   private ImmutableSet<Partitioner> partitioners;
 
   private HashMap<String, WriteResultValue> valueCacheByFile = new HashMap<>();
-  private LinkedHashMultimap<String, String> valueCacheByPartition = LinkedHashMultimap.create();
-//  private HashMap<String, AtomicInteger> valueCacheByPartition = new HashMap<>();
 
   private Binlog file;
 
@@ -95,10 +92,6 @@ public class PartitionWriterManager implements WriteResult {
     return valueCacheByFile;
   }
 
-  public LinkedHashMultimap<String, String> getValueCacheByPartition() {
-    return valueCacheByPartition;
-  }
-
   public void close() {
     writerCache.forEach((path, partitionWriter) -> {
       try {
@@ -113,7 +106,6 @@ public class PartitionWriterManager implements WriteResult {
           Status.COMMITRECORDFAILED, e);
       }
     });
-    valueCacheByPartition.clear();
     valueCacheByFile.clear();
   }
 
@@ -170,22 +162,17 @@ public class PartitionWriterManager implements WriteResult {
         }
         writer.write(result);
 
-        if (partitioner.getRoot().equalsIgnoreCase("create")) {
-          String key = String
-            .format("%s.%s.%s.%s", fullSchema[0], fullSchema[1], envelopSchema.getName(),
-              relativeFilePath);
-          if (valueCacheByFile.containsKey(key)) {
-            WriteResultValue value = valueCacheByFile.get(key);
-            value.increment(operator);
-          } else {
-            WriteResultValue value = WriteResultValue.create();
-            value.increment(operator);
-            valueCacheByFile.put(key, value);
-          }
-
-          valueCacheByPartition.put(String.format("%s.%s.%s.%s", fullSchema[0], fullSchema[1],
-            envelopSchema.getName(), relativeFilePath),
-            String.format("%s.avro", file.getIdentity1().replace(".tar", "")));
+        String key = String
+          .format("%s.%s.%s.%s.%s", partitioner.getRoot(), fullSchema[0], fullSchema[1],
+            envelopSchema.getName(),
+            relativeFilePath);
+        if (valueCacheByFile.containsKey(key)) {
+          WriteResultValue value = valueCacheByFile.get(key);
+          value.increment(operator);
+        } else {
+          WriteResultValue value = WriteResultValue.create();
+          value.increment(operator);
+          valueCacheByFile.put(key, value);
         }
       }
     }

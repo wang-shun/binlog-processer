@@ -28,7 +28,10 @@ public class RabbitMqDispensor extends TaskDispensor {
         channel = connection.createChannel();
         channel.queueDeclare(topic, false, false, false, null);
         channel.
-          basicPublish("", topic, null, JSON.toJSONString(binlog).getBytes("UTF-8"));
+          basicPublish("", topic, null,
+            (binlog.getClass().isAssignableFrom(String.class)) ? ((String) binlog).
+              getBytes("UTF-8")
+              : JSON.toJSONString(binlog).getBytes("UTF-8"));
       } catch (IOException e) {
         logger.error(e.getMessage(), e);
       } catch (TimeoutException e) {

@@ -7,19 +7,20 @@ import com.datatrees.datacenter.resolver.TaskProcessor;
 import com.datatrees.datacenter.resolver.TaskProcessorListner;
 
 public class CompareTask implements TaskRunner {
-    public void startCheck() {
-        TaskProcessor.defaultProcessor().setTopic("local_topic").registerListner(
-                new TaskProcessorListner() {
-                    @Override
-                    public void onMessageReceived(String desc) {
-                        DataCompare compare = new TiDBCompare();
-                        compare.binLogCompare(desc);
-                    }
-                }).process();
-    }
 
-    @Override
-    public void process() {
+  public void startCheck() {
+    TaskProcessor.defaultProcessor().setTopic("local_topic").registerListner(
+      new TaskProcessorListner() {
+        @Override
+        public void onMessageReceived(String desc) {
+          DataCompare compare = new TiDBCompare();
+          compare.binLogCompare(desc);
+        }
+      }).process();
+  }
 
-    }
+  @Override
+  public void process() {
+    startCheck();
+  }
 }
