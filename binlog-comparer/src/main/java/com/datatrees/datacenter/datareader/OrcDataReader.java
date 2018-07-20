@@ -1,5 +1,6 @@
 package com.datatrees.datacenter.datareader;
 
+import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.table.FieldNameOp;
@@ -24,7 +25,7 @@ import java.util.Properties;
 /**
  * @author personalc
  */
-public class OrcDataReader extends DataReader {
+public class OrcDataReader extends BaseDataReader {
     private static Logger LOG = LoggerFactory.getLogger(OrcDataReader.class);
     @Override
     public Map<String, Long> readDestData(String filePath) {

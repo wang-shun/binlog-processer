@@ -12,21 +12,21 @@ public class AliYunConfig {
     private static final String REGION_ID = properties.getProperty("REGION_ID");
     private static final String ACCESS_KEY_ID = properties.getProperty("ACCESS_KEY_ID");
     private static final String ACCESS_SECRET = properties.getProperty("ACCESS_SECRET");
-    private static final DefaultProfile profile;
-    private static final IAcsClient client;
+    private static final DefaultProfile PROFILE;
+    private static final IAcsClient CLIENT;
     static {
-        profile = DefaultProfile.getProfile(
+        PROFILE = DefaultProfile.getProfile(
                 REGION_ID,
                 ACCESS_KEY_ID,
                 ACCESS_SECRET);
-        client = new DefaultAcsClient(profile);
+        CLIENT = new DefaultAcsClient(PROFILE);
     }
 
     public static DefaultProfile getProfile() {
-        return profile;
+        return PROFILE;
     }
 
     public static IAcsClient getClient() {
-        return client;
+        return CLIENT;
     }
 }
