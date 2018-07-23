@@ -17,7 +17,7 @@ public class HiveCompare extends BaseDataCompare {
     private final String HIVE_HDFS_PATH = properties.getProperty("HIVE_HDFS_PATH");
 
     @Override
-    public void binLogCompare(String dest) {
+    public void binLogCompare(String dest,String type) {
         //查看当前binlog解析出来的文件分区文件数目和文件条数是否达到了数量要求
         List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(dest);
         if (partitionInfos.size() > 0) {

@@ -5,7 +5,6 @@ import com.mchange.v2.c3p0.DataSources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -20,7 +19,6 @@ public class DBConnectionPool {
 
     private static volatile DBConnectionPool dbConnection;
     private ComboPooledDataSource cpds;
-    //private DBInfo dbInfo;
     private String dbType;
 
     /**
@@ -78,10 +76,9 @@ public class DBConnectionPool {
             }
         } else {
             String dbSource = dbConnection.cpds.getDataSourceName();
-            System.out.println(dbSource);
-            System.out.println(dbType);
+            logger.info("the existed dbpool is :"+dbSource);
+            logger.info("the dbpool goto create is :"+dbType);
             if (!dbSource.equalsIgnoreCase(dbType)) {
-                //dbConnection.finalize();
                 dbConnection = new DBConnectionPool(dbType);
             }
         }
@@ -123,42 +120,5 @@ public class DBConnectionPool {
         }
     }
 
-    static class DBInfo {
-        private String driver;
-        private String url;
-        private String username;
-        private String password;
 
-        public String getDriver() {
-            return driver;
-        }
-
-        public void setDriver(String driver) {
-            this.driver = driver;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-    }
 }

@@ -27,8 +27,8 @@ public class TiDBCompare extends BaseDataCompare {
     private String recordLastUpdateTime;
 
     @Override
-    public void binLogCompare(String fileName) {
-        List<Map<String, Object>> TableInfo = getCurrentTableInfo(fileName);
+    public void binLogCompare(String fileName,String type) {
+        List<Map<String, Object>> TableInfo = getCurrentTableInfo(fileName,type);
         dataCheck(TableInfo);
     }
 

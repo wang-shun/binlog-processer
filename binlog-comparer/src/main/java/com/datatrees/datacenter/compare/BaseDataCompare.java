@@ -19,11 +19,11 @@ public abstract class BaseDataCompare implements DataCheck {
     final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
 
     @Override
-    public void binLogCompare(String dest) {
+    public void binLogCompare(String dest,String type) {
     }
 
     @Override
-    public void binLogCompare(String database, String table, String partition,String partitionType) {
+    public void binLogCompare(String database, String table, String partition, String partitionType) {
 
     }
 
@@ -39,11 +39,11 @@ public abstract class BaseDataCompare implements DataCheck {
         return partitionInfo;
     }
 
-    List<Map<String, Object>> getCurrentTableInfo(String fileName) {
+    List<Map<String, Object>> getCurrentTableInfo(String fileName, String type) {
         List<Map<String, Object>> partitionInfo = null;
         //String maxLen="SET GLOBAL group_concat_max_len = 102400";
         String sql = "select db_instance,database_name,table_name,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_partitions) as partitions from " +
-                " (select * from " + processLogTable + " where file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
+                " (select * from " + processLogTable + " where type=" + "'"+type+"'" + "and file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
         try {
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (SQLException e1) {
