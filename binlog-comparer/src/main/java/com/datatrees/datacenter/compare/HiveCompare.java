@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.*;
 
-public class HiveCompare extends DataCompare {
+public class HiveCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompare.class);
     private Properties properties = PropertiesUtility.defaultProperties();
     private final String HIVE_HDFS_PATH = properties.getProperty("HIVE_HDFS_PATH");
 
     @Override
-    public void binLogCompare(String dest) {
+    public void binLogCompare(String dest,String type) {
         //查看当前binlog解析出来的文件分区文件数目和文件条数是否达到了数量要求
         List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(dest);
         if (partitionInfos.size() > 0) {
@@ -43,7 +43,7 @@ public class HiveCompare extends DataCompare {
 
                 String avroPath = super.AVRO_HDFS_PATH + File.separator + filePath;
                 String orcPath = HIVE_HDFS_PATH + File.separator + filePath;
-                //List<Map<String, Object>> testFilter = test.stream().filter(line -> !"hell0".equalsIgnoreCase(String.valueOf(line.get("hello")) + String.valueOf(line.get("kugou")))).collect(Collectors.toList());
+
                 Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
                 Map<String, Long> orcData = orcDataReader.readDestData(orcPath);
 

@@ -18,12 +18,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class AvroDataReader extends DataReader {
+public class AvroDataReader extends BaseDataReader {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
     private String dataBase;
     private String tableName;
-    private String RECORD_ID;
-    private String RECORD_LAST_UPDATE_TIME;
+    private String recordId;
+    private String recordLastUpdateTime;
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
@@ -34,7 +34,7 @@ public class AvroDataReader extends DataReader {
                 is = fs.open(new Path(filePath));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.info(e.getMessage(), e);
         }
         Map<String, Map<String, Long>> recordMap = readFromAvro(is);
         return recordMap;
@@ -49,7 +49,7 @@ public class AvroDataReader extends DataReader {
      */
     private Map<String, Map<String, Long>> readFromAvro(InputStream is) {
         Map<String, Map<String, Long>> recordMap = new HashMap<>(2);
-        if (null != RECORD_ID && null != RECORD_LAST_UPDATE_TIME) {
+        if (null != recordId && null != recordLastUpdateTime) {
             Map<String, Long> uniqueMap = new HashMap<>();
             Map<String, Long> deleteMap = new HashMap<>();
             try {
@@ -57,11 +57,14 @@ public class AvroDataReader extends DataReader {
                 for (Object o : reader) {
                     GenericRecord r = (GenericRecord) o;
                     String operator = r.get(2).toString();
-
-                    JSONObject jsonObject = JSONObject.parseObject(r.get(1).toString());
-                    String id = String.valueOf(jsonObject.get(RECORD_ID));
-                    long lastUpdateTime = jsonObject.getLong(RECORD_LAST_UPDATE_TIME);
-
+                    JSONObject jsonObject;
+                    if (null != r.get(1)) {
+                        jsonObject = JSONObject.parseObject(r.get(1).toString());
+                    } else {
+                        jsonObject = JSONObject.parseObject(r.get(0).toString());
+                    }
+                    String id = String.valueOf(jsonObject.get(recordId));
+                    long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
                     switch (operator) {
                         case "Create":
                         case "Update":
@@ -74,6 +77,7 @@ public class AvroDataReader extends DataReader {
                         default:
                             break;
                     }
+
                 }
                 IOUtils.cleanup(null, is);
                 IOUtils.cleanup(null, reader);
@@ -82,7 +86,7 @@ public class AvroDataReader extends DataReader {
                 recordMap.put(OperateType.Delete.toString(), deleteMap);
 
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.info(e.getMessage(), e);
             }
         }
         return recordMap;
@@ -104,19 +108,19 @@ public class AvroDataReader extends DataReader {
         this.tableName = tableName;
     }
 
-    public String getRECORD_ID() {
-        return RECORD_ID;
+    public String getRecordLastUpdateTime() {
+        return recordLastUpdateTime;
     }
 
-    public void setRECORD_ID(String RECORD_ID) {
-        this.RECORD_ID = RECORD_ID;
+    public void setRecordLastUpdateTime(String recordLastUpdateTime) {
+        this.recordLastUpdateTime = recordLastUpdateTime;
     }
 
-    public String getRECORD_LAST_UPDATE_TIME() {
-        return RECORD_LAST_UPDATE_TIME;
+    public String getRecordId() {
+        return recordId;
     }
 
-    public void setRECORD_LAST_UPDATE_TIME(String RECORD_LAST_UPDATE_TIME) {
-        this.RECORD_LAST_UPDATE_TIME = RECORD_LAST_UPDATE_TIME;
+    public void setRecordId(String recordId) {
+        this.recordId = recordId;
     }
 }

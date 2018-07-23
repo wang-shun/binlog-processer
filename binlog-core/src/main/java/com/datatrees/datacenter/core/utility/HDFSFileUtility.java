@@ -3,6 +3,7 @@ package com.datatrees.datacenter.core.utility;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -170,7 +171,7 @@ public class HDFSFileUtility {
         try {
            fs = FileSystem.get(URI.create(path),conf);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.info(e.getMessage());
         }
         return fs;
     }

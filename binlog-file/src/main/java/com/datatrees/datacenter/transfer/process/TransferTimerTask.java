@@ -24,11 +24,11 @@ public class TransferTimerTask implements TaskRunner {
     private long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
 
     ProcessCheck processCheck;
-    public static Set processingSet=Collections.synchronizedSet(new HashSet<String>());
+    public static volatile Set processingSet = Collections.synchronizedSet(new HashSet<String>());
 
     public TransferTimerTask() {
-            processCheck = new ProcessCheck();
-            processCheck.process();
+        processCheck = new ProcessCheck();
+        processCheck.process();
     }
 
     @Override
