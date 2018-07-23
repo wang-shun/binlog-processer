@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TiDBCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
@@ -27,8 +28,8 @@ public class TiDBCompare extends BaseDataCompare {
     private String recordLastUpdateTime;
 
     @Override
-    public void binLogCompare(String fileName,String type) {
-        List<Map<String, Object>> TableInfo = getCurrentTableInfo(fileName,type);
+    public void binLogCompare(String fileName, String type) {
+        List<Map<String, Object>> TableInfo = getCurrentTableInfo(fileName, type);
         dataCheck(TableInfo);
     }
 
@@ -102,8 +103,8 @@ public class TiDBCompare extends BaseDataCompare {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
             LOG.info("本次采样得到的数据量为：" + sampleData.size());
-            Map<String, Long> deleteCheck = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleData, op);
-            insertPartitionBatch(checkResult, deleteCheck);
+            Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleData, op);
+            insertPartitionBatch(checkResult, afterCompare);
         }
     }
 
@@ -121,6 +122,7 @@ public class TiDBCompare extends BaseDataCompare {
         if (sql.length() > 0) {
             try {
                 resultList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sql);
+                Map<String, Long> collectMap = sampleData.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 if (null != resultList) {
                     checkDataMap = new HashMap<>();
                     for (Map<String, Object> errorRecord : resultList) {
@@ -128,6 +130,7 @@ public class TiDBCompare extends BaseDataCompare {
                         long upDateTime = (Long) errorRecord.get("avroTime");
                         checkDataMap.put(recordId, upDateTime);
                     }
+                    diffCompare(collectMap, checkDataMap);
                 }
             } catch (Exception e) {
                 LOG.info(e.getMessage(), e);
@@ -253,7 +256,7 @@ public class TiDBCompare extends BaseDataCompare {
             if (dataSize > factor) {
                 n = dataSize / factor;
             } else {
-                n = dataSize - 1;
+                n = dataSize;
             }
         }
         return copy.subList(0, n);

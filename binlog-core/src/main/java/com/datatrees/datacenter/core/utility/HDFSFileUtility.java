@@ -167,6 +167,7 @@ public class HDFSFileUtility {
         return fileList;
     }
     public static FileSystem getFileSystem(String path){
+        System.out.println(path.substring(0,path.indexOf("/")));
         FileSystem fs = null;
         try {
            fs = FileSystem.get(URI.create(path),conf);
