@@ -87,6 +87,15 @@ public class TiDBCompare extends BaseDataCompare {
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(partitions.toString());
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete);
+                        Map<String, Object> whereMap = new HashMap<>(1);
+                        whereMap.put(CheckTable.FILE_NAME, fileName);
+                        Map<String, Object> valueMap = new HashMap<>(1);
+                        valueMap.put("status", 1);
+                        try {
+                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
+                        } catch (SQLException e) {
+                            LOG.info("change status from 0 to 1 failed of file: "+fileName);
+                        }
                     }
                 }
             }
@@ -130,7 +139,8 @@ public class TiDBCompare extends BaseDataCompare {
                         long upDateTime = (Long) errorRecord.get("avroTime");
                         checkDataMap.put(recordId, upDateTime);
                     }
-                    diffCompare(collectMap, checkDataMap);
+                } else {
+                    checkDataMap = collectMap;
                 }
             } catch (Exception e) {
                 LOG.info(e.getMessage(), e);
