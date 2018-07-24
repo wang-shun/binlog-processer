@@ -11,25 +11,39 @@ import java.sql.Statement;
 
 public class ConnOfC3P0Util {
     private static Log logger = LogFactory.getLog(ConnOfC3P0Util.class);
-    private static ComboPooledDataSource ds = new ComboPooledDataSource();
-    private static ComboPooledDataSource ds2 = new ComboPooledDataSource("myApp");
+    private static ComboPooledDataSource ds = new ComboPooledDataSource("TiDB");
+    private static ComboPooledDataSource ds2 = new ComboPooledDataSource("MYSQL");
+
     public static ComboPooledDataSource getDs(String type) {
         return ds;
     }
 
-    public static Connection getConnection() {
-        try {
-            logger.info("ds.getDataSourceName():"+ds.getDataSourceName());
-            return ds.getConnection();
+    public static Connection getConnection(String type) {
+        if ("TiDB".equals(type)) {
+            try {
+                logger.info("ds.getDataSourceName():" + ds.getDataSourceName());
+                return ds.getConnection();
 
-        } catch (SQLException e) {
-            logger.error(e.getMessage(), e);
+            } catch (SQLException e) {
+                logger.error(e.getMessage(), e);
+            }
+        } else {
+            if ("MYSQL".equals(type)) {
+                try {
+                    logger.info("ds2.getDataSourceName():" + ds2.getDataSourceName());
+                    return ds2.getConnection();
+
+                } catch (SQLException e) {
+                    logger.error(e.getMessage(), e);
+                }
+            }
         }
         return null;
     }
+
     public static Connection getMyConnection() {
         try {
-            logger.info("ds2.getDataSourceName():"+ds2.getDataSourceName());
+            logger.info("ds2.getDataSourceName():" + ds2.getDataSourceName());
             return ds2.getConnection();
 
         } catch (SQLException e) {
@@ -44,14 +58,14 @@ public class ConnOfC3P0Util {
                 rs.close();
             }
         } catch (Exception e) {
-            logger.error( e.getMessage(), e);
+            logger.error(e.getMessage(), e);
         } finally {
             try {
                 if (st != null) {
                     st.close();
                 }
             } catch (Exception e) {
-                logger.error( e.getMessage(), e);
+                logger.error(e.getMessage(), e);
             } finally {
                 if (conn != null) {
                     try {

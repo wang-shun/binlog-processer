@@ -180,7 +180,7 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(recordLastUpdateTime)
                                 .append(")")
                                 .append("<")
-                                .append(timeStamp + 1);
+                                .append(timeStamp);
                         if (i < sampleDataSize - 1) {
                             sql.append(" union ");
                         }
