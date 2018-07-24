@@ -13,10 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class TiDBCompareByDate extends TiDBCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompareByDate.class);
@@ -30,7 +27,7 @@ public class TiDBCompareByDate extends TiDBCompare {
 
     @Override
     public void binLogCompare(String dataBase, String table, String partition, String type) {
-        this.type=type;
+        this.type = type;
         List<Map<String, Object>> specifiedDateTable = super.getSpecifiedDateTableInfo(dataBase, table, partition, type);
         dataCheck(specifiedDateTable);
     }
@@ -45,7 +42,11 @@ public class TiDBCompareByDate extends TiDBCompare {
                 String dbInstance = String.valueOf(recordMap.get("db_instance"));
                 String[] filePaths = String.valueOf(recordMap.get("files")).split(",");
                 recordId = FieldNameOp.getFieldName(dataBase, tableName, idList);
+                super.recordId=recordId;
+                LOG.info("the field id is :" + recordId);
                 recordLastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
+                super.recordLastUpdateTime=recordLastUpdateTime;
+                LOG.info("the field update is:" + recordLastUpdateTime);
                 if (null != recordId && null != recordLastUpdateTime) {
                     if (filePaths.length > 0) {
                         Map<String, Long> allUniqueData = new HashMap<>();
@@ -72,10 +73,10 @@ public class TiDBCompareByDate extends TiDBCompare {
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                             Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
                             Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
-                            if (null != unique) {
+                            if (null != unique&&unique.size()>0) {
                                 allUniqueData.putAll(unique);
                             }
-                            if (null != delete) {
+                            if (null != delete&&unique.size()>0) {
                                 allDeleteData.putAll(delete);
                             }
                         }
@@ -83,24 +84,25 @@ public class TiDBCompareByDate extends TiDBCompare {
                         CheckResult checkResult = new CheckResult();
                         checkResult.setDataBase(dataBase);
                         checkResult.setTableName(tableName);
-                        checkResult.setFileName(filePaths.toString());
+                        checkResult.setFileName(Arrays.toString(filePaths));
                         checkResult.setDbInstance(dbInstance);
                         checkResult.setOpType(OperateType.Unique.toString());
-                        checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique);
+                        checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique, CheckTable.BINLOG_CHECK_DATE_TABLE);
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(partition);
-                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete);
+                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
                         Map<String, Object> whereMap = new HashMap<>(1);
-                        whereMap.put(CheckTable.FILE_PARTITION, partition);
-                        whereMap.put(CheckTable.DATA_BASE,dataBase);
-                        whereMap.put(CheckTable.TABLE_NAME,tableName);
-                        whereMap.put("type",type);
+                        whereMap.put(CheckTable.FILE_PARTITION, partition );
+                        whereMap.put(CheckTable.DATA_BASE,  dataBase);
+                        whereMap.put(CheckTable.TABLE_NAME,  tableName );
+                        whereMap.put("type", type);
                         Map<String, Object> valueMap = new HashMap<>(1);
                         valueMap.put("status", 1);
                         try {
-                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_CHECK_DATE_TABLE, valueMap, whereMap);
+                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
+                            LOG.info("compare finished !");
                         } catch (SQLException e) {
-                            LOG.info("change status from 0 to 1 failed of file: " + partition);
+                            LOG.info("change status from 0 to 1 failed of partition: " + partition);
                         }
                     }
                 }
