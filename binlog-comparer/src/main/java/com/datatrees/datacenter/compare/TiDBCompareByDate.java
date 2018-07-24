@@ -25,15 +25,27 @@ public class TiDBCompareByDate extends TiDBCompare {
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
     private String recordId;
     private String recordLastUpdateTime;
-    private String type;
+    private String partitionType;
 
     @Override
     public void binLogCompare(String dataBase, String table, String partition, String type) {
-        this.type = type;
+        this.partitionType = type;
         List<Map<String, Object>> specifiedDateTable = super.getSpecifiedDateTableInfo(dataBase, table, partition, type);
         dataCheck(specifiedDateTable);
+        Map<String, Object> whereMap = new HashMap<>(1);
+        whereMap.put(CheckTable.FILE_PARTITION, partition);
+        whereMap.put(CheckTable.DATA_BASE, dataBase);
+        whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+        Map<String, Object> valueMap = new HashMap<>(1);
+        valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
+        try {
+            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
+            LOG.info("compare finished !");
+        } catch (SQLException e) {
+            LOG.info("change status from 0 to 1 failed of partition: " + partition);
+        }
+        LOG.info("all the data with database: {} , table: {} , partitions {} ,type: {} have checked", dataBase, table, partition, type);
     }
-
     @Override
     public void dataCheck(List<Map<String, Object>> tableInfo) {
         if (null != tableInfo) {
@@ -61,6 +73,8 @@ public class TiDBCompareByDate extends TiDBCompare {
                             avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
                             String filePath = super.AVRO_HDFS_PATH +
                                     File.separator +
+                                    partitionType +
+                                    File.separator +
                                     dbInstance +
                                     File.separator +
                                     dataBase +
@@ -73,13 +87,15 @@ public class TiDBCompareByDate extends TiDBCompare {
                                     ".avro";
 
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
-                            Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
-                            Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
-                            if (null != unique && unique.size() > 0) {
-                                allUniqueData.putAll(unique);
-                            }
-                            if (null != delete && unique.size() > 0) {
-                                allDeleteData.putAll(delete);
+                            if (null != avroData && avroData.size() > 0) {
+                                Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
+                                Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
+                                if (null != unique && unique.size() > 0) {
+                                    allUniqueData.putAll(unique);
+                                }
+                                if (null != delete && unique.size() > 0) {
+                                    allDeleteData.putAll(delete);
+                                }
                             }
                         }
                         Map<String, Long> filterDeleteMap = diffCompare(allUniqueData, allDeleteData);
@@ -93,18 +109,7 @@ public class TiDBCompareByDate extends TiDBCompare {
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(partition);
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
-                        Map<String, Object> whereMap = new HashMap<>(1);
-                        whereMap.put(CheckTable.FILE_PARTITION, partition);
-                        whereMap.put(CheckTable.DATA_BASE, dataBase);
-                        whereMap.put(CheckTable.PARTITION_TYPE, type);
-                        Map<String, Object> valueMap = new HashMap<>(1);
-                        valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
-                        try {
-                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
-                            LOG.info("compare finished !");
-                        } catch (SQLException e) {
-                            LOG.info("change status from 0 to 1 failed of partition: " + partition);
-                        }
+
                     }
                 }
             }

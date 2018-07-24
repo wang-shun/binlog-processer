@@ -2,6 +2,7 @@ package com.datatrees.datacenter.datareader;
 
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.operate.OperateType;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
@@ -16,10 +17,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 
 public class AvroDataReader extends BaseDataReader {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
+    private final Properties properties = PropertiesUtility.defaultProperties();
+    private final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
     private String dataBase;
     private String tableName;
     private String recordId;
@@ -29,16 +33,18 @@ public class AvroDataReader extends BaseDataReader {
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
         InputStream is = null;
         try {
-            FileSystem fs = HDFSFileUtility.getFileSystem(filePath);
-            if (fs != null) {
+            FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+            if (null != fs) {
                 is = fs.open(new Path(filePath));
             }
         } catch (IOException e) {
-            LOG.info(e.getMessage(), e);
+            LOG.info(e.getMessage());
         }
-        Map<String, Map<String, Long>> recordMap = readFromAvro(is);
+        Map<String, Map<String, Long>> recordMap = null;
+        if (null != is) {
+            recordMap = readFromAvro(is);
+        }
         return recordMap;
-
     }
 
     /**
