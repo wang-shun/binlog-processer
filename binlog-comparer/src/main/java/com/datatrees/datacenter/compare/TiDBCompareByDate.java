@@ -15,6 +15,8 @@ import java.io.File;
 import java.sql.SQLException;
 import java.util.*;
 
+import static com.datatrees.datacenter.table.CheckTable.PARTITION_TYPE;
+
 public class TiDBCompareByDate extends TiDBCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompareByDate.class);
     private Properties properties = PropertiesUtility.defaultProperties();
@@ -36,16 +38,16 @@ public class TiDBCompareByDate extends TiDBCompare {
     public void dataCheck(List<Map<String, Object>> tableInfo) {
         if (null != tableInfo) {
             for (Map<String, Object> recordMap : tableInfo) {
-                String dataBase = String.valueOf(recordMap.get("database_name"));
-                String tableName = String.valueOf(recordMap.get("table_name"));
-                String partition = String.valueOf(recordMap.get("file_partitions"));
-                String dbInstance = String.valueOf(recordMap.get("db_instance"));
+                String dataBase = String.valueOf(recordMap.get(CheckTable.DATA_BASE));
+                String tableName = String.valueOf(recordMap.get(CheckTable.TABLE_NAME));
+                String partition = String.valueOf(recordMap.get(CheckTable.FILE_PARTITION));
+                String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
                 String[] filePaths = String.valueOf(recordMap.get("files")).split(",");
                 recordId = FieldNameOp.getFieldName(dataBase, tableName, idList);
-                super.recordId=recordId;
+                super.recordId = recordId;
                 LOG.info("the field id is :" + recordId);
                 recordLastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
-                super.recordLastUpdateTime=recordLastUpdateTime;
+                super.recordLastUpdateTime = recordLastUpdateTime;
                 LOG.info("the field update is:" + recordLastUpdateTime);
                 if (null != recordId && null != recordLastUpdateTime) {
                     if (filePaths.length > 0) {
@@ -73,10 +75,10 @@ public class TiDBCompareByDate extends TiDBCompare {
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                             Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
                             Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
-                            if (null != unique&&unique.size()>0) {
+                            if (null != unique && unique.size() > 0) {
                                 allUniqueData.putAll(unique);
                             }
-                            if (null != delete&&unique.size()>0) {
+                            if (null != delete && unique.size() > 0) {
                                 allDeleteData.putAll(delete);
                             }
                         }
@@ -92,12 +94,11 @@ public class TiDBCompareByDate extends TiDBCompare {
                         checkResult.setFilePartition(partition);
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
                         Map<String, Object> whereMap = new HashMap<>(1);
-                        whereMap.put(CheckTable.FILE_PARTITION, partition );
-                        whereMap.put(CheckTable.DATA_BASE,  dataBase);
-                        whereMap.put(CheckTable.TABLE_NAME,  tableName );
-                        whereMap.put("type", type);
+                        whereMap.put(CheckTable.FILE_PARTITION, partition);
+                        whereMap.put(CheckTable.DATA_BASE, dataBase);
+                        whereMap.put(CheckTable.PARTITION_TYPE, type);
                         Map<String, Object> valueMap = new HashMap<>(1);
-                        valueMap.put("status", 1);
+                        valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
                         try {
                             DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
                             LOG.info("compare finished !");

@@ -129,9 +129,4 @@ public class TimeUtil {
         return newDate;
     }
 
-    public static void main(String[] args) {
-        long s=System.currentTimeMillis();
-        stampToDate(s);
-    }
-
 }

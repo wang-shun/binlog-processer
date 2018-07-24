@@ -36,11 +36,11 @@ public class TiDBCompare extends BaseDataCompare {
     public void dataCheck(List<Map<String, Object>> tableInfo) {
         if (null != tableInfo) {
             for (Map<String, Object> recordMap : tableInfo) {
-                String dataBase = String.valueOf(recordMap.get("database_name"));
-                String tableName = String.valueOf(recordMap.get("table_name"));
+                String dataBase = String.valueOf(recordMap.get(CheckTable.DATA_BASE));
+                String tableName = String.valueOf(recordMap.get(CheckTable.TABLE_NAME));
                 String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
-                String dbInstance = String.valueOf(recordMap.get("db_instance"));
-                String fileName = String.valueOf(recordMap.get("file_name"));
+                String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
+                String fileName = String.valueOf(recordMap.get(CheckTable.FILE_NAME));
                 recordId = FieldNameOp.getFieldName(dataBase, tableName, idList);
                 recordLastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
                 if (null != recordId && null != recordLastUpdateTime) {
@@ -90,7 +90,7 @@ public class TiDBCompare extends BaseDataCompare {
                         Map<String, Object> whereMap = new HashMap<>(1);
                         whereMap.put(CheckTable.FILE_NAME, fileName);
                         Map<String, Object> valueMap = new HashMap<>(1);
-                        valueMap.put("status", 1);
+                        valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
                         try {
                             DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
                             LOG.info("compare finished !");
@@ -180,7 +180,7 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(recordLastUpdateTime)
                                 .append(")")
                                 .append("<")
-                                .append(timeStamp + 1);
+                                .append(timeStamp);
                         if (i < sampleDataSize - 1) {
                             sql.append(" union ");
                         }
