@@ -141,7 +141,11 @@ public class TiDBCompare extends BaseDataCompare {
                         checkDataMap.put(recordId, upDateTime);
                     }
                 } else {
-                    checkDataMap = collectMap;
+                    String sqlCount = "select count(*) from" + tableName;
+                    List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlCount);
+                    if (null == list || list.size()== 0) {
+                        checkDataMap = collectMap;
+                    }
                 }
             } catch (Exception e) {
                 LOG.info(e.getMessage(), e);
@@ -158,7 +162,7 @@ public class TiDBCompare extends BaseDataCompare {
                 case Unique: {
                     for (int i = 0; i < sampleDataSize; i++) {
                         Map.Entry record = sampleData.get(i);
-                        long timeStamp = (Long) record.getValue();
+                        long timeStamp = (Long) record.getValue() / 1000;
                         sql.append("select ")
                                 .append(recordId)
                                 .append(" , ")
@@ -174,7 +178,7 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(" where ")
                                 .append(recordId)
                                 .append("=")
-                                .append(record.getKey())
+                                .append("'" + record.getKey() + "'")
                                 .append(" and ")
                                 .append("UNIX_TIMESTAMP(")
                                 .append(recordLastUpdateTime)
