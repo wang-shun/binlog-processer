@@ -55,9 +55,9 @@ public abstract class BaseDataCompare implements DataCheck {
     List<Map<String, Object>> getSpecifiedDateTableInfo(String instance, String tableName, String partitions, String partitionType) {
         List<Map<String, Object>> partitionInfo = null;
         Map<String, String> whereMap = new HashMap<>();
-        whereMap.put("database_name", instance);
-        whereMap.put("table_name", tableName);
-        whereMap.put("file_partitions", partitions);
+        whereMap.put(CheckTable.DATA_BASE, instance);
+        whereMap.put(CheckTable.TABLE_NAME, tableName);
+        whereMap.put(CheckTable.FILE_PARTITION, partitions);
         whereMap.put("type", partitionType);
         whereMap.values().remove("");
         List<Map.Entry<String, String>> map2List;
@@ -128,7 +128,6 @@ public abstract class BaseDataCompare implements DataCheck {
      * @return
      */
     public Map<String, Long> retainCompare(Map<String, Long> map1, Map<String, Long> map2) {
-
         Set<Map.Entry<String, Long>> set1 = map1.entrySet();
         Set<Map.Entry<String, Long>> set2 = map2.entrySet();
         Map<String, Long> diffMaps = new HashMap<>();

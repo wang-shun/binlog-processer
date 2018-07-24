@@ -2,6 +2,7 @@ package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.TiDBCompareByDate;
+import com.datatrees.datacenter.core.utility.ConnOfC3P0Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +15,8 @@ public class Test {
         // DataCompare dataCompare = new TiDBCompare();
         //dataCompare.getSpecifiedDateTableInfo("loandb","","year=2018/month=7/day=19");
 
-        //BaseDataCompare dataCompare1 = new TiDBCompareByDate();
-        //dataCompare1.binLogCompare("loandb", "", "year=2018/month=7/day=19","create");
+        BaseDataCompare dataCompare1 = new TiDBCompareByDate();
+        dataCompare1.binLogCompare("loandb", "", "year=2018/month=7/day=20","update");
         // dataCompare.binLogCompare("1531931491-mysql-bin.000764");
         //1530494870-mysql-bin.001132.tar,1530496380-mysql-bin.000811.tar
         //LOG.info("compare finished");

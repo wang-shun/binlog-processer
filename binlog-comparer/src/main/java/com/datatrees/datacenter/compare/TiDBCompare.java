@@ -24,8 +24,8 @@ public class TiDBCompare extends BaseDataCompare {
     private String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
-    private String recordId;
-    private String recordLastUpdateTime;
+    public String recordId;
+    public String recordLastUpdateTime;
 
     @Override
     public void binLogCompare(String fileName, String type) {
@@ -83,18 +83,19 @@ public class TiDBCompare extends BaseDataCompare {
                         checkResult.setFileName(fileName);
                         checkResult.setDbInstance(dbInstance);
                         checkResult.setOpType(OperateType.Unique.toString());
-                        checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique);
+                        checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique, CheckTable.BINLOG_CHECK_TABLE);
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(partitions.toString());
-                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete);
+                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
                         Map<String, Object> whereMap = new HashMap<>(1);
-                        whereMap.put(CheckTable.FILE_NAME, fileName);
+                        whereMap.put(CheckTable.FILE_NAME, "'" + fileName + "'");
                         Map<String, Object> valueMap = new HashMap<>(1);
                         valueMap.put("status", 1);
                         try {
                             DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
+                            LOG.info("compare finished !");
                         } catch (SQLException e) {
-                            LOG.info("change status from 0 to 1 failed of file: "+fileName);
+                            LOG.info("change status from 0 to 1 failed of file: " + fileName);
                         }
                     }
                 }
@@ -108,12 +109,12 @@ public class TiDBCompare extends BaseDataCompare {
      * @param checkResult
      * @param dataMap
      */
-    void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op) {
+    void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTalbe) {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
             LOG.info("本次采样得到的数据量为：" + sampleData.size());
             Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleData, op);
-            insertPartitionBatch(checkResult, afterCompare);
+            insertPartitionBatch(checkResult, afterCompare, saveTalbe);
         }
     }
 
@@ -132,7 +133,7 @@ public class TiDBCompare extends BaseDataCompare {
             try {
                 resultList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sql);
                 Map<String, Long> collectMap = sampleData.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                if (null != resultList) {
+                if (null != resultList && resultList.size() > 0) {
                     checkDataMap = new HashMap<>();
                     for (Map<String, Object> errorRecord : resultList) {
                         String recordId = String.valueOf(errorRecord.get(this.recordId));
@@ -214,7 +215,7 @@ public class TiDBCompare extends BaseDataCompare {
         return sql.toString();
     }
 
-    private void insertPartitionBatch(CheckResult result, Map<String, Long> afterComp) {
+    private void insertPartitionBatch(CheckResult result, Map<String, Long> afterComp, String tableName) {
         List<Map<String, Object>> resultMap = new ArrayList<>();
         if (afterComp != null) {
             Iterator<Map.Entry<String, Long>> itr = afterComp.entrySet().iterator();
@@ -226,12 +227,12 @@ public class TiDBCompare extends BaseDataCompare {
                 dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
                 dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
                 dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
-                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue() * 1000));
+                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()));
                 dataMap.put(CheckTable.OP_TYPE, result.getOpType());
                 resultMap.add(dataMap);
             }
             try {
-                DBUtil.insertAll(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_CHECK_TABLE, resultMap);
+                DBUtil.insertAll(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, tableName, resultMap);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
