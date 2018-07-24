@@ -88,7 +88,7 @@ public class TiDBCompare extends BaseDataCompare {
                         checkResult.setFilePartition(partitions.toString());
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
                         Map<String, Object> whereMap = new HashMap<>(1);
-                        whereMap.put(CheckTable.FILE_NAME, "'" + fileName + "'");
+                        whereMap.put(CheckTable.FILE_NAME, fileName);
                         Map<String, Object> valueMap = new HashMap<>(1);
                         valueMap.put("status", 1);
                         try {
@@ -158,7 +158,7 @@ public class TiDBCompare extends BaseDataCompare {
                 case Unique: {
                     for (int i = 0; i < sampleDataSize; i++) {
                         Map.Entry record = sampleData.get(i);
-                        long timeStamp = (Long) record.getValue() / 1000;
+                        long timeStamp = (Long) record.getValue();
                         sql.append("select ")
                                 .append(recordId)
                                 .append(" , ")

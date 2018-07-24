@@ -92,10 +92,10 @@ public class TiDBCompareByDate extends TiDBCompare {
                         checkResult.setFilePartition(partition);
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
                         Map<String, Object> whereMap = new HashMap<>(1);
-                        whereMap.put(CheckTable.FILE_PARTITION, "'" + partition + "'");
-                        whereMap.put(CheckTable.DATA_BASE, "'" + dataBase + "'");
-                        whereMap.put(CheckTable.TABLE_NAME, "'" + tableName + "'");
-                        whereMap.put("type", "'" + type + "'");
+                        whereMap.put(CheckTable.FILE_PARTITION, partition );
+                        whereMap.put(CheckTable.DATA_BASE,  dataBase);
+                        whereMap.put(CheckTable.TABLE_NAME,  tableName );
+                        whereMap.put("type", type);
                         Map<String, Object> valueMap = new HashMap<>(1);
                         valueMap.put("status", 1);
                         try {
