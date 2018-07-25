@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -31,18 +32,18 @@ public class AvroDataReader extends BaseDataReader {
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
-        InputStream is = null;
+        InputStream is;
+        Map<String, Map<String, Long>> recordMap = null;
         try {
             FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
             if (null != fs) {
                 is = fs.open(new Path(filePath));
+                if (null != is) {
+                    recordMap = readFromAvro(is);
+                }
             }
         } catch (IOException e) {
             LOG.info(e.getMessage());
-        }
-        Map<String, Map<String, Long>> recordMap = null;
-        if (null != is) {
-            recordMap = readFromAvro(is);
         }
         return recordMap;
     }
@@ -60,7 +61,9 @@ public class AvroDataReader extends BaseDataReader {
             Map<String, Long> deleteMap = new HashMap<>();
             try {
                 DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());
-                for (Object o : reader) {
+                Iterator<Object> iterator = reader.iterator();
+                while (iterator.hasNext()) {
+                    Object o = iterator.next();
                     GenericRecord r = (GenericRecord) o;
                     String operator = r.get(2).toString();
                     JSONObject jsonObject;
@@ -83,19 +86,20 @@ public class AvroDataReader extends BaseDataReader {
                         default:
                             break;
                     }
-
                 }
                 IOUtils.cleanup(null, is);
                 IOUtils.cleanup(null, reader);
 
                 recordMap.put(OperateType.Unique.toString(), uniqueMap);
                 recordMap.put(OperateType.Delete.toString(), deleteMap);
-
-            } catch (IOException e) {
-                LOG.info(e.getMessage(), e);
+                return recordMap;
+            } catch (Exception e) {
+                LOG.info("can't read the avro file");
+                return null;
             }
         }
-        return recordMap;
+        return null;
+
     }
 
     public String getDataBase() {

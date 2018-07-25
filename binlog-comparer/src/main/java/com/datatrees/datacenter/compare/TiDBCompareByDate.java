@@ -44,8 +44,9 @@ public class TiDBCompareByDate extends TiDBCompare {
         } catch (SQLException e) {
             LOG.info("change status from 0 to 1 failed of partition: " + partition);
         }
-        LOG.info("all the data with database: {} , table: {} , partitions {} ,type: {} have checked", dataBase, table, partition, type);
+        LOG.info("all the data with database: {} , table: {} , partitions {} ,type: {} ----check finished !", dataBase, table, partition, type);
     }
+
     @Override
     public void dataCheck(List<Map<String, Object>> tableInfo) {
         if (null != tableInfo) {
@@ -85,15 +86,17 @@ public class TiDBCompareByDate extends TiDBCompare {
                                     File.separator +
                                     fileName +
                                     ".avro";
-
+                            LOG.info("****************");
+                            LOG.info("checking file :" + filePath);
+                            LOG.info("****************");
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                             if (null != avroData && avroData.size() > 0) {
                                 Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
                                 Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
-                                if (null != unique && unique.size() > 0) {
+                                if (null != unique) {
                                     allUniqueData.putAll(unique);
                                 }
-                                if (null != delete && unique.size() > 0) {
+                                if (null != delete) {
                                     allDeleteData.putAll(delete);
                                 }
                             }

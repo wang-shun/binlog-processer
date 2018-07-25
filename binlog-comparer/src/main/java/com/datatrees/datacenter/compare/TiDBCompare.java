@@ -235,7 +235,7 @@ public class TiDBCompare extends BaseDataCompare {
                 dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
                 dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
                 dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
-                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()));
+                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()*1000));
                 dataMap.put(CheckTable.OP_TYPE, result.getOpType());
                 resultMap.add(dataMap);
             }
