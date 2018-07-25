@@ -26,11 +26,23 @@ public class TiDBCompare extends BaseDataCompare {
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
     public String recordId;
     public String recordLastUpdateTime;
+    private String partitionType;
 
     @Override
     public void binLogCompare(String fileName, String type) {
+        partitionType = type;
         List<Map<String, Object>> TableInfo = getCurrentTableInfo(fileName, type);
         dataCheck(TableInfo);
+        Map<String, Object> whereMap = new HashMap<>(1);
+        whereMap.put(CheckTable.FILE_NAME, fileName);
+        Map<String, Object> valueMap = new HashMap<>(1);
+        valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
+        try {
+            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
+            LOG.info("compare finished !");
+        } catch (SQLException e) {
+            LOG.info("change status from 0 to 1 failed of file: " + fileName);
+        }
     }
 
     public void dataCheck(List<Map<String, Object>> tableInfo) {
@@ -55,6 +67,7 @@ public class TiDBCompare extends BaseDataCompare {
                             avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
                             String filePath = super.AVRO_HDFS_PATH +
                                     File.separator +
+                                    partitionType +
                                     dbInstance +
                                     File.separator +
                                     dataBase +
@@ -87,16 +100,7 @@ public class TiDBCompare extends BaseDataCompare {
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(partitions.toString());
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
-                        Map<String, Object> whereMap = new HashMap<>(1);
-                        whereMap.put(CheckTable.FILE_NAME, fileName);
-                        Map<String, Object> valueMap = new HashMap<>(1);
-                        valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
-                        try {
-                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
-                            LOG.info("compare finished !");
-                        } catch (SQLException e) {
-                            LOG.info("change status from 0 to 1 failed of file: " + fileName);
-                        }
+
                     }
                 }
             }
@@ -143,7 +147,7 @@ public class TiDBCompare extends BaseDataCompare {
                 } else {
                     String sqlCount = "select count(*) from" + tableName;
                     List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlCount);
-                    if (null == list || list.size()== 0) {
+                    if (null == list || list.size() == 0) {
                         checkDataMap = collectMap;
                     }
                 }
@@ -231,7 +235,7 @@ public class TiDBCompare extends BaseDataCompare {
                 dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
                 dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
                 dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
-                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()));
+                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()*1000));
                 dataMap.put(CheckTable.OP_TYPE, result.getOpType());
                 resultMap.add(dataMap);
             }
