@@ -21,6 +21,7 @@ import org.apache.avro.Schema.Field;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.commons.lang3.time.DateUtils;
 import org.javatuples.KeyValue;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +64,7 @@ public final class SchemaData {
       if (!(value instanceof Date)) {
         return null;
       }
-      return ((Date) value).getTime();
+      return (DateUtils.addHours((Date) value, -8)).getTime();
     });
 
     TO_CONNECT_LOGICAL_CONVERTERS.put("timestamp-millis", (schema, value) -> {
@@ -188,7 +189,7 @@ public final class SchemaData {
     }
   }
 
-  public Schema toAvroSchema(Binlog binlog, String schema, String table)  {
+  public Schema toAvroSchema(Binlog binlog, String schema, String table) {
     requireNonNull(schema, "No schema provided");
     requireNonNull(table, "No table provided");
     String key = schema + "." + table;
