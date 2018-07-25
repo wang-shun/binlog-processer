@@ -14,7 +14,7 @@ public class ConnOfC3P0Util {
     private static ComboPooledDataSource ds = new ComboPooledDataSource("TiDB");
     private static ComboPooledDataSource ds2 = new ComboPooledDataSource("MYSQL");
 
-    public static ComboPooledDataSource getDs(String type) {
+    public static ComboPooledDataSource getDs() {
         return ds;
     }
 
@@ -32,7 +32,6 @@ public class ConnOfC3P0Util {
                 try {
                     logger.info("ds2.getDataSourceName():" + ds2.getDataSourceName());
                     return ds2.getConnection();
-
                 } catch (SQLException e) {
                     logger.error(e.getMessage(), e);
                 }

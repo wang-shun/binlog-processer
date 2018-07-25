@@ -78,8 +78,9 @@ public class DBUtil {
         if(datas.size()>0) {
             try {
                 //从数据库连接池中获取数据库连接
-                DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
-                connection = dbConnectionPool.getInstance().getConnection(dataBase);
+                connection=ConnOfC3P0Util.getConnection(dbSource);
+               /* DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
+                connection = dbConnectionPool.getInstance().getConnection(dataBase);*/
                 Map<String, Object> valueMap = datas.get(0);
                 //获取数据库插入的Map的键值对的值
                 Set<String> keySet = valueMap.keySet();
@@ -103,7 +104,7 @@ public class DBUtil {
                 //开始拼插入的sql语句
                 StringBuilder sql = new StringBuilder();
                 sql.append("INSERT INTO ");
-                sql.append(tableName);
+                sql.append(dataBase+"."+tableName);
                 sql.append(" (");
                 sql.append(columnSql);
                 sql.append(" )  VALUES (");
@@ -247,8 +248,9 @@ public class DBUtil {
         PreparedStatement preparedStatement = null;
         try {
             //从数据库连接池中获取数据库连接
-            DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
-            connection = dbConnectionPool.getInstance().getConnection(dataBase);
+            connection=ConnOfC3P0Util.getConnection(dbSource);
+           /* DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
+            connection = dbConnectionPool.getInstance().getConnection(dataBase);*/
             //执行SQL预编译
             preparedStatement = connection.prepareStatement(sql);
             //设置不自动提交，以便于在出现异常的时候数据库回滚
@@ -332,7 +334,7 @@ public class DBUtil {
                                                   String having,
                                                   String orderBy,
                                                   String limit) throws SQLException {
-        String sql = buildQueryString(distinct, tableName, columns, selection, groupBy, having, orderBy,
+        String sql = buildQueryString(distinct, dataBase+"."+tableName, columns, selection, groupBy, having, orderBy,
                 limit);
         return executeQuery(dbSource, dataBase, sql, selectionArgs);
 
@@ -346,8 +348,9 @@ public class DBUtil {
         ResultSet resultSet = null;
         try {
             //获取数据库连接池中的连接
-            DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
-            connection = dbConnectionPool.getInstance().getConnection(dataBase);
+            connection=ConnOfC3P0Util.getConnection(dbSource);
+           /* DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
+            connection = dbConnectionPool.getInstance().getConnection(dataBase);*/
             if (null != connection) {
                 preparedStatement = connection.prepareStatement(sql);
                 if (bindArgs != null) {
