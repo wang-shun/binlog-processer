@@ -104,6 +104,8 @@ public class BinLogFileUtil {
                 binLogFiles.addAll(items);
             }
         }
+        BinLogFile binLogFile=new BinLogFile();
+        binLogFile.getChecksum();
         return binLogFiles;
     }
 

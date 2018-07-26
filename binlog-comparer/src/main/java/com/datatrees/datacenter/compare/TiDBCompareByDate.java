@@ -85,7 +85,7 @@ public class TiDBCompareByDate extends TiDBCompare {
                                     partition +
                                     File.separator +
                                     fileName +
-                                    ".avro";
+                                    CheckTable.FILE_LAST_NAME;
                             LOG.info("****************");
                             LOG.info("checking file :" + filePath);
                             LOG.info("****************");
@@ -112,7 +112,6 @@ public class TiDBCompareByDate extends TiDBCompare {
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(partition);
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
-
                     }
                 }
             }

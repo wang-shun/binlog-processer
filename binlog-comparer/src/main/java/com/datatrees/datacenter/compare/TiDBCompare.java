@@ -24,15 +24,15 @@ public class TiDBCompare extends BaseDataCompare {
     private String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
-    public String recordId;
-    public String recordLastUpdateTime;
+    String recordId;
+    String recordLastUpdateTime;
     private String partitionType;
 
     @Override
     public void binLogCompare(String fileName, String type) {
         partitionType = type;
-        List<Map<String, Object>> TableInfo = getCurrentTableInfo(fileName, type);
-        dataCheck(TableInfo);
+        List<Map<String, Object>> tableInfo = getCurrentTableInfo(fileName, type);
+        dataCheck(tableInfo);
         Map<String, Object> whereMap = new HashMap<>(1);
         whereMap.put(CheckTable.FILE_NAME, fileName);
         Map<String, Object> valueMap = new HashMap<>(1);
@@ -98,7 +98,7 @@ public class TiDBCompare extends BaseDataCompare {
                         checkResult.setOpType(OperateType.Unique.toString());
                         checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique, CheckTable.BINLOG_CHECK_TABLE);
                         checkResult.setOpType(OperateType.Delete.toString());
-                        checkResult.setFilePartition(partitions.toString());
+                        checkResult.setFilePartition(Arrays.toString(partitions));
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
 
                     }
@@ -110,15 +110,15 @@ public class TiDBCompare extends BaseDataCompare {
     /**
      * 将查询得到的错误数据记录到数据库
      *
-     * @param checkResult
-     * @param dataMap
+     * @param checkResult 结果对象
+     * @param dataMap     待抽样数据
      */
-    void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTalbe) {
+    void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTable) {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
             LOG.info("本次采样得到的数据量为：" + sampleData.size());
             Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleData, op);
-            insertPartitionBatch(checkResult, afterCompare, saveTalbe);
+            batchInsert(checkResult, afterCompare, saveTable);
         }
     }
 
@@ -147,8 +147,8 @@ public class TiDBCompare extends BaseDataCompare {
                 } else {
                     String sqlCount = "select TABLE_ROWS from " + "information_schema.TABLES where TABLE_SCHEMA='" + dataBase + "' and  TABLE_NAME='" + tableName + "'";
                     List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlCount);
-                    if (null == list || list.size() == 0) {
-                        int tableRows = (int) list.get(0).get("TABLE_ROWS");
+                    if (null != list) {
+                        long tableRows = Integer.valueOf(list.get(0).get("TABLE_ROWS").toString());
                         if (tableRows == 0) {
                             checkDataMap = collectMap;
                         }
@@ -181,11 +181,15 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(timeStamp)
                                 .append(" as avroTime ")
                                 .append(" from ")
-                                .append(dataBase + "." + tableName)
+                                .append(dataBase)
+                                .append(".")
+                                .append(tableName)
                                 .append(" where ")
                                 .append(recordId)
                                 .append("=")
-                                .append("'" + record.getKey() + "'")
+                                .append("'")
+                                .append(record.getKey())
+                                .append("'")
                                 .append(" and ")
                                 .append("UNIX_TIMESTAMP(")
                                 .append(recordLastUpdateTime)
@@ -208,7 +212,9 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(timeStamp)
                                 .append(" as avroTime ")
                                 .append(" from ")
-                                .append(dataBase + "." + tableName)
+                                .append(dataBase)
+                                .append(".")
+                                .append(tableName)
                                 .append(" where ")
                                 .append(recordId)
                                 .append("=")
@@ -226,12 +232,10 @@ public class TiDBCompare extends BaseDataCompare {
         return sql.toString();
     }
 
-    private void insertPartitionBatch(CheckResult result, Map<String, Long> afterComp, String tableName) {
+    private void batchInsert(CheckResult result, Map<String, Long> afterComp, String tableName) {
         List<Map<String, Object>> resultMap = new ArrayList<>();
         if (afterComp != null) {
-            Iterator<Map.Entry<String, Long>> itr = afterComp.entrySet().iterator();
-            while (itr.hasNext()) {
-                Map.Entry<String, Long> entry = itr.next();
+            for (Map.Entry<String, Long> entry : afterComp.entrySet()) {
                 Map<String, Object> dataMap = new HashMap<>();
                 dataMap.put(CheckTable.OLD_ID, entry.getKey());
                 dataMap.put(CheckTable.FILE_NAME, result.getFileName());
@@ -260,7 +264,7 @@ public class TiDBCompare extends BaseDataCompare {
      */
     private List<Map.Entry<String, Long>> dataSample(Map<String, Long> operateRecordMap) {
         List<Map.Entry<String, Long>> dataList = mapToList(operateRecordMap);
-        return pickNRandom(dataList);
+        return randomSample(dataList);
     }
 
     /**
@@ -269,19 +273,20 @@ public class TiDBCompare extends BaseDataCompare {
      * @param lst data sets to be sampled
      * @return sampled data
      */
-    private List<Map.Entry<String, Long>> pickNRandom(List<Map.Entry<String, Long>> lst) {
+    private List<Map.Entry<String, Long>> randomSample(List<Map.Entry<String, Long>> lst) {
         List<Map.Entry<String, Long>> copy = new ArrayList<>(lst);
-        Collections.shuffle(copy);
-        int dataSize = copy.size();
-        int n = 0;
-        if (dataSize > 0) {
+        int dataSize = lst.size();
+        if (dataSize > 0 && factor > 0) {
+            Collections.shuffle(copy);
+            int n;
             if (dataSize > factor) {
                 n = dataSize / factor;
             } else {
                 n = dataSize;
             }
+            lst = copy.subList(0, n);
         }
-        return copy.subList(0, n);
+        return lst;
     }
 
     /**
