@@ -21,7 +21,7 @@ public class HdfsStorage implements FileStorage {
   private Boolean adapter;
   private FileStorage adapterFileStorage;
 
-  private HdfsStorage() {
+  public HdfsStorage() {
     conf = new Configuration();
     conf.setBoolean(DFSConfigKeys.DFS_SUPPORT_APPEND_KEY, true);
     conf.setInt(DFSConfigKeys.DFS_NAMENODE_HEARTBEAT_RECHECK_INTERVAL_KEY, 1000);
