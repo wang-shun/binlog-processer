@@ -21,9 +21,9 @@ public class FieldNameOp {
     public static String getFieldName(String dataBase, String tableName, List<String> configField) {
         try {
             String tableQuerySql = "SELECT table_name FROM information_schema.TABLES WHERE table_name ='" + tableName + "'";
-            List<Map<String, Object>> tableExists = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableQuerySql);
-            if(null!=tableExists&&tableExists.size()>0) {
-                String tableFieldSql = "select * from " + tableName + " limit 1";
+            List<Map<String, Object>> tableExists = DBUtil.query(DBServer.DBServerType.TIDB.toString(), "information_schema", tableQuerySql);
+            if (null != tableExists && tableExists.size() > 0) {
+                String tableFieldSql = "select * from " + dataBase + "." + tableName + " limit 1";
                 List<Map<String, Object>> mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
                 if (null != mapList && mapList.size() > 0) {
                     Map<String, Object> firstRecord = mapList.get(0);
@@ -37,9 +37,8 @@ public class FieldNameOp {
                         }
                     }
                 }
-            }
-            else {
-                LOG.info("Table "+dataBase+"."+tableName+" doesn't exist!");
+            } else {
+                LOG.info("Table " + dataBase + "." + tableName + " doesn't exist!");
             }
         } catch (SQLException e) {
             LOG.error(e.getMessage(), e);

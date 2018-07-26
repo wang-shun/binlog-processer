@@ -132,7 +132,7 @@ public class TiDBCompare extends BaseDataCompare {
     private Map<String, Long> batchCheck(String dataBase, String tableName, List<Map.Entry<String, Long>> sampleData, OperateType op) {
         Map<String, Long> checkDataMap = null;
         List<Map<String, Object>> resultList;
-        String sql = assembleSql(sampleData, op, tableName);
+        String sql = assembleSql(sampleData, op, dataBase, tableName);
         if (sql.length() > 0) {
             try {
                 resultList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sql);
@@ -145,10 +145,13 @@ public class TiDBCompare extends BaseDataCompare {
                         checkDataMap.put(recordId, upDateTime);
                     }
                 } else {
-                    String sqlCount = "select count(*) from" + tableName;
+                    String sqlCount = "select TABLE_ROWS from " + "information_schema.TABLES where TABLE_SCHEMA='" + dataBase + "' and  TABLE_NAME='" + tableName + "'";
                     List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlCount);
                     if (null == list || list.size() == 0) {
-                        checkDataMap = collectMap;
+                        int tableRows = (int) list.get(0).get("TABLE_ROWS");
+                        if (tableRows == 0) {
+                            checkDataMap = collectMap;
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -158,7 +161,7 @@ public class TiDBCompare extends BaseDataCompare {
         return checkDataMap;
     }
 
-    private String assembleSql(List<Map.Entry<String, Long>> sampleData, OperateType op, String tableName) {
+    private String assembleSql(List<Map.Entry<String, Long>> sampleData, OperateType op, String dataBase, String tableName) {
         StringBuilder sql = new StringBuilder();
         if (null != sampleData && sampleData.size() > 0) {
             int sampleDataSize = sampleData.size();
@@ -178,7 +181,7 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(timeStamp)
                                 .append(" as avroTime ")
                                 .append(" from ")
-                                .append(tableName)
+                                .append(dataBase + "." + tableName)
                                 .append(" where ")
                                 .append(recordId)
                                 .append("=")
@@ -205,7 +208,7 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(timeStamp)
                                 .append(" as avroTime ")
                                 .append(" from ")
-                                .append(tableName)
+                                .append(dataBase + "." + tableName)
                                 .append(" where ")
                                 .append(recordId)
                                 .append("=")
@@ -235,7 +238,7 @@ public class TiDBCompare extends BaseDataCompare {
                 dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
                 dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
                 dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
-                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()*1000));
+                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue() * 1000));
                 dataMap.put(CheckTable.OP_TYPE, result.getOpType());
                 resultMap.add(dataMap);
             }
