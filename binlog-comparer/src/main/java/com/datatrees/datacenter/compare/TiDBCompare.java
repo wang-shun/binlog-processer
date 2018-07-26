@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
 public class TiDBCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
     private Properties properties = PropertiesUtility.defaultProperties();
-    private final int factor = Integer.valueOf(properties.getProperty("SAMPLE_FACTOR"));
+    private final String sampleFlag = properties.getProperty("SAMPLE_flag");
+    private final String sampleDefalut="yes";
     private String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
@@ -276,17 +277,17 @@ public class TiDBCompare extends BaseDataCompare {
     private List<Map.Entry<String, Long>> randomSample(List<Map.Entry<String, Long>> lst) {
         List<Map.Entry<String, Long>> copy = new ArrayList<>(lst);
         int dataSize = lst.size();
-        if (dataSize > 0 && factor > 0) {
-            Collections.shuffle(copy);
-            int n;
-            if (dataSize > factor) {
-                n = dataSize / factor;
-            } else {
-                n = dataSize;
+        int n = 0;
+        if (sampleDefalut.equalsIgnoreCase(sampleFlag)) {
+            if (dataSize > 0) {
+                Collections.shuffle(copy);
+                n = (int) Math.sqrt(dataSize);
+                System.out.println("************" + n);
             }
-            lst = copy.subList(0, n);
+            return copy.subList(0, n);
+        } else {
+            return lst;
         }
-        return lst;
     }
 
     /**
