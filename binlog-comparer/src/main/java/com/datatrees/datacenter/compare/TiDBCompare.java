@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class TiDBCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
     private Properties properties = PropertiesUtility.defaultProperties();
-    private final String sampleFlag = properties.getProperty("SAMPLE_flag");
+    private final String sampleFlag = properties.getProperty("SAMPLE_FLAG");
     private final String sampleDefalut="yes";
     private String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
