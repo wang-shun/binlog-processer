@@ -83,7 +83,7 @@ public abstract class BaseDataCompare implements DataCheck {
             }
         }
         try {
-            String sql = "select db_instance,database_name,table_name,GROUP_CONCAT(file_name) as files,file_partitions from " + dataBase + "." + processLogTable + " " + whereExpress.toString() + " group by database_name,table_name";
+            String sql = "select db_instance,database_name,table_name,GROUP_CONCAT(file_name) as files,file_partitions from " + processLogTable + " " + whereExpress.toString() + " group by database_name,table_name";
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (Exception e) {
             e.printStackTrace();

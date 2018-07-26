@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.core.utility;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.mchange.v2.c3p0.DataSources;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -9,46 +10,37 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+
 public class ConnOfC3P0Util {
     private static Log logger = LogFactory.getLog(ConnOfC3P0Util.class);
-    private static ComboPooledDataSource ds = new ComboPooledDataSource("TiDB");
-    private static ComboPooledDataSource ds2 = new ComboPooledDataSource("MYSQL");
+    private static ComboPooledDataSource ds = new ComboPooledDataSource();
+    private static ComboPooledDataSource ds2 = new ComboPooledDataSource(DBServer.DBServerType.TIDB.toString());
+    private static volatile ConnOfC3P0Util dbConnection;
 
-    public static ComboPooledDataSource getDs() {
-        return ds;
-    }
-
-    public static Connection getConnection(String type) {
-        if ("TiDB".equals(type)) {
-            try {
+    public final synchronized Connection getConnection(String type) {
+        try {
+            if (DBServer.DBServerType.TIDB.toString().equals(type)) {
+                logger.info("ds2.getDataSourceName():" + ds2.getDataSourceName());
+                return ds2.getConnection();
+            } else {
                 logger.info("ds.getDataSourceName():" + ds.getDataSourceName());
                 return ds.getConnection();
-
-            } catch (SQLException e) {
-                logger.error(e.getMessage(), e);
             }
-        } else {
-            if ("MYSQL".equals(type)) {
-                try {
-                    logger.info("ds2.getDataSourceName():" + ds2.getDataSourceName());
-                    return ds2.getConnection();
-                } catch (SQLException e) {
-                    logger.error(e.getMessage(), e);
+        } catch (SQLException e) {
+            logger.info(e.getMessage());
+        }
+        return null;
+    }
+
+    public static ConnOfC3P0Util getInstance() {
+        if (dbConnection == null) {
+            synchronized (ConnOfC3P0Util.class) {
+                if (dbConnection == null) {
+                    dbConnection = new ConnOfC3P0Util();
                 }
             }
         }
-        return null;
-    }
-
-    public static Connection getMyConnection() {
-        try {
-            logger.info("ds2.getDataSourceName():" + ds2.getDataSourceName());
-            return ds2.getConnection();
-
-        } catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-        }
-        return null;
+        return dbConnection;
     }
 
     public static void free(ResultSet rs, Statement st, Connection conn) {
@@ -74,6 +66,20 @@ public class ConnOfC3P0Util {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * finalize()方法是在垃圾收集器删除对象之前对这个对象调用的。
+     */
+    protected void closeComboPool(ComboPooledDataSource cpds) {
+        try {
+            DataSources.destroy(cpds);
+            super.finalize();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
         }
     }
 }

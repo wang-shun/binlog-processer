@@ -52,7 +52,7 @@ public class DBUtil {
         //开始拼插入的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ");
-        sql.append(tableName);
+        sql.append(dataBase+"."+tableName);
         sql.append(" (");
         sql.append(columnSql);
         sql.append(" )  VALUES (");
@@ -78,7 +78,7 @@ public class DBUtil {
         if(datas.size()>0) {
             try {
                 //从数据库连接池中获取数据库连接
-                connection=ConnOfC3P0Util.getConnection(dbSource);
+                connection=ConnOfC3P0Util.getInstance().getConnection(dbSource);
                /* DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
                 connection = dbConnectionPool.getInstance().getConnection(dataBase);*/
                 Map<String, Object> valueMap = datas.get(0);
@@ -163,7 +163,7 @@ public class DBUtil {
         //开始拼插入的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ");
-        sql.append(tableName);
+        sql.append(dataBase + "." + tableName);
         sql.append(" SET ");
 
         //要更改的的字段sql，其实就是用key拼起来的
@@ -209,7 +209,7 @@ public class DBUtil {
         //准备删除的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ");
-        sql.append(tableName);
+        sql.append(dataBase+"."+tableName);
 
         //更新的条件:要更改的的字段sql，其实就是用key拼起来的
         StringBuilder whereSql = new StringBuilder();
@@ -248,7 +248,7 @@ public class DBUtil {
         PreparedStatement preparedStatement = null;
         try {
             //从数据库连接池中获取数据库连接
-            connection=ConnOfC3P0Util.getConnection(dbSource);
+            connection=ConnOfC3P0Util.getInstance().getConnection(dbSource);
            /* DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
             connection = dbConnectionPool.getInstance().getConnection(dataBase);*/
             //执行SQL预编译
@@ -348,7 +348,7 @@ public class DBUtil {
         ResultSet resultSet = null;
         try {
             //获取数据库连接池中的连接
-            connection=ConnOfC3P0Util.getConnection(dbSource);
+            connection=ConnOfC3P0Util.getInstance().getConnection(dbSource);
            /* DBConnectionPool dbConnectionPool = new DBConnectionPool(dbSource);
             connection = dbConnectionPool.getInstance().getConnection(dataBase);*/
             if (null != connection) {
