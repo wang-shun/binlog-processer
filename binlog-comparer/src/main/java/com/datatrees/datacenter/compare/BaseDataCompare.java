@@ -43,7 +43,7 @@ public abstract class BaseDataCompare implements DataCheck {
         List<Map<String, Object>> partitionInfo = null;
         //String maxLen="SET GLOBAL group_concat_max_len = 102400";
         String sql = "select db_instance,database_name,table_name,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_partitions) as partitions from " +
-                " (select * from " + processLogTable + " where type=" + "'" + type + "'" + "and file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
+                " (select * from " + processLogTable + " where type=" + "'" + type + "'" + " and file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
         try {
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (SQLException e1) {
@@ -65,7 +65,8 @@ public abstract class BaseDataCompare implements DataCheck {
         StringBuilder whereExpress = new StringBuilder();
         if (whereMap.size() > 0) {
             whereExpress.append(" where ");
-            for (int i = 0; i < map2List.size(); i++) {
+            for (int i = 0,length = map2List.size();i<length ;
+            i++){
                 Map.Entry<String, String> express = map2List.get(i);
                 whereExpress
                         .append(express.getKey())

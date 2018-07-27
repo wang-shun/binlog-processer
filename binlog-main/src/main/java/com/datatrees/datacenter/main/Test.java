@@ -2,7 +2,6 @@ package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.TiDBCompareByDate;
-import com.datatrees.datacenter.core.utility.ConnOfC3P0Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
