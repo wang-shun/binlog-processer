@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
+import com.datatrees.datacenter.compare.TiDBCompare;
 import com.datatrees.datacenter.compare.TiDBCompareByDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,11 +12,11 @@ public class Test {
     public static void main(String[] args) {
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
-        // DataCompare dataCompare = new TiDBCompare();
-        //dataCompare.getSpecifiedDateTableInfo("loandb","","year=2018/month=7/day=19");
+        BaseDataCompare dataCompare = new TiDBCompare();
+        dataCompare.binLogCompare("1532768214-mysql-bin.000703","create");
 
-        BaseDataCompare dataCompare1 = new TiDBCompareByDate();
-        dataCompare1.binLogCompare("loandb", "", "year=2018/month=7/day=25","update");
+       // BaseDataCompare dataCompare1 = new TiDBCompareByDate();
+        //dataCompare1.binLogCompare("loandb", "", "year=2018/month=7/day=25","update");
         // dataCompare.binLogCompare("1531931491-mysql-bin.000764");
         //1530494870-mysql-bin.001132.tar,1530496380-mysql-bin.000811.tar
         //LOG.info("compare finished");
