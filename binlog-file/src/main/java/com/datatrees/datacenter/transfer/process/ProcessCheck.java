@@ -54,7 +54,7 @@ public class ProcessCheck {
                             .append(" and ")
                             .append(" ")
                             .append(TableInfo.PROCESS_STATUS)
-                            .append("=0")
+                            .append("<>1")
                             .append(" ")
                             .append(" and ")
                             .append(" ")

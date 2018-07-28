@@ -21,7 +21,7 @@ public class TiDBCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
     private Properties properties = PropertiesUtility.defaultProperties();
     private final String sampleFlag = properties.getProperty("SAMPLE_FLAG");
-    private final String sampleDefalut="yes";
+    private final String sampleDefalut = "yes";
     private String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
@@ -49,6 +49,7 @@ public class TiDBCompare extends BaseDataCompare {
     public void dataCheck(List<Map<String, Object>> tableInfo) {
         if (null != tableInfo) {
             for (Map<String, Object> recordMap : tableInfo) {
+                // FIXME: 2018/7/27 Map value 需要判空
                 String dataBase = String.valueOf(recordMap.get(CheckTable.DATA_BASE));
                 String tableName = String.valueOf(recordMap.get(CheckTable.TABLE_NAME));
                 String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
@@ -69,6 +70,7 @@ public class TiDBCompare extends BaseDataCompare {
                             String filePath = super.AVRO_HDFS_PATH +
                                     File.separator +
                                     partitionType +
+                                    File.separator +
                                     dbInstance +
                                     File.separator +
                                     dataBase +
@@ -146,7 +148,7 @@ public class TiDBCompare extends BaseDataCompare {
                         checkDataMap.put(recordId, upDateTime);
                     }
                 } else {
-                    String sqlCount = "select TABLE_ROWS from " + "information_schema.TABLES where TABLE_SCHEMA='" + dataBase + "' and  TABLE_NAME='" + tableName + "'";
+                    String sqlCount = "select TABLE_ROWS from information_schema.TABLES where TABLE_SCHEMA='" + dataBase + "'" + " and  TABLE_NAME='" + tableName + "'";
                     List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlCount);
                     if (null != list) {
                         long tableRows = Integer.valueOf(list.get(0).get("TABLE_ROWS").toString());

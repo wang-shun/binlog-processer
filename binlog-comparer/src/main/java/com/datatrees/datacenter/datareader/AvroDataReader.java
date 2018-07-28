@@ -89,7 +89,6 @@ public class AvroDataReader extends BaseDataReader {
                 }
                 IOUtils.cleanup(null, is);
                 IOUtils.cleanup(null, reader);
-
                 recordMap.put(OperateType.Unique.toString(), uniqueMap);
                 recordMap.put(OperateType.Delete.toString(), deleteMap);
                 return recordMap;
