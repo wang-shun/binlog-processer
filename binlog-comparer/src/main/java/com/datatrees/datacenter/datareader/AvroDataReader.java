@@ -42,10 +42,11 @@ public class AvroDataReader extends BaseDataReader {
                     recordMap = readFromAvro(is);
                 }
             }
+            return recordMap;
         } catch (IOException e) {
-            LOG.info(e.getMessage());
+            LOG.info("file " + filePath + " doesn't exist");
         }
-        return recordMap;
+        return null;
     }
 
     /**

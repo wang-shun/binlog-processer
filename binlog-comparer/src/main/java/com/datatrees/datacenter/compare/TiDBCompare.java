@@ -83,13 +83,15 @@ public class TiDBCompare extends BaseDataCompare {
                                     ".avro";
 
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
-                            Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
-                            Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
-                            if (null != unique) {
-                                allUniqueData.putAll(unique);
-                            }
-                            if (null != delete) {
-                                allDeleteData.putAll(delete);
+                            if (null != avroData) {
+                                Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
+                                Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
+                                if (null != unique) {
+                                    allUniqueData.putAll(unique);
+                                }
+                                if (null != delete) {
+                                    allDeleteData.putAll(delete);
+                                }
                             }
                         }
                         Map<String, Long> filterDeleteMap = diffCompare(allUniqueData, allDeleteData);
