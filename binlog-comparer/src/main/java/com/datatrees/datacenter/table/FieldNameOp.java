@@ -20,7 +20,7 @@ public class FieldNameOp {
 
     public static String getFieldName(String dataBase, String tableName, List<String> configField) {
         try {
-            String tableQuerySql = "SELECT table_name FROM information_schema.TABLES WHERE TABLE_SCHEMA='" + dataBase +"'"+ " and TABLE_NAME ='" + tableName + "'";
+            String tableQuerySql = "SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA='" + dataBase +"'"+ " and TABLE_NAME ='" + tableName + "'";
             List<Map<String, Object>> tableExists = DBUtil.query(DBServer.DBServerType.TIDB.toString(), "information_schema", tableQuerySql);
             if (null != tableExists && tableExists.size() > 0) {
                 String tableFieldSql = "select * from " + dataBase + "." + tableName + " limit 1";

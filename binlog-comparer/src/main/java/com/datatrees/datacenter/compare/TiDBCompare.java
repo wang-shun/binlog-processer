@@ -151,7 +151,7 @@ public class TiDBCompare extends BaseDataCompare {
                     String sqlCount = "select TABLE_ROWS from information_schema.TABLES where TABLE_SCHEMA='" + dataBase + "'" + " and  TABLE_NAME='" + tableName + "'";
                     List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlCount);
                     if (null != list) {
-                        long tableRows = Integer.valueOf(list.get(0).get("TABLE_ROWS").toString());
+                        long tableRows = Long.valueOf(list.get(0).get("TABLE_ROWS").toString());
                         if (tableRows == 0) {
                             checkDataMap = collectMap;
                         }
