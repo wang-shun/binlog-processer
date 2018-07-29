@@ -23,7 +23,7 @@ public class FieldNameOp {
             String tableQuerySql = "SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA='" + dataBase +"'"+ " and TABLE_NAME ='" + tableName + "'";
             List<Map<String, Object>> tableExists = DBUtil.query(DBServer.DBServerType.TIDB.toString(), "information_schema", tableQuerySql);
             if (null != tableExists && tableExists.size() > 0) {
-                String tableFieldSql = "select * from " + dataBase + "." + tableName + " limit 1";
+                String tableFieldSql = "select * from " + "`"+dataBase+"`."+ tableName + " limit 1";
                 List<Map<String, Object>> mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
                 if (null != mapList && mapList.size() > 0) {
                     Map<String, Object> firstRecord = mapList.get(0);

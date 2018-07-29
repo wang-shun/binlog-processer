@@ -3,6 +3,7 @@ package com.datatrees.datacenter.main;
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.TiDBCompare;
 import com.datatrees.datacenter.compare.TiDBCompareByDate;
+import com.datatrees.datacenter.datareader.AvroDataReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,8 +13,10 @@ public class Test {
     public static void main(String[] args) {
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
-        BaseDataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1532768214-mysql-bin.000703","create");
+       BaseDataCompare dataCompare = new TiDBCompare();
+       dataCompare.binLogCompare("1532831715-mysql-bin.000735","create");
+        //AvroDataReader reader=new AvroDataReader();
+        //reader.readSrcData("hdfs://cloudera3/data/warehouse/create/basisdataoperator/operator/t_tel_call_sheet/year=2017/month=10/day=18/1532831715-mysql-bin.000735.avro");
 
        // BaseDataCompare dataCompare1 = new TiDBCompareByDate();
         //dataCompare1.binLogCompare("loandb", "", "year=2018/month=7/day=25","update");

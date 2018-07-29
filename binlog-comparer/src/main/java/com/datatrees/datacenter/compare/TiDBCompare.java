@@ -49,7 +49,6 @@ public class TiDBCompare extends BaseDataCompare {
     public void dataCheck(List<Map<String, Object>> tableInfo) {
         if (null != tableInfo) {
             for (Map<String, Object> recordMap : tableInfo) {
-                // FIXME: 2018/7/27 Map value 需要判空
                 String dataBase = String.valueOf(recordMap.get(CheckTable.DATA_BASE));
                 String tableName = String.valueOf(recordMap.get(CheckTable.TABLE_NAME));
                 String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
@@ -186,7 +185,9 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(timeStamp)
                                 .append(" as avroTime ")
                                 .append(" from ")
+                                .append("`")
                                 .append(dataBase)
+                                .append("`")
                                 .append(".")
                                 .append(tableName)
                                 .append(" where ")
@@ -217,7 +218,9 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(timeStamp)
                                 .append(" as avroTime ")
                                 .append(" from ")
+                                .append("`")
                                 .append(dataBase)
+                                .append("`")
                                 .append(".")
                                 .append(tableName)
                                 .append(" where ")
