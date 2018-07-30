@@ -13,7 +13,10 @@
         <property name="maxPoolSize">1000</property>
         <property name="checkoutTimeout">30000</property>
         <property name="testConnectionOnCheckin">true</property>
-        <property name="testConnectionOnCheckout">true</property>>
+        <property name="testConnectionOnCheckout">false</property>
+        <property name="idleConnectionTestPeriod">60</property>
+        <property name="maxIdleTime">3000</property>
+        <property name="breakAfterAcquireFailure">true</property>
     </default-config>
 
     <!-- 命名配置，如果有多个数据库，可以使用命名配置来区分 -->
@@ -27,6 +30,9 @@
         <property name="maxPoolSize">1000</property>
         <property name="checkoutTimeout">30000</property>
         <property name="testConnectionOnCheckin">true</property>
-        <property name="testConnectionOnCheckout">true</property>
+        <property name="testConnectionOnCheckout">false</property>
+        <property name="idleConnectionTestPeriod">60</property>
+        <property name="maxIdleTime">3000</property>
+        <property name="breakAfterAcquireFailure">true</property>
     </named-config>
 </c3p0-config>

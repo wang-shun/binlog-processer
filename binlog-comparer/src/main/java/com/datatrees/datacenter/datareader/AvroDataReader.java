@@ -33,16 +33,16 @@ public class AvroDataReader extends BaseDataReader {
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
         InputStream is;
-        Map<String, Map<String, Long>> recordMap = null;
+        Map<String, Map<String, Long>> recordMap;
+        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
         try {
-            FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
             if (null != fs) {
                 is = fs.open(new Path(filePath));
                 if (null != is) {
                     recordMap = readFromAvro(is);
+                    return recordMap;
                 }
             }
-            return recordMap;
         } catch (IOException e) {
             LOG.info("file " + filePath + " doesn't exist");
         }
