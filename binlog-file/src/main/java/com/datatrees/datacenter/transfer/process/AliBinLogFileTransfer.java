@@ -228,7 +228,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         } else {
                             int status = (int) recordCount.get(0).get(TableInfo.DOWN_STATUS);
                             if (status == 1) {
-                                break;
+                                continue;
                             }
                         }
                     } catch (Exception e) {
