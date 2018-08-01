@@ -16,5 +16,10 @@ public enum OperateType {
     /**
      * 多个时间按时间先后覆盖
      */
-    Unique
+    Unique,
+    /**
+     * 数据
+     */
+    Data
+
 }

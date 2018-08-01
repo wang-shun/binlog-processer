@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.datatrees.datacenter.table.CheckTable.PARTITION_TYPE;
 
@@ -49,6 +50,7 @@ public class TiDBCompareByDate extends TiDBCompare {
 
     @Override
     public void dataCheck(List<Map<String, Object>> tableInfo) {
+        tableInfo.stream().sorted();
         if (null != tableInfo) {
             for (Map<String, Object> recordMap : tableInfo) {
                 String dataBase = String.valueOf(recordMap.get(CheckTable.DATA_BASE));
@@ -89,10 +91,10 @@ public class TiDBCompareByDate extends TiDBCompare {
                             LOG.info("****************");
                             LOG.info("checking file :" + filePath);
                             LOG.info("****************");
-                            Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
+                            Map<String, Map<String, ?>> avroData = avroDataReader.readSrcData(filePath);
                             if (null != avroData && avroData.size() > 0) {
-                                Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
-                                Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
+                                Map<String, Long> unique = (Map<String, Long>) avroData.get(OperateType.Unique.toString());
+                                Map<String, Long> delete = (Map<String, Long>) avroData.get(OperateType.Delete.toString());
                                 if (null != unique) {
                                     allUniqueData.putAll(unique);
                                 }

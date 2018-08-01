@@ -13,10 +13,10 @@ public class Test {
     public static void main(String[] args) {
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
-       BaseDataCompare dataCompare = new TiDBCompare();
-       dataCompare.binLogCompare("1532870048-mysql-bin.000287","create");
-        //AvroDataReader reader=new AvroDataReader();
-        //reader.readSrcData("hdfs://cloudera3/data/warehouse/create/basisdataoperator/operator/t_tel_call_sheet/year=2017/month=10/day=18/1532831715-mysql-bin.000735.avro");
+       //BaseDataCompare dataCompare = new TiDBCompare();
+       //dataCompare.binLogCompare("1532870048-mysql-bin.000287","create");
+        AvroDataReader reader=new AvroDataReader();
+        reader.readSrcData("hdfs://cloudera3/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/year=2018/month=7/day=29/1532890853-mysql-bin.001225.avro");
 
        // BaseDataCompare dataCompare1 = new TiDBCompareByDate();
         //dataCompare1.binLogCompare("loandb", "", "year=2018/month=7/day=25","update");

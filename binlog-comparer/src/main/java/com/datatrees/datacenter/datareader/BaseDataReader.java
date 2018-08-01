@@ -8,7 +8,7 @@ public abstract class BaseDataReader {
      *
      * @param filePath 文件路径
      */
-    Map<String, Map<String, Long>> readSrcData(String filePath) {
+    Map<String, Map<String, ?>> readSrcData(String filePath) {
         return null;
     }
 

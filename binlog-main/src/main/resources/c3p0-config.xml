@@ -21,7 +21,7 @@
 
     <!-- 命名配置，如果有多个数据库，可以使用命名配置来区分 -->
     <named-config name="TIDB">
-        <property name="jdbcUrl">jdbc:mysql://TiDB1:3306/loandb?useUnicode=true&amp;characterEncoding=utf-8</property>
+        <property name="jdbcUrl">jdbc:mysql://TiDB1:3306/loandb?useUnicode=true&amp;amp;characterEncoding=utf-8</property>
         <property name="user">tidb_rd</property>
         <property name="password">T87MQVWJKUo8VXeV</property>
         <property name="driverClass">com.mysql.jdbc.Driver</property>

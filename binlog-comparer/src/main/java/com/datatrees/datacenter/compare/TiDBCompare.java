@@ -60,6 +60,7 @@ public class TiDBCompare extends BaseDataCompare {
                     if (partitions.length > 0) {
                         Map<String, Long> allUniqueData = new HashMap<>();
                         Map<String, Long> allDeleteData = new HashMap<>();
+                        Map<String, String> allDataRecord = new HashMap<>();
                         AvroDataReader avroDataReader = new AvroDataReader();
                         for (String partition : partitions) {
                             avroDataReader.setDataBase(dataBase);
@@ -81,15 +82,19 @@ public class TiDBCompare extends BaseDataCompare {
                                     fileName +
                                     ".avro";
 
-                            Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
+                            Map<String, Map<String, ?>> avroData = avroDataReader.readSrcData(filePath);
                             if (null != avroData) {
-                                Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
-                                Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
+                                Map<String, Long> unique = (Map<String, Long>) avroData.get(OperateType.Unique.toString());
+                                Map<String, Long> delete = (Map<String, Long>) avroData.get(OperateType.Delete.toString());
+                                Map<String, String> dataMap = (Map<String, String>) avroData.get(OperateType.Data.toString());
                                 if (null != unique) {
                                     allUniqueData.putAll(unique);
                                 }
                                 if (null != delete) {
                                     allDeleteData.putAll(delete);
+                                }
+                                if (null != dataMap) {
+                                    allDataRecord.putAll(dataMap);
                                 }
                             }
                         }
@@ -150,17 +155,10 @@ public class TiDBCompare extends BaseDataCompare {
                     }
                 } else {
                     String sqlLimit = "select * from " + "`" + dataBase + "`" + "." + tableName + " limit 1";
-                    String sqlCount = "select TABLE_ROWS from information_schema.TABLES where TABLE_SCHEMA='" + dataBase + "'" + " and  TABLE_NAME='" + tableName + "'";
                     List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlLimit);
                     if (list == null) {
                         checkDataMap = collectMap;
                     }
-                  /*  if (null != list) {
-                        long tableRows = Long.valueOf(list.get(0).get("TABLE_ROWS").toString());
-                        if (tableRows == 0) {
-                            checkDataMap = collectMap;
-                        }
-                    }*/
                 }
             } catch (Exception e) {
                 LOG.info(e.getMessage(), e);
