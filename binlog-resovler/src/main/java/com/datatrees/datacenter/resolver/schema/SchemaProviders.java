@@ -37,7 +37,16 @@ public class SchemaProviders {
    * KeyValue<namespace,avrostring>
    */
   private static Redis.SimpleRedis<String, String> redis = Redis.getMgr();
-  private static Function<String, String> schemaNameMapper = t -> t.replaceAll("\\d+", "");
+  //  private static Function<String, String> instanceNameMapper = t -> t.replaceAll("\\d+", "");
+  private static Function<String, String> instanceNameMapper = t -> t;
+  private static Function<String, String> schemaNameMapper = t -> {
+    if (t.contains("ecommerce") || t.contains("operator")) {
+      return t.replaceAll("\\d+", "");
+    }
+    return t;
+  };
+  //  private static Function<String, String> tableNameMapper = t -> t.replaceAll("\\d+", "");
+  private static Function<String, String> tableNameMapper = t -> t;
   private static Properties properties;
   private static LoadingCache<SecondaryCacheKey, KeyValue<String, String>> secondaryCache;
 
@@ -76,9 +85,9 @@ public class SchemaProviders {
   }
 
   private static KeyValue<String, String> getSchema(Binlog binlog, String schema, String table) {
-    final String patternInstance = schemaNameMapper.apply(binlog.getInstanceId());
+    final String patternInstance = instanceNameMapper.apply(binlog.getInstanceId());
     final String patternSchema = schemaNameMapper.apply(schema);
-    final String patternTable = schemaNameMapper.apply(table);
+    final String patternTable = tableNameMapper.apply(table);
 
     try {
       String redisKey =
