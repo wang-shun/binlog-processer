@@ -86,7 +86,7 @@ public class TiDBCompareByDate extends TiDBCompare {
                                     File.separator +
                                     partition +
                                     File.separator +
-                                    fileName +
+                                    fileName.replace(".tar", "") +
                                     CheckTable.FILE_LAST_NAME;
                             LOG.info("****************");
                             LOG.info("checking file :" + filePath);

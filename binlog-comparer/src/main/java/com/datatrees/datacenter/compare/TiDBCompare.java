@@ -80,7 +80,8 @@ public class TiDBCompare extends BaseDataCompare {
                                     File.separator +
                                     partition +
                                     File.separator +
-                                    fileName +
+                                    fileName.replace(".tar", "")
+                                    +
                                     ".avro";
 
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
