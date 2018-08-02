@@ -44,11 +44,11 @@ public class HiveCompare extends BaseDataCompare {
                 String avroPath = super.AVRO_HDFS_PATH + File.separator + filePath;
                 String orcPath = HIVE_HDFS_PATH + File.separator + filePath;
 
-                Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
+                Map<String, Map<String, ?>> avroData = avroDataReader.readSrcData(avroPath);
                 Map<String, Long> orcData = orcDataReader.readDestData(orcPath);
 
-                Map<String, Long> uniqueRecord = avroData.get(OperateType.Unique.toString());
-                Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
+                Map<String, Long> uniqueRecord = (Map<String, Long>) avroData.get(OperateType.Unique.toString());
+                Map<String, Long> deleteRecord = (Map<String, Long>) avroData.get(OperateType.Delete.toString());
                 Map<String, Long> createData = diffCompare(uniqueRecord, deleteRecord);
                 //create/insert事件
                 Map<String, Long> diffMap = diffCompare(createData, orcData);
@@ -70,7 +70,7 @@ public class HiveCompare extends BaseDataCompare {
      */
     private Map<String, Long> compareByValue(Map<String, Long> srcMap, Map<String, Long> destMap) {
         Map<String, Long> resultMap = new HashMap<>();
-        Map<String, Long> sameIdMap = this.retainCompare(srcMap, destMap);
+        Map<String, Long> sameIdMap = retainCompare(srcMap, destMap);
         for (String key : sameIdMap.keySet()) {
             Long srcLastTime = sameIdMap.get(key);
             Long destLastTime = sameIdMap.get(key);
@@ -88,10 +88,9 @@ public class HiveCompare extends BaseDataCompare {
      * @param destMap 被比较的Map
      * @return
      */
-    @Override
-    public Map<String, Long> retainCompare(Map<String, Long> srcMap, Map<String, Long> destMap) {
+    public static Map<String, Long> retainCompare(Map<String, Long> srcMap, Map<String, Long> destMap) {
         Set<String> set1 = srcMap.keySet();
-        Set<String> set2 = srcMap.keySet();
+        Set<String> set2 = destMap.keySet();
         Map<String, Long> diffMaps = new HashMap<>();
         if (set1.retainAll(set2)) {
             for (String key : set1) {

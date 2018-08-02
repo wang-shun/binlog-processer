@@ -99,7 +99,7 @@ public abstract class BaseDataCompare implements DataCheck {
      * @param destMap
      * @return
      */
-    public Map<String, Long> diffCompare(Map<String, Long> srcMap, Map<String, Long> destMap) {
+    public static Map<String, Long> diffCompare(Map<String, Long> srcMap, Map<String, Long> destMap) {
 
         Set<Map.Entry<String, Long>> avroSet = srcMap.entrySet();
         Set<Map.Entry<String, Long>> orcSet = destMap.entrySet();
@@ -128,15 +128,15 @@ public abstract class BaseDataCompare implements DataCheck {
      * @param map2
      * @return
      */
-    public Map<String, Long> retainCompare(Map<String, Long> map1, Map<String, Long> map2) {
+    public static Map<String, Long> retainCompare(Map<String, Long> map1, Map<String, Long> map2) {
         Set<Map.Entry<String, Long>> set1 = map1.entrySet();
         Set<Map.Entry<String, Long>> set2 = map2.entrySet();
-        Map<String, Long> diffMaps = new HashMap<>();
+        Map<String, Long> retainMaps = new HashMap<>();
         if (set1.retainAll(set2)) {
             for (Map.Entry entry : set1) {
-                diffMaps.put(entry.getKey().toString(), Long.valueOf(entry.getValue().toString()));
+                retainMaps.put(entry.getKey().toString(), Long.valueOf(entry.getValue().toString()));
             }
         }
-        return diffMaps;
+        return retainMaps;
     }
 }

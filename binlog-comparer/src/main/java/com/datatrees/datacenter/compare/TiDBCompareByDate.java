@@ -14,9 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.datatrees.datacenter.table.CheckTable.PARTITION_TYPE;
 
 public class TiDBCompareByDate extends TiDBCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompareByDate.class);
@@ -24,8 +21,6 @@ public class TiDBCompareByDate extends TiDBCompare {
     private String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
-    private String recordId;
-    private String recordLastUpdateTime;
     private String partitionType;
 
     @Override
@@ -50,7 +45,7 @@ public class TiDBCompareByDate extends TiDBCompare {
 
     @Override
     public void dataCheck(List<Map<String, Object>> tableInfo) {
-        tableInfo.stream().sorted();
+        // TODO: 2018/8/1 对文件进行排序
         if (null != tableInfo) {
             for (Map<String, Object> recordMap : tableInfo) {
                 String dataBase = String.valueOf(recordMap.get(CheckTable.DATA_BASE));
@@ -58,16 +53,18 @@ public class TiDBCompareByDate extends TiDBCompare {
                 String partition = String.valueOf(recordMap.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
                 String[] filePaths = String.valueOf(recordMap.get("files")).split(",");
-                recordId = FieldNameOp.getFieldName(dataBase, tableName, idList);
+                String recordId = FieldNameOp.getFieldName(dataBase, tableName, idList);
                 super.recordId = recordId;
                 LOG.info("the field id is :" + recordId);
-                recordLastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
+                String recordLastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
                 super.recordLastUpdateTime = recordLastUpdateTime;
                 LOG.info("the field update is:" + recordLastUpdateTime);
                 if (null != recordId && null != recordLastUpdateTime) {
                     if (filePaths.length > 0) {
-                        Map<String, Long> allUniqueData = new HashMap<>();
+                        Map<String, Long> allCreate = new HashMap<>();
+                        Map<String, Long> allUpdate = new HashMap<>();
                         Map<String, Long> allDeleteData = new HashMap<>();
+                        Map<String, String> allDataRecord = new HashMap<>();
                         AvroDataReader avroDataReader = new AvroDataReader();
                         for (String fileName : filePaths) {
                             avroDataReader.setDataBase(dataBase);
@@ -92,28 +89,39 @@ public class TiDBCompareByDate extends TiDBCompare {
                             LOG.info("checking file :" + filePath);
                             LOG.info("****************");
                             Map<String, Map<String, ?>> avroData = avroDataReader.readSrcData(filePath);
-                            if (null != avroData && avroData.size() > 0) {
-                                Map<String, Long> unique = (Map<String, Long>) avroData.get(OperateType.Unique.toString());
+                            if (null != avroData) {
+                                Map<String, Long> create = (Map<String, Long>) avroData.get(OperateType.Create.toString());
+                                Map<String, Long> update = (Map<String, Long>) avroData.get(OperateType.Update.toString());
                                 Map<String, Long> delete = (Map<String, Long>) avroData.get(OperateType.Delete.toString());
-                                if (null != unique) {
-                                    allUniqueData.putAll(unique);
+                                Map<String, String> dataMap = (Map<String, String>) avroData.get(OperateType.Data.toString());
+                                if (null != create) {
+                                    allCreate.putAll(create);
+                                }
+                                if (null != update) {
+                                    allUpdate.putAll(update);
                                 }
                                 if (null != delete) {
                                     allDeleteData.putAll(delete);
                                 }
+                                if (null != dataMap) {
+                                    allDataRecord.putAll(dataMap);
+                                }
                             }
                         }
-                        Map<String, Long> filterDeleteMap = diffCompare(allUniqueData, allDeleteData);
+                        Map<String, Long> filterCreateMap = diffCompare(allCreate, allDeleteData);
+                        Map<String, Long> filterUpdateMap = diffCompare(allUpdate, allDeleteData);
                         CheckResult checkResult = new CheckResult();
                         checkResult.setDataBase(dataBase);
                         checkResult.setTableName(tableName);
                         checkResult.setFileName(Arrays.toString(filePaths));
                         checkResult.setDbInstance(dbInstance);
-                        checkResult.setOpType(OperateType.Unique.toString());
-                        checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique, CheckTable.BINLOG_CHECK_DATE_TABLE);
+                        checkResult.setOpType(OperateType.Create.toString());
+                        checkAndSaveErrorData(checkResult, filterCreateMap, OperateType.Create, CheckTable.BINLOG_CHECK_TABLE, allDataRecord);
+                        checkResult.setOpType(OperateType.Update.toString());
+                        checkAndSaveErrorData(checkResult, filterUpdateMap, OperateType.Update, CheckTable.BINLOG_CHECK_TABLE, allDataRecord);
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(partition);
-                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
+                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE, allDataRecord);
                     }
                 }
             }

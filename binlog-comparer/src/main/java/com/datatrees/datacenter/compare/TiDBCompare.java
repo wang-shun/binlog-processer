@@ -9,6 +9,8 @@ import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
+import javafx.beans.binding.ObjectExpression;
+import org.apache.zookeeper.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +60,8 @@ public class TiDBCompare extends BaseDataCompare {
                 recordLastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
                 if (null != recordId && null != recordLastUpdateTime) {
                     if (partitions.length > 0) {
-                        Map<String, Long> allUniqueData = new HashMap<>();
+                        Map<String, Long> allCreate = new HashMap<>();
+                        Map<String, Long> allUpdate = new HashMap<>();
                         Map<String, Long> allDeleteData = new HashMap<>();
                         Map<String, String> allDataRecord = new HashMap<>();
                         AvroDataReader avroDataReader = new AvroDataReader();
@@ -80,15 +83,19 @@ public class TiDBCompare extends BaseDataCompare {
                                     partition +
                                     File.separator +
                                     fileName +
-                                    ".avro";
+                                    CheckTable.FILE_LAST_NAME;
 
                             Map<String, Map<String, ?>> avroData = avroDataReader.readSrcData(filePath);
                             if (null != avroData) {
-                                Map<String, Long> unique = (Map<String, Long>) avroData.get(OperateType.Unique.toString());
+                                Map<String, Long> create = (Map<String, Long>) avroData.get(OperateType.Create.toString());
+                                Map<String, Long> update = (Map<String, Long>) avroData.get(OperateType.Update.toString());
                                 Map<String, Long> delete = (Map<String, Long>) avroData.get(OperateType.Delete.toString());
                                 Map<String, String> dataMap = (Map<String, String>) avroData.get(OperateType.Data.toString());
-                                if (null != unique) {
-                                    allUniqueData.putAll(unique);
+                                if (null != create) {
+                                    allCreate.putAll(create);
+                                }
+                                if (null != update) {
+                                    allUpdate.putAll(update);
                                 }
                                 if (null != delete) {
                                     allDeleteData.putAll(delete);
@@ -98,17 +105,20 @@ public class TiDBCompare extends BaseDataCompare {
                                 }
                             }
                         }
-                        Map<String, Long> filterDeleteMap = diffCompare(allUniqueData, allDeleteData);
+                        Map<String, Long> filterCreateMap = diffCompare(allCreate, allDeleteData);
+                        Map<String, Long> filterUpdateMap = diffCompare(allUpdate, allDeleteData);
                         CheckResult checkResult = new CheckResult();
                         checkResult.setDataBase(dataBase);
                         checkResult.setTableName(tableName);
                         checkResult.setFileName(fileName);
                         checkResult.setDbInstance(dbInstance);
-                        checkResult.setOpType(OperateType.Unique.toString());
-                        checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique, CheckTable.BINLOG_CHECK_TABLE);
+                        checkResult.setOpType(OperateType.Create.toString());
+                        checkAndSaveErrorData(checkResult, filterCreateMap, OperateType.Create, CheckTable.BINLOG_CHECK_TABLE, allDataRecord);
+                        checkResult.setOpType(OperateType.Update.toString());
+                        checkAndSaveErrorData(checkResult, filterUpdateMap, OperateType.Update, CheckTable.BINLOG_CHECK_TABLE, allDataRecord);
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(Arrays.toString(partitions));
-                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
+                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE, allDataRecord);
 
                     }
                 }
@@ -122,12 +132,12 @@ public class TiDBCompare extends BaseDataCompare {
      * @param checkResult 结果对象
      * @param dataMap     待抽样数据
      */
-    void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTable) {
+    void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTable, Map<String, String> recordMap) {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
             LOG.info("本次采样得到的数据量为：" + sampleData.size());
             Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleData, op);
-            batchInsert(checkResult, afterCompare, saveTable);
+            batchInsert(checkResult, afterCompare, saveTable, recordMap);
         }
     }
 
@@ -143,11 +153,10 @@ public class TiDBCompare extends BaseDataCompare {
         List<Map<String, Object>> resultList;
         String sql = assembleSql(sampleData, op, dataBase, tableName);
         if (sql.length() > 0) {
+            checkDataMap = new HashMap<>();
             try {
                 resultList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sql);
-                Map<String, Long> collectMap = sampleData.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 if (null != resultList && resultList.size() > 0) {
-                    checkDataMap = new HashMap<>();
                     for (Map<String, Object> errorRecord : resultList) {
                         String recordId = String.valueOf(errorRecord.get(this.recordId));
                         long upDateTime = (Long) errorRecord.get("avroTime");
@@ -157,7 +166,7 @@ public class TiDBCompare extends BaseDataCompare {
                     String sqlLimit = "select * from " + "`" + dataBase + "`" + "." + tableName + " limit 1";
                     List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlLimit);
                     if (list == null) {
-                        checkDataMap = collectMap;
+                        checkDataMap = sampleData.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                     }
                 }
             } catch (Exception e) {
@@ -172,7 +181,7 @@ public class TiDBCompare extends BaseDataCompare {
         if (null != sampleData && sampleData.size() > 0) {
             int sampleDataSize = sampleData.size();
             switch (op) {
-                case Unique: {
+                case Update: {
                     for (int i = 0; i < sampleDataSize; i++) {
                         Map.Entry record = sampleData.get(i);
                         long timeStamp = (Long) record.getValue() / 1000;
@@ -210,6 +219,7 @@ public class TiDBCompare extends BaseDataCompare {
                     }
                     break;
                 }
+                case Create:
                 case Delete: {
                     for (int i = 0; i < sampleDataSize; i++) {
                         Map.Entry record = sampleData.get(i);
@@ -242,12 +252,13 @@ public class TiDBCompare extends BaseDataCompare {
         return sql.toString();
     }
 
-    private void batchInsert(CheckResult result, Map<String, Long> afterComp, String tableName) {
+    private void batchInsert(CheckResult result, Map<String, Long> afterComp, String tableName, Map<String, String> dataRecord) {
         List<Map<String, Object>> resultMap = new ArrayList<>();
         if (afterComp != null) {
             for (Map.Entry<String, Long> entry : afterComp.entrySet()) {
                 Map<String, Object> dataMap = new HashMap<>();
                 dataMap.put(CheckTable.OLD_ID, entry.getKey());
+                dataMap.put(CheckTable.RECORD_DETAILS, dataRecord.get(entry.getKey()));
                 dataMap.put(CheckTable.FILE_NAME, result.getFileName());
                 dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
                 dataMap.put(CheckTable.DATA_BASE, result.getDataBase());

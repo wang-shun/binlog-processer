@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.datareader;
 
 import com.alibaba.fastjson.JSONObject;
+import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.operate.OperateType;
@@ -11,6 +12,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.zookeeper.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,22 +26,20 @@ public class AvroDataReader extends BaseDataReader {
     private final Properties properties = PropertiesUtility.defaultProperties();
     private final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
     // TODO: 2018/8/1 注意删除绑定
-    private String dataBase = "tongdun";
-    private String tableName = "t_td_risk_user_summary";
+    private String dataBase;
+    private String tableName;
     private String recordId = "Id";
-    private String recordLastUpdateTime = "LastUpdatedDatetime";
+    private String recordLastUpdateTime;
 
     @Override
     public Map<String, Map<String, ?>> readSrcData(String filePath) {
         InputStream is;
-        Map<String, Map<String, ?>> recordMap;
         FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
         try {
             if (null != fs) {
                 is = fs.open(new Path(filePath));
                 if (null != is) {
-                    recordMap = readFromAvro(is);
-                    return recordMap;
+                    return readFromAvro(is);
                 }
             }
         } catch (IOException e) {
@@ -57,6 +57,9 @@ public class AvroDataReader extends BaseDataReader {
     private Map<String, Map<String, ?>> readFromAvro(InputStream is) {
         Map<String, Map<String, ?>> recordMap = new HashMap<>(2);
         if (null != recordId && null != recordLastUpdateTime) {
+
+            Map<String, Long> createMap = new HashMap<>();
+            Map<String, Long> updateMap = new HashMap<>();
             Map<String, Long> uniqueMap = new HashMap<>();
             Map<String, Long> deleteMap = new HashMap<>();
             Map<String, String> dataMap = new HashMap<>();
@@ -76,13 +79,20 @@ public class AvroDataReader extends BaseDataReader {
                     operator = r.get(2).toString();
                     switch (operator) {
                         case "Create":
-                        case "Update":
                             jsonObject = JSONObject.parseObject(r.get(1).toString());
-                            System.out.println(jsonObject.toJSONString());
                             id = String.valueOf(jsonObject.get(recordId));
                             lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
+                            createMap.put(id, lastUpdateTime);
                             uniqueMap.put(id, lastUpdateTime);
-                            dataMap.put(id,jsonObject.toJSONString());
+                            dataMap.put(id, jsonObject.toJSONString());
+                            break;
+                        case "Update":
+                            jsonObject = JSONObject.parseObject(r.get(1).toString());
+                            id = String.valueOf(jsonObject.get(recordId));
+                            lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
+                            updateMap.put(id,lastUpdateTime);
+                            uniqueMap.put(id, lastUpdateTime);
+                            dataMap.put(id, jsonObject.toJSONString());
                             break;
                         case "Delete":
                             jsonObject = JSONObject.parseObject(r.get(0).toString());
@@ -90,7 +100,7 @@ public class AvroDataReader extends BaseDataReader {
                             lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
                             uniqueMap.put(id, lastUpdateTime);
                             deleteMap.put(id, lastUpdateTime);
-                            dataMap.put(id,jsonObject.toJSONString());
+                            dataMap.put(id, jsonObject.toJSONString());
                             break;
                         default:
                             break;
@@ -98,9 +108,10 @@ public class AvroDataReader extends BaseDataReader {
                 }
                 IOUtils.cleanup(null, is);
                 IOUtils.cleanup(null, reader);
-                recordMap.put(OperateType.Unique.toString(), uniqueMap);
+                recordMap.put(OperateType.Create.toString(), BaseDataCompare.retainCompare(createMap, uniqueMap));
+                recordMap.put(OperateType.Update.toString(), BaseDataCompare.retainCompare(updateMap, uniqueMap));
                 recordMap.put(OperateType.Delete.toString(), deleteMap);
-                recordMap.put(OperateType.Data.toString(),dataMap);
+                recordMap.put(OperateType.Data.toString(), dataMap);
                 return recordMap;
             } catch (Exception e) {
                 LOG.info("can't read the avro file");
@@ -108,7 +119,6 @@ public class AvroDataReader extends BaseDataReader {
             }
         }
         return null;
-
     }
 
     public String getDataBase() {

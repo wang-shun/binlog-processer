@@ -16,4 +16,5 @@ public class CheckTable {
     public static final String PROCESS_LOG_STATUS="status";
     public static final String PARTITION_TYPE="type";
     public static final String FILE_LAST_NAME=".avro";
+    public static final String RECORD_DETAILS="record_details";
 }
