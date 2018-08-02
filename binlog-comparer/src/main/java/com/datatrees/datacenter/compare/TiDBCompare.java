@@ -61,7 +61,9 @@ public class TiDBCompare extends BaseDataCompare {
                         Map<String, Long> allUniqueData = new HashMap<>();
                         Map<String, Long> allDeleteData = new HashMap<>();
                         AvroDataReader avroDataReader = new AvroDataReader();
-                        for (String partition : partitions) {
+                        List<String> partitionList = Arrays.asList(partitions);
+                        partitionList.remove(null);
+                        for (String partition : partitionList) {
                             avroDataReader.setDataBase(dataBase);
                             avroDataReader.setTableName(tableName);
                             avroDataReader.setRecordId(recordId);

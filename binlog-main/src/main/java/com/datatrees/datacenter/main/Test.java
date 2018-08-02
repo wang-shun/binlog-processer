@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,6 +16,15 @@ public class Test {
     private static Logger LOG = LoggerFactory.getLogger(Test.class);
 
     public static void main(String[] args) {
+        List<String> list=new ArrayList<>();
+        list.add("1532831715-mysql-bin.000735.avro");
+        list.add("1530496380-mysql-bin.000811.avro");
+        list.add("1532870048-mysql-bin.000287.avro");
+        list.add("1530494870-mysql-bin.001132.avro");
+        list.add(null);
+        System.out.println(list);
+        list.remove(null);
+        System.out.println(list);
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
       // BaseDataCompare dataCompare = new TiDBCompare();
