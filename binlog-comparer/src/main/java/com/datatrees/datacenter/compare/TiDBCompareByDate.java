@@ -56,6 +56,8 @@ public class TiDBCompareByDate extends TiDBCompare {
                 String partition = String.valueOf(recordMap.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
                 String[] filePaths = String.valueOf(recordMap.get("files")).split(",");
+                List<String> fileList = Arrays.asList(filePaths);
+                Collections.sort(fileList);
                 recordId = FieldNameOp.getFieldName(dataBase, tableName, idList);
                 super.recordId = recordId;
                 LOG.info("the field id is :" + recordId);
@@ -67,7 +69,7 @@ public class TiDBCompareByDate extends TiDBCompare {
                         Map<String, Long> allUniqueData = new HashMap<>();
                         Map<String, Long> allDeleteData = new HashMap<>();
                         AvroDataReader avroDataReader = new AvroDataReader();
-                        for (String fileName : filePaths) {
+                        for (String fileName : fileList) {
                             avroDataReader.setDataBase(dataBase);
                             avroDataReader.setTableName(tableName);
                             avroDataReader.setRecordId(recordId);

@@ -150,17 +150,10 @@ public class TiDBCompare extends BaseDataCompare {
                     }
                 } else {
                     String sqlLimit = "select * from " + "`" + dataBase + "`" + "." + tableName + " limit 1";
-                    String sqlCount = "select TABLE_ROWS from information_schema.TABLES where TABLE_SCHEMA='" + dataBase + "'" + " and  TABLE_NAME='" + tableName + "'";
                     List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlLimit);
                     if (list == null) {
                         checkDataMap = collectMap;
                     }
-                  /*  if (null != list) {
-                        long tableRows = Long.valueOf(list.get(0).get("TABLE_ROWS").toString());
-                        if (tableRows == 0) {
-                            checkDataMap = collectMap;
-                        }
-                    }*/
                 }
             } catch (Exception e) {
                 LOG.info(e.getMessage(), e);
