@@ -37,7 +37,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private final String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
     private final String HDFS_PATH = properties.getProperty("HDFS_PATH");
     private final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
-    private int RETRY_TIMES = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
+    private int retryTimes = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
     private final long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
     private final long TIMEHOURS_DIFF = -8L;
     private long currentTime = System.currentTimeMillis() - TIMESTAMP_DIFF;
@@ -57,12 +57,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
 
     @Override
     public void transfer() {
-        int CurrentHour = LocalDateTime.now().getHour();
-        System.out.println("当前时间小时：" + CurrentHour);
+        int currenthour = LocalDateTime.now().getHour();
+        System.out.println("当前时间小时：" + currenthour);
         if (!"".equals(EXCLUDE_TIME_START) && !"".equals(EXCLUDE_TIME_END)) {
             int excludeStart = Integer.parseInt(EXCLUDE_TIME_START);
             int excludeEnd = Integer.parseInt(EXCLUDE_TIME_END);
-            if (CurrentHour < excludeStart || CurrentHour > excludeEnd) {
+            if (currenthour < excludeStart || currenthour > excludeEnd) {
                 transferAll();
             }
         } else {
@@ -83,7 +83,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         String fileSizeError = "select * from " + TableInfo.BINLOG_TRANS_TABLE + " where down_size is not null and file_size<>down_size";
         processErrorFile(fileSizeError);
         //处理解析错误文件
-        String resolveError = "select * from " + TableInfo.BINLOG_PROC_TABLE + " where status<>1 and status<>0 and retry_times=" + RETRY_TIMES;
+        String resolveError = "select * from " + TableInfo.BINLOG_PROC_TABLE + " where status<>1 and status<>0 and status<>7 and retry_times=" + retryTimes;
         processErrorFile(resolveError);
         //重新下载未完成的数据
         umCompleteProcess();
@@ -159,7 +159,9 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                         .append(" where ")
                         .append(TableInfo.DB_INSTANCE)
                         .append(" in ")
-                        .append("(" + instanceStr + ")")
+                        .append("(")
+                        .append(instanceStr)
+                        .append(")")
                         .append(" order by ")
                         .append(TableInfo.DOWN_END_TIME)
                         .append(" desc limit 1");
@@ -292,7 +294,9 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
                     .append(" ")
                     .append("in")
                     .append(" ")
-                    .append("(" + instanceStr + ")")
+                    .append("(")
+                    .append(instanceStr)
+                    .append(")")
                     .append(" ")
                     .append("order by")
                     .append(" ")

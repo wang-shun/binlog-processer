@@ -201,7 +201,7 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(recordLastUpdateTime)
                                 .append(")")
                                 .append("<")
-                                .append(timeStamp);
+                                .append(timeStamp + 1);
                         if (i < sampleDataSize - 1) {
                             sql.append(" union ");
                         }
@@ -250,11 +250,18 @@ public class TiDBCompare extends BaseDataCompare {
                 dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
                 dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
                 dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
-                dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()));
+                long time = entry.getValue();
+                if (String.valueOf(time).length() == 10) {
+                    dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue() * 1000));
+                } else {
+                    dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()));
+                }
                 dataMap.put(CheckTable.OP_TYPE, result.getOpType());
                 resultMap.add(dataMap);
             }
             try {
+                /*String maxLen="SET GLOBAL group_concat_max_len = 102400";
+                DBUtil.query(DBServer.DBServerType.MYSQL.toString(), binLogDataBase,maxLen);*/
                 DBUtil.insertAll(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, tableName, resultMap);
             } catch (SQLException e) {
                 e.printStackTrace();
