@@ -107,7 +107,7 @@ public class TiDBCompareByDate extends TiDBCompare {
                         CheckResult checkResult = new CheckResult();
                         checkResult.setDataBase(dataBase);
                         checkResult.setTableName(tableName);
-                        checkResult.setFileName(Arrays.toString(filePaths));
+                        //checkResult.setFileName(Arrays.toString(filePaths));
                         checkResult.setDbInstance(dbInstance);
                         checkResult.setOpType(OperateType.Unique.toString());
                         checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique, CheckTable.BINLOG_CHECK_DATE_TABLE);
