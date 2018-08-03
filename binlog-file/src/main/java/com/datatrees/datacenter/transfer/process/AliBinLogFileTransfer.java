@@ -83,7 +83,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         String fileSizeError = "select * from " + TableInfo.BINLOG_TRANS_TABLE + " where down_size is not null and file_size<>down_size";
         processErrorFile(fileSizeError);
         //处理解析错误文件
-        String resolveError = "select * from " + TableInfo.BINLOG_PROC_TABLE + " where status<>1 and status<>0 and status<>7 and retry_times=" + retryTimes;
+        String resolveError = "select * from " + TableInfo.BINLOG_PROC_TABLE + " wher:wqe status<>1 and status<>0 and status<>7 and retry_times=" + retryTimes;
         processErrorFile(resolveError);
         //重新下载未完成的数据
         umCompleteProcess();
