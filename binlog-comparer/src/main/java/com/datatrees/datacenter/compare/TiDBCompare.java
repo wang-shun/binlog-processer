@@ -36,6 +36,7 @@ public class TiDBCompare extends BaseDataCompare {
         dataCheck(tableInfo);
         Map<String, Object> whereMap = new HashMap<>(1);
         whereMap.put(CheckTable.FILE_NAME, fileName);
+        whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
         Map<String, Object> valueMap = new HashMap<>(1);
         valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
         try {
@@ -201,7 +202,7 @@ public class TiDBCompare extends BaseDataCompare {
                                 .append(recordLastUpdateTime)
                                 .append(")")
                                 .append("<")
-                                .append(timeStamp + 1);
+                                .append(timeStamp);
                         if (i < sampleDataSize - 1) {
                             sql.append(" union ");
                         }
