@@ -82,6 +82,9 @@ public final class BinlogFileReader implements Runnable {
    */
   private Function<String, String> schemaNameMapper = t -> t;
 
+  private List<String> ignoreTables;
+  private List<String> ignoreDatabases;
+
   public BinlogFileReader() {
     resultMap = new HashMap<>(
       ImmutableMap.<Operator, AtomicLong>builder().put(Operator.Create, new AtomicLong(0L))
@@ -91,21 +94,6 @@ public final class BinlogFileReader implements Runnable {
     eventDeserializer = new EventDeserializer();
     tableMapCache = new ConcurrentHashMap<>();
     consumerCache = new EnumMap<>(EventType.class);
-//    metrics = new MetricRegistry();
-//    requests = metrics.timer(name(BinlogFileReader.class, "resolve binlog"));
-//    reporter = Slf4jReporter.forRegistry(metrics).build();
-//    reporter.start(3000L, TimeUnit.MILLISECONDS);
-
-//    try {
-//      ganglia = new GMetric("localhost", 8649, UDPAddressingMode.MULTICAST, 1);
-//      reporter2 = GangliaReporter.forRegistry(metrics)
-//        .convertRatesTo(TimeUnit.SECONDS)
-//        .convertDurationsTo(TimeUnit.MILLISECONDS)
-//        .build(ganglia);
-//      reporter2.start(3000L, TimeUnit.MILLISECONDS);
-//    } catch (IOException e) {
-//      e.printStackTrace();
-//    }
   }
 
   public BinlogFileReader(Binlog binlog,
@@ -145,6 +133,8 @@ public final class BinlogFileReader implements Runnable {
     if (r != null) {
       this.callback = r;
     }
+    this.ignoreDatabases = DBbiz.ignoreDatabases(this.binlog.getIdentity1());
+    this.ignoreTables = DBbiz.ignoreTables(this.binlog.getIdentity1());
   }
 
   public void read() {
@@ -184,10 +174,18 @@ public final class BinlogFileReader implements Runnable {
     long tableNumber = tableMapEventData.getTableId();
     String databaseName = schemaNameMapper.apply(tableMapEventData.getDatabase());
     String tableName = tableMapEventData.getTable();
-    if (!databaseName.equalsIgnoreCase("mysql")) {
-      tableMapCache.put(tableNumber, new SimpleEntry<>(databaseName, tableName));
+    if (databaseName.equalsIgnoreCase("mysql")) {
+      return;
     }
+    if (this.ignoreTables.stream().anyMatch(s -> s.equalsIgnoreCase(tableName))) {
+      return;
+    }
+    if (this.ignoreDatabases.stream().anyMatch(s -> s.equalsIgnoreCase(databaseName))) {
+      return;
+    }
+    tableMapCache.put(tableNumber, new SimpleEntry<>(databaseName, tableName));
   }
+
 
   private void consumeBufferRecord(Operator operator, Long tableId, Serializable[] before,
     Serializable[] after) {
