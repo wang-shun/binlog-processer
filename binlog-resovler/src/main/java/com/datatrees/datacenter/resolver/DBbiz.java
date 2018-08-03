@@ -14,7 +14,10 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.LinkedHashMultimap;
 import io.prometheus.client.Counter;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.joda.time.DateTime;
@@ -142,5 +145,41 @@ public class DBbiz {
       logger.error(String
         .format("error to report status"), e);
     }
+  }
+
+  /**
+   * 获取单个文件的需要忽略的database
+   */
+  public static List<String> ignoreDatabases(String file) {
+    try {
+      List<Map<String, Object>> ignore = DBUtil
+        .query(DBServer.DBServerType.MYSQL.toString(), dataBase, "t_binlog_ignore",
+          ImmutableMap.<String, Object>builder().put("file_name", file).build());
+      if (ignore.size() > 0) {
+        return Arrays.asList(ignore.get(0).get("database_name").toString().split(","));
+      }
+    } catch (Exception e) {
+      logger.error(String
+        .format("error to report status"), e);
+    }
+    return new ArrayList<>();
+  }
+
+  /**
+   * 获取单个文件需要忽略的table
+   */
+  public static List<String> ignoreTables(String file) {
+    try {
+      List<Map<String, Object>> ignore = DBUtil
+        .query(DBServer.DBServerType.MYSQL.toString(), dataBase, "t_binlog_ignore",
+          ImmutableMap.<String, Object>builder().put("file_name", file).build());
+      if (ignore.size() > 0) {
+        return Arrays.asList(ignore.get(0).get("table_name").toString().split(","));
+      }
+    } catch (Exception e) {
+      logger.error(String
+        .format("error to report status"), e);
+    }
+    return new ArrayList<>();
   }
 }
