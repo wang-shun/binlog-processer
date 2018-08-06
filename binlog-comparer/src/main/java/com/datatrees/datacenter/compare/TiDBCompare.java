@@ -55,8 +55,9 @@ public class TiDBCompare extends BaseDataCompare {
                 String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
                 String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
                 String fileName = String.valueOf(recordMap.get(CheckTable.FILE_NAME));
-                recordId = FieldNameOp.getFieldName(dataBase, tableName, idList);
-                recordLastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
+                Set<String> allFieldSet=FieldNameOp.getAllFieldName(dataBase,tableName);
+                recordId = FieldNameOp.getFieldName(allFieldSet,idList);
+                recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
                 if (null != recordId && null != recordLastUpdateTime) {
                     if (partitions.length > 0) {
                         Map<String, Long> allUniqueData = new HashMap<>();

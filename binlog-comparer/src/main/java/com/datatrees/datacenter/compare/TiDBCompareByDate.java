@@ -58,12 +58,11 @@ public class TiDBCompareByDate extends TiDBCompare {
                 String[] filePaths = String.valueOf(recordMap.get("files")).split(",");
                 List<String> fileList = Arrays.asList(filePaths);
                 Collections.sort(fileList);
-                recordId = FieldNameOp.getFieldName(dataBase, tableName, idList);
+                Set<String> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
+                recordId = FieldNameOp.getFieldName(allFieldSet, idList);
+                recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
                 super.recordId = recordId;
-                LOG.info("the field id is :" + recordId);
-                recordLastUpdateTime = FieldNameOp.getFieldName(dataBase, tableName, createTimeList);
                 super.recordLastUpdateTime = recordLastUpdateTime;
-                LOG.info("the field update is:" + recordLastUpdateTime);
                 if (null != recordId && null != recordLastUpdateTime) {
                     if (filePaths.length > 0) {
                         Map<String, Long> allUniqueData = new HashMap<>();
