@@ -4,6 +4,7 @@ import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -46,7 +47,7 @@ public class FileUtil {
                 }
             }
         } catch (IOException e) {
-            LOG.error("connection refused",e.getMessage());
+            LOG.error("connection refused", e.getMessage());
         }
         return len;
     }

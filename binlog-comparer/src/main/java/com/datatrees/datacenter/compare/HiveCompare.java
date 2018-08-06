@@ -17,9 +17,9 @@ public class HiveCompare extends BaseDataCompare {
     private final String HIVE_HDFS_PATH = properties.getProperty("HIVE_HDFS_PATH");
 
     @Override
-    public void binLogCompare(String dest,String type) {
+    public void binLogCompare(String dest, String type) {
         //查看当前binlog解析出来的文件分区文件数目和文件条数是否达到了数量要求
-        List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(dest);
+        List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(dest, type);
         if (partitionInfos.size() > 0) {
             AvroDataReader avroDataReader = new AvroDataReader();
             OrcDataReader orcDataReader = new OrcDataReader();
@@ -41,8 +41,8 @@ public class HiveCompare extends BaseDataCompare {
                         fileName.replace(".tar", "") +
                         ".avro";
 
-                String avroPath = super.AVRO_HDFS_PATH + File.separator + filePath;
-                String orcPath = HIVE_HDFS_PATH + File.separator + filePath;
+                String avroPath = super.AVRO_HDFS_PATH + File.separator + type + File.separator + filePath;
+                String orcPath = HIVE_HDFS_PATH + File.separator + type + File.separator + filePath;
 
                 Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
                 Map<String, Long> orcData = orcDataReader.readDestData(orcPath);
