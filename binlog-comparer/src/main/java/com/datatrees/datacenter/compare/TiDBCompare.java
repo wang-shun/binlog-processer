@@ -55,8 +55,8 @@ public class TiDBCompare extends BaseDataCompare {
                 String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
                 String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
                 String fileName = String.valueOf(recordMap.get(CheckTable.FILE_NAME));
-                Set<String> allFieldSet=FieldNameOp.getAllFieldName(dataBase,tableName);
-                recordId = FieldNameOp.getFieldName(allFieldSet,idList);
+                Set<String> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
+                recordId = FieldNameOp.getFieldName(allFieldSet, idList);
                 recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
                 if (null != recordId && null != recordLastUpdateTime) {
                     if (partitions.length > 0) {
@@ -83,8 +83,7 @@ public class TiDBCompare extends BaseDataCompare {
                                     partition +
                                     File.separator +
                                     fileName.replace(".tar", "")
-                                    +
-                                    ".avro";
+                                    + ".avro";
 
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                             if (null != avroData) {
@@ -109,7 +108,6 @@ public class TiDBCompare extends BaseDataCompare {
                         checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(Arrays.toString(partitions));
                         checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
-
                     }
                 }
             }
