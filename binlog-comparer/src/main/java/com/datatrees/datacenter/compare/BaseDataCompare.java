@@ -1,5 +1,6 @@
 package com.datatrees.datacenter.compare;
 
+import avro.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
@@ -13,6 +14,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.*;
 
 public abstract class BaseDataCompare implements DataCheck {
 
@@ -177,13 +179,13 @@ public abstract class BaseDataCompare implements DataCheck {
      * @param column       列
      * @return Map
      */
-    public Map<String, Long> getBatchDataFromHBase(List<String> idList, String tableName, String columnFamily, String column) {
+    public static Map<String, Long> getBatchDataFromHBase(List<String> idList, String tableName, String columnFamily, String column) {
         Map<String, Long> resultMap = null;
         if (null != idList && idList.size() > 0) {
             Table table = HBaseHelper.getTable(tableName);
             List<Get> gets = new ArrayList<>();
-            for (int i = 0, length = idList.size(); i < length; i++) {
-                Get get = new Get(Bytes.toBytes(idList.get(i)));
+            for (String anIdList : idList) {
+                Get get = new Get(Bytes.toBytes(anIdList));
                 get.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column));
                 gets.add(get);
             }
@@ -204,5 +206,99 @@ public abstract class BaseDataCompare implements DataCheck {
             }
         }
         return resultMap;
+    }
+
+    class BatchSearchCallable implements Callable<Map<String, Long>> {
+        private List<String> ids;
+        private String tableName;
+        private String columnFamily;
+        private String column;
+
+        BatchSearchCallable(List<String> keys, String tableName, String columnFamily, String column) {
+            this.ids = keys;
+            this.tableName = tableName;
+            this.columnFamily = columnFamily;
+            this.column = column;
+        }
+
+        @Override
+        public Map<String, Long> call() {
+            return BaseDataCompare.getBatchDataFromHBase(ids, tableName, columnFamily, column);
+        }
+    }
+
+    /**
+     * 多线程批量查询
+     *
+     * @param idList       需要查询的rowKey列表
+     * @param tableName    表名
+     * @param columnFamily 列簇
+     * @param column       列名
+     * @return map
+     */
+    public Map<String, Long> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
+        Map<String, Long> dataMap = new HashMap<>();
+        int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 2;
+        List<List<String>> batchIdList;
+        if (null != idList && idList.size() > 0) {
+            if (idList.size() < parallel) {
+                batchIdList = new ArrayList<>(1);
+                batchIdList.add(idList);
+            } else {
+                batchIdList = new ArrayList<>(parallel);
+                List<String> lst;
+                for (int i = 0; i < parallel; i++) {
+                    lst = new ArrayList<>();
+                    batchIdList.add(lst);
+                }
+                for (int i = 0; i < idList.size(); i++) {
+                    batchIdList.get(i % parallel).add(idList.get(i));
+                }
+            }
+            List<Future<Map<String, Long>>> futures = new ArrayList<>(parallel);
+            ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
+            builder.setNameFormat("parallelBatchQuery");
+            ThreadFactory factory = builder.build();
+            ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(parallel, factory);
+            for (List<String> keys : batchIdList) {
+                Callable<Map<String, Long>> callable = new BatchSearchCallable(keys, tableName, columnFamily, column);
+                FutureTask<Map<String, Long>> future = (FutureTask<Map<String, Long>>) executor.submit(callable);
+                futures.add(future);
+            }
+            executor.shutdown();
+            try {
+                boolean stillRuning = !executor.awaitTermination(30000, TimeUnit.MILLISECONDS);
+                if (stillRuning) {
+                    try {
+                        executor.shutdownNow();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (InterruptedException e) {
+                try {
+                    Thread.currentThread().interrupt();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+            for (Future f : futures) {
+                try {
+                    if (f.get() != null) {
+                        dataMap.putAll((Map<String, Long>) f.get());
+                    }
+                } catch (InterruptedException e) {
+                    try {
+                        Thread.currentThread().interrupt();
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                    }
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return dataMap;
     }
 }
