@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.operate.OperateType;
+import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;

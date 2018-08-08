@@ -250,6 +250,7 @@ public class TiDBCompare extends BaseDataCompare {
                 dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
                 dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
                 dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
+                dataMap.put(CheckTable.PARTITION_TYPE,partitionType);
                 long time = entry.getValue();
                 if (String.valueOf(time).length() == 10) {
                     dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue() * 1000));
@@ -296,7 +297,6 @@ public class TiDBCompare extends BaseDataCompare {
             if (dataSize > 0) {
                 Collections.shuffle(copy);
                 n = (int) Math.sqrt(dataSize);
-                System.out.println("************" + n);
             }
             return copy.subList(0, n);
         } else {
