@@ -1,28 +1,23 @@
-public class HiveDataRepair implements DataRepair {
+public class HiveDataRepair extends BaseDataRepair {
 
 
     @Override
-    public void dataRepairById(String fileName, String dataBase, String tableName, String id) {
+    public void repairByTime(String startTime, String endTime, String partitionType) {
 
     }
 
     @Override
-    public void dataRepairByTime(String fileName, String instance, String dataBase, String tableName, String startTime, String endTime) {
+    public void repairByFile(String fileName, String partitionType) {
 
     }
 
     @Override
-    public void dataRepairByFile(String fileName) {
+    public void repairByRecordNum(int recordNum, String partitionType) {
 
     }
 
     @Override
-    public void dataRepairSchedule() {
-
-    }
-
-    @Override
-    public void dataRepairByRecordNum(int recordNum) {
+    public void repairSchedule(String partitionType) {
 
     }
 }

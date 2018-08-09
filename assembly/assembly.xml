@@ -19,6 +19,7 @@
                 <include>com.datatrees.datacenter.binlog:binlog-comparer</include>
                 <include>com.datatrees.datacenter.binlog:binlog-api</include>
                 <include>com.datatrees.datacenter.binlog:binlog-service</include>
+                <include>com.datatrees.datacenter.binlog:binlog-repair</include>
             </includes>
             <!--<binaries>-->
                 <!--&lt;!&ndash;<outputDirectory>modules/maven-assembly-plugin</outputDirectory>&ndash;&gt;-->

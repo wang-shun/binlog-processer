@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.operate.OperateType;
+import javafx.beans.binding.ObjectExpression;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
@@ -16,16 +17,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 
 public class AvroDataReader extends BaseDataReader {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
-    private final Properties properties = PropertiesUtility.defaultProperties();
-    private final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
+    private static final Properties properties = PropertiesUtility.defaultProperties();
+    private static final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
     private String dataBase;
     private String tableName;
     private String recordId;
@@ -101,6 +99,57 @@ public class AvroDataReader extends BaseDataReader {
         }
         return null;
 
+    }
+
+    public static Map<String, List<Set<Map.Entry<String, Object>>>> readAllDataFromAvro(String filePath) {
+        InputStream is;
+        Map<String, List<Set<Map.Entry<String, Object>>>> oprRecordMap = null;
+        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+        if (null != fs) {
+            try {
+                is = fs.open(new Path(filePath));
+                DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());
+                Iterator<Object> iterator = reader.iterator();
+                List<Set<Map.Entry<String, Object>>> createList = new ArrayList<>();
+                List<Set<Map.Entry<String, Object>>> updateList = new ArrayList<>();
+                List<Set<Map.Entry<String, Object>>> deleteList = new ArrayList<>();
+                List<Set<Map.Entry<String, Object>>> upsertList = new ArrayList<>();
+                while (iterator.hasNext()) {
+                    Object o = iterator.next();
+                    GenericRecord r = (GenericRecord) o;
+                    String operator = r.get(2).toString();
+                    JSONObject jsonObject;
+                    if (null != r.get(1)) {
+                        jsonObject = JSONObject.parseObject(r.get(1).toString());
+                    } else {
+                        jsonObject = JSONObject.parseObject(r.get(0).toString());
+                    }
+                    Map<String, Object> record = new HashMap<>();
+                    switch (operator) {
+                        case "Create":
+                            createList.add(jsonObject.entrySet());
+                            break;
+                        case "Update":
+                            updateList.add(jsonObject.entrySet());
+                            break;
+                        case "Delete":
+                            deleteList.add(jsonObject.entrySet());
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                updateList.addAll(createList);
+                updateList.addAll(updateList);
+                oprRecordMap = new HashMap<>(3);
+                oprRecordMap.put(OperateType.Unique.toString(), upsertList);
+                oprRecordMap.put(OperateType.Delete.toString(), deleteList);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return oprRecordMap;
     }
 
     public String getDataBase() {
