@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.resolver;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
 import com.datatrees.datacenter.core.domain.Status;
@@ -14,12 +15,12 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.LinkedHashMultimap;
 import io.prometheus.client.Counter;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,7 +163,7 @@ public class DBbiz {
       logger.error(String
         .format("error to report status"), e);
     }
-    return new ArrayList<>();
+    return emptyList();
   }
 
   /**
@@ -180,6 +181,22 @@ public class DBbiz {
       logger.error(String
         .format("error to report status"), e);
     }
-    return new ArrayList<>();
+    return emptyList();
+//    return new ArrayList<>();
+  }
+
+  public static void updateIgnore(String file, Map<String, AtomicLong> ignoreMessage) {
+    StringBuffer message = new StringBuffer();
+    ignoreMessage.forEach((s, atomicLong) -> {
+      message.append(s + ":" + atomicLong.longValue() + ";");
+    });
+    try {
+      DBUtil.update(DBServer.DBServerType.MYSQL.toString(), dataBase, "t_binlog_ignore",
+        ImmutableMap.<String, Object>builder().put("message", message.toString()).build(),
+        ImmutableMap.<String, Object>builder().put("file_name", file).build());
+    } catch (SQLException e) {
+      logger.error(String
+        .format("error to report status"), e);
+    }
   }
 }
