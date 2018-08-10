@@ -87,14 +87,32 @@ public abstract class BaseDataCompare implements DataCheck {
         whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.FILE_PARTITION, partitions);
         whereMap.put("type", partitionType);
+        StringBuilder whereExpress = getStringBuilder(whereMap);
+        try {
+          /*  String maxLen = "SET GLOBAL group_concat_max_len = 102400";
+            DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, maxLen);*/
+            String sql = "select db_instance,database_name,table_name,GROUP_CONCAT(file_name) as files,file_partitions from " + processLogTable + " " + whereExpress.toString() + " group by database_name,table_name";
+            partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return partitionInfo;
+    }
+
+    /**
+     * 组装where语句
+     *
+     * @param whereMap
+     * @return
+     */
+    public static StringBuilder getStringBuilder(Map<String, String> whereMap) {
         whereMap.values().remove("");
         List<Map.Entry<String, String>> map2List;
         map2List = new ArrayList<>(whereMap.entrySet());
         StringBuilder whereExpress = new StringBuilder();
         if (whereMap.size() > 0) {
             whereExpress.append(" where ");
-            for (int i = 0, length = map2List.size(); i < length;
-                 i++) {
+            for (int i = 0, length = map2List.size(); i < length; i++) {
                 Map.Entry<String, String> express = map2List.get(i);
                 whereExpress
                         .append(express.getKey())
@@ -111,15 +129,7 @@ public abstract class BaseDataCompare implements DataCheck {
                 }
             }
         }
-        try {
-          /*  String maxLen = "SET GLOBAL group_concat_max_len = 102400";
-            DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, maxLen);*/
-            String sql = "select db_instance,database_name,table_name,GROUP_CONCAT(file_name) as files,file_partitions from " + processLogTable + " " + whereExpress.toString() + " group by database_name,table_name";
-            partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return partitionInfo;
+        return whereExpress;
     }
 
     /**

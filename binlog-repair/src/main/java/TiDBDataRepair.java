@@ -2,12 +2,10 @@ import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.core.utility.TimeUtil;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
-import org.iq80.leveldb.DB;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -18,29 +16,40 @@ public class TiDBDataRepair extends BaseDataRepair {
     private String mysqlDataBase = properties.getProperty("jdbc.database");
     private String avroHDFSPath = properties.getProperty("AVRO_HDFS_PATH");
     private List<String> idList = FieldNameOp.getConfigField("id");
-    private final String binlogTable = "t_binlog_record";
-
+    private String dbInstance;
+    private String dataBase;
+    private String tableName;
+    private String partition;
 
     @Override
-    public void repairByTime(String dbInstance, String dataBase, String tableName, String partition, String type) {
-        List<Map<String, Object>> specifiedDateTable = BaseDataCompare.getSpecifiedDateTableInfo(dataBase, tableName, partition, type);
+    public void repairByTime(String dbInstance, String dataBase, String tableName, String partition, String partitionType) {
+        List<Map<String, Object>> specifiedDateTable = BaseDataCompare.getSpecifiedDateTableInfo(dataBase, tableName, partition, partitionType);
         if (specifiedDateTable != null && specifiedDateTable.size() > 0) {
             for (Map<String, Object> fileMap : specifiedDateTable) {
                 String fileName = String.valueOf(fileMap.get(CheckTable.FILE_NAME));
-                repairByFile(fileName, type);
+                this.dbInstance = dbInstance;
+                this.dataBase = dataBase;
+                this.tableName = tableName;
+                this.partition = partition;
+                repairByFile(fileName, partitionType);
             }
         }
     }
 
-
     @Override
     public void repairByFile(String fileName, String partitionType) {
         //读取某个文件，并将所有记录解析出来重新插入到数据库
-        Map<String, Object> whereMap = new HashMap<>(2);
+        Map<String, String> whereMap = new HashMap<>(6);
+        whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
+        whereMap.put(CheckTable.DATA_BASE, dataBase);
+        whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.FILE_NAME, fileName);
+        whereMap.put(CheckTable.FILE_PARTITION, partition);
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+        StringBuilder whereExpress = BaseDataCompare.getStringBuilder(whereMap);
+        String sqlStr = "select * from " + CheckTable.BINLOG_PROCESS_LOG_TABLE + " " + whereExpress;
         try {
-            List<Map<String, Object>> tableInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), mysqlDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, whereMap);
+            List<Map<String, Object>> tableInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), mysqlDataBase, sqlStr);
             if (null != tableInfo && tableInfo.size() > 0) {
                 for (Map<String, Object> tablePartition : tableInfo) {
                     String dbInstance = String.valueOf(tablePartition.get(CheckTable.DB_INSTANCE));
