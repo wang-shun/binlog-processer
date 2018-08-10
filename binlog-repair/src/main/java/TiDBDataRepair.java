@@ -1,3 +1,4 @@
+import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
@@ -21,24 +22,16 @@ public class TiDBDataRepair extends BaseDataRepair {
 
 
     @Override
-    public void repairByTime(String startTime, String endTime, String partitionType) {
-        if (startTime != null && endTime != null) {
-            Date logStart = TimeUtil.strToDate(startTime, "yyyy-MM-dd HH:mm:ss");
-            Date logEnd = TimeUtil.strToDate(endTime, "yyyy-MM-dd HH:mm:ss");
-            String sql = "select " + CheckTable.FILE_NAME + " from " + binlogTable + " where log_start_time>=" + "'" + logStart + "'" + " and log_end_time<=" + "'" + logEnd + "'";
-            try {
-                List<Map<String, Object>> binlogInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), mysqlDataBase, sql);
-                if (binlogInfo != null && binlogInfo.size() > 0) {
-                    for (Map<String, Object> fileMap : binlogInfo) {
-                        String fileName = String.valueOf(fileMap.get(CheckTable.FILE_NAME));
-                        repairByFile(fileName, partitionType);
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
+    public void repairByTime(String dbInstance, String dataBase, String tableName, String partition, String type) {
+        List<Map<String, Object>> specifiedDateTable = BaseDataCompare.getSpecifiedDateTableInfo(dataBase, tableName, partition, type);
+        if (specifiedDateTable != null && specifiedDateTable.size() > 0) {
+            for (Map<String, Object> fileMap : specifiedDateTable) {
+                String fileName = String.valueOf(fileMap.get(CheckTable.FILE_NAME));
+                repairByFile(fileName, type);
             }
         }
     }
+
 
     @Override
     public void repairByFile(String fileName, String partitionType) {

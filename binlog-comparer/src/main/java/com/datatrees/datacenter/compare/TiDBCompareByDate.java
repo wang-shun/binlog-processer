@@ -30,7 +30,7 @@ public class TiDBCompareByDate extends TiDBCompare {
     @Override
     public void binLogCompare(String dataBase, String table, String partition, String type) {
         this.partitionType = type;
-        List<Map<String, Object>> specifiedDateTable = super.getSpecifiedDateTableInfo(dataBase, table, partition, type);
+        List<Map<String, Object>> specifiedDateTable = BaseDataCompare.getSpecifiedDateTableInfo(dataBase, table, partition, type);
         dataCheck(specifiedDateTable);
         Map<String, Object> whereMap = new HashMap<>(1);
         whereMap.put(CheckTable.FILE_PARTITION, partition);

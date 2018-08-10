@@ -2,7 +2,7 @@ public class HiveDataRepair extends BaseDataRepair {
 
 
     @Override
-    public void repairByTime(String startTime, String endTime, String partitionType) {
+    public void repairByTime(String dbInstance, String dataBase, String tableName, String partition, String type) {
 
     }
 

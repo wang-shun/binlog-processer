@@ -1,12 +1,13 @@
 public interface DataRepair {
     /**
-     * 根据时间段进行批量修复
-     *
-     * @param startTime
-     * @param endTime
-     * @param partitionType
+     * 根据分区进行修复
+     * @param dbInstance
+     * @param dataBase
+     * @param tableName
+     * @param partition
+     * @param type
      */
-    void repairByTime(String startTime, String endTime, String partitionType);
+    void repairByTime(String dbInstance, String dataBase, String tableName, String partition, String type) ;
 
     /**
      * 根据文件名进行批量修复
