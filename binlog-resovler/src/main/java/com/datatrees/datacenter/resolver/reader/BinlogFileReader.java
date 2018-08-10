@@ -85,11 +85,16 @@ public final class BinlogFileReader implements Runnable {
   private List<String> ignoreTables;
   private List<String> ignoreDatabases;
 
+  private Map<String, AtomicLong> ignoreCount;
+
   public BinlogFileReader() {
     resultMap = new HashMap<>(
       ImmutableMap.<Operator, AtomicLong>builder().put(Operator.Create, new AtomicLong(0L))
         .put(Operator.Update, new AtomicLong(0L)).put(Operator.Delete, new AtomicLong(0L))
         .put(Operator.DEFAULT, new AtomicLong(0L)).build());
+
+    ignoreCount = new HashMap<>();
+
     currentStatus = Status.SUCCESS;
     eventDeserializer = new EventDeserializer();
     tableMapCache = new ConcurrentHashMap<>();
@@ -166,6 +171,7 @@ public final class BinlogFileReader implements Runnable {
         logger.error(e.getMessage(), e);
       }
     }
+    DBbiz.updateIgnore(this.binlog.getIdentity1(), this.ignoreCount);
 //    this.reporter2.stop();
   }
 
@@ -178,6 +184,7 @@ public final class BinlogFileReader implements Runnable {
       return;
     }
     if (this.ignoreTables.stream().anyMatch(s -> s.equalsIgnoreCase(tableName))) {
+      incrementIgnore(tableName);
       return;
     }
     if (this.ignoreDatabases.stream().anyMatch(s -> s.equalsIgnoreCase(databaseName))) {
@@ -186,6 +193,13 @@ public final class BinlogFileReader implements Runnable {
     tableMapCache.put(tableNumber, new SimpleEntry<>(databaseName, tableName));
   }
 
+  private void incrementIgnore(String tableName) {
+    if (!ignoreCount.containsKey(tableName)) {
+      ignoreCount.put(tableName, new AtomicLong(1));
+    } else {
+      ignoreCount.get(tableName).incrementAndGet();
+    }
+  }
 
   private void consumeBufferRecord(Operator operator, Long tableId, Serializable[] before,
     Serializable[] after) {
@@ -294,7 +308,6 @@ public final class BinlogFileReader implements Runnable {
       onFinished();
       timer.setDuration();
       removeMetricsLabel();
-
     }
     logger.info("end to read binlog file {} of instance.", this.binlog);
   }
