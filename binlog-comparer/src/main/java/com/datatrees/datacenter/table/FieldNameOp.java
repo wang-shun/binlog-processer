@@ -7,10 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -33,7 +30,7 @@ public class FieldNameOp {
 
     public static List<String> getConfigField(String fieldName) {
         String allName = PropertiesUtility.defaultProperties().getProperty(fieldName);
-        return asList(allName.split(","));
+        return new ArrayList<>(asList(allName.split(",")));
     }
 
     public static Set<String> getAllFieldName(String dataBase, String tableName) {

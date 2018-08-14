@@ -15,10 +15,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+
 
 /**
  * @author personalc
@@ -32,7 +30,7 @@ public class OrcDataReader extends BaseDataReader {
 
     @Override
     public Map<String, Long> readDestData(String filePath) {
-        List<String> fileList = HDFSFileUtility.getFilesPath(hivePath+File.separator+filePath);
+        List<String> fileList = HDFSFileUtility.getFilesPath(hivePath + File.separator + filePath);
         Map<String, Long> opRecord = new HashMap<>();
         if (fileList.size() > 0) {
             for (String file : fileList) {
@@ -55,24 +53,36 @@ public class OrcDataReader extends BaseDataReader {
             StructObjectInspector inspector = (StructObjectInspector) reader.getObjectInspector();
             RecordReader records = reader.rows();
             Object row = null;
-            List fields = inspector.getAllStructFieldRefs();
+            List<StructField> fields = (List<StructField>) inspector.getAllStructFieldRefs();
+            List<String> fieldList = new ArrayList<>(fields.size());
+            for (StructField oneField : fields) {
+                String colName = oneField.getFieldName();
+                fieldList.add(colName);
+
+            }
             dataMap = new HashMap<>();
+
             String idField = null;
             String timeField = null;
-            if (idList.removeAll(fields)) {
-                idField = idList.get(0);
+            if (idList.retainAll(fieldList)) {
+                if (null != idList && idList.size() > 0) {
+                    idField = idList.get(0);
+                    System.out.println(idField);
+                }
             }
-            if (timeList.removeAll(fields)) {
-                timeField = timeList.get(0);
+            if (timeList.retainAll(fieldList)) {
+                if (null != timeList && timeList.size() > 0) {
+                    timeField = timeList.get(0);
+                    System.out.println(timeField);
+                }
             }
             if (null != idField && null != timeField) {
                 while (records.hasNext()) {
                     row = records.next(row);
-                    String id = inspector.getStructFieldData(row, (StructField) fields.get(fields.indexOf(idField))).toString();
-                    String lastUpdateTime = inspector.getStructFieldData(row, (StructField) fields.get(fields.indexOf(timeField))).toString();
+                    String id = inspector.getStructFieldData(row, fields.get(fields.indexOf(idField))).toString();
+                    String lastUpdateTime = inspector.getStructFieldData(row, fields.get(fields.indexOf(timeField))).toString();
                     long lastTime = Timestamp.valueOf(lastUpdateTime).getTime();
                     dataMap.put(id, lastTime);
-                    System.out.println("id :"+id+" , "+" lastTime :"+lastUpdateTime);
                 }
             }
         } catch (IOException e) {
