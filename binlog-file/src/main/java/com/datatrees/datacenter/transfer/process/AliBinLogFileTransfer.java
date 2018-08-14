@@ -57,12 +57,12 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
 
     @Override
     public void transfer() {
-        int currenthour = LocalDateTime.now().getHour();
-        System.out.println("当前时间小时：" + currenthour);
-        if (!"".equals(EXCLUDE_TIME_START) && !"".equals(EXCLUDE_TIME_END)) {
+        int currentHour = LocalDateTime.now().getHour();
+        System.out.println("当前时间小时：" + currentHour);
+        if (null!=EXCLUDE_TIME_START && null!=EXCLUDE_TIME_END) {
             int excludeStart = Integer.parseInt(EXCLUDE_TIME_START);
             int excludeEnd = Integer.parseInt(EXCLUDE_TIME_END);
-            if (currenthour < excludeStart || currenthour > excludeEnd) {
+            if (currentHour < excludeStart || currentHour > excludeEnd) {
                 transferAll();
             }
         } else {
