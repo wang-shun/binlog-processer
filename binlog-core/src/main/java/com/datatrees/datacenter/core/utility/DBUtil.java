@@ -52,7 +52,7 @@ public class DBUtil {
         //开始拼插入的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ");
-        sql.append("`"+dataBase+"`."+tableName);
+        sql.append("`" + dataBase + "`." + tableName);
         sql.append(" (");
         sql.append(columnSql);
         sql.append(" )  VALUES (");
@@ -72,13 +72,13 @@ public class DBUtil {
     public static int insertAll(String dbSource, String dataBase, String tableName, List<Map<String, Object>> datas)
             throws SQLException {
         //影响的行数
-        int affectRowCount=-1;
+        int affectRowCount = -1;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
-        if(datas.size() > 0) {
+        if (datas != null && datas.size() > 0) {
             try {
                 //从数据库连接池中获取数据库连接
-                connection=ConnOfC3P0Util.getInstance().getConnection(dbSource);
+                connection = ConnOfC3P0Util.getInstance().getConnection(dbSource);
                 Map<String, Object> valueMap = datas.get(0);
                 //获取数据库插入的Map的键值对的值
                 Set<String> keySet = valueMap.keySet();
@@ -102,7 +102,7 @@ public class DBUtil {
                 //开始拼插入的sql语句
                 StringBuilder sql = new StringBuilder();
                 sql.append("INSERT INTO ");
-                sql.append("`"+dataBase+"`."+tableName);
+                sql.append("`" + dataBase + "`." + tableName);
                 sql.append(" (");
                 sql.append(columnSql);
                 sql.append(" )  VALUES (");
@@ -161,7 +161,7 @@ public class DBUtil {
         //开始拼插入的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ");
-        sql.append("`"+dataBase+"`."+ tableName);
+        sql.append("`" + dataBase + "`." + tableName);
         sql.append(" SET ");
 
         //要更改的的字段sql，其实就是用key拼起来的
@@ -207,7 +207,7 @@ public class DBUtil {
         //准备删除的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ");
-        sql.append("`"+dataBase+"`."+tableName);
+        sql.append("`" + dataBase + "`." + tableName);
 
         //更新的条件:要更改的的字段sql，其实就是用key拼起来的
         StringBuilder whereSql = new StringBuilder();
@@ -246,7 +246,7 @@ public class DBUtil {
         PreparedStatement preparedStatement = null;
         try {
             //从数据库连接池中获取数据库连接
-            connection=ConnOfC3P0Util.getInstance().getConnection(dbSource);
+            connection = ConnOfC3P0Util.getInstance().getConnection(dbSource);
             //执行SQL预编译
             preparedStatement = connection.prepareStatement(sql);
             //设置不自动提交，以便于在出现异常的时候数据库回滚
@@ -330,7 +330,7 @@ public class DBUtil {
                                                   String having,
                                                   String orderBy,
                                                   String limit) throws SQLException {
-        String sql = buildQueryString(distinct, "`"+dataBase+"`."+tableName, columns, selection, groupBy, having, orderBy,
+        String sql = buildQueryString(distinct, "`" + dataBase + "`." + tableName, columns, selection, groupBy, having, orderBy,
                 limit);
         return executeQuery(dbSource, dataBase, sql, selectionArgs);
 
@@ -344,7 +344,7 @@ public class DBUtil {
         ResultSet resultSet = null;
         try {
             //获取数据库连接池中的连接
-            connection=ConnOfC3P0Util.getInstance().getConnection(dbSource);
+            connection = ConnOfC3P0Util.getInstance().getConnection(dbSource);
             if (null != connection) {
                 preparedStatement = connection.prepareStatement(sql);
                 if (bindArgs != null) {
