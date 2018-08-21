@@ -10,7 +10,7 @@ LOG_DIR=${DEPLOY_DIR}/logs
 LIB_DIR=${DEPLOY_DIR}/lib
 LIB_JARS=`ls ${LIB_DIR}|grep .jar|awk '{print "'${LIB_DIR}'/"$0}'|tr "\n" ":"`
 LIB_JARS=${LIB_JARS}
-LOG_FILE=${LOG_DIR}/process_check.log
+LOG_FILE=${LOG_DIR}/resolve_check.log
 APP_MAIN_CLASS=com.datatrees.datacenter.check.ResolveCheck
 
 start()
@@ -33,6 +33,7 @@ start()
                 echo "==========================="
         else
                 echo "binlog process is starting ..."
+
                 nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} $2 > ${LOG_FILE} 2>&1 &
 
                 checkpid
@@ -95,7 +96,7 @@ status()
 
 case "$1" in
    'start')
-      start
+      start $2
      ;;
    'stop')
      stop

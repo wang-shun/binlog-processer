@@ -97,7 +97,7 @@ status()
 
 case "$1" in
    'start')
-      start
+      start $1 $2 $3 $4
      ;;
    'stop')
      stop

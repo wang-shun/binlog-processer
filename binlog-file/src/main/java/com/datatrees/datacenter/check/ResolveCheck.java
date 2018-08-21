@@ -17,10 +17,9 @@ public class ResolveCheck {
     private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static final String HDFS_ROOT_PATH = properties.getProperty("AVRO_HDFS_PATH");
-    private static Path path;
 
     public static void main(String[] args) {
-       if (args.length > 0) {
+        if (args.length != 0) {
             String filePath = args[0];
             FileSystem fs = HDFSFileUtility.getFileSystem(HDFS_ROOT_PATH);
             Path path = new Path(filePath);

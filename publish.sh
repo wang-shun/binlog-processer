@@ -1,18 +1,18 @@
 #!/bin/sh
 
-mvn clean package -Dmaven.test.skip=true;
+#mvn clean package -Dmaven.test.skip=true;
 
 
 BROKERS="application1 application2 application3 application4 application5"
 BINLOG_PROCESS_HOME="/data1/application/binlog-process"
 
-cd binlog-main/target/binlog-main-1.0-SNAPSHOT/lib;
+cd binlog-file/target/binlog-file-1.0-SNAPSHOT/bin;
 
 for broker in $BROKERS
 do
-    for file in $(ls -rt binlog*.jar);
+    for file in $(ls -rt resolve*.sh);
     do
-        scp -p $file root@$broker:$BINLOG_PROCESS_HOME/lib;
+        scp -p $file root@$broker:$BINLOG_PROCESS_HOME/bin;
     done
 done
 
