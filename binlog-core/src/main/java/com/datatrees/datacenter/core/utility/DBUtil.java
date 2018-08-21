@@ -75,7 +75,7 @@ public class DBUtil {
         int affectRowCount=-1;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
-        if(datas.size()>0) {
+        if(datas.size() > 0) {
             try {
                 //从数据库连接池中获取数据库连接
                 connection=ConnOfC3P0Util.getInstance().getConnection(dbSource);

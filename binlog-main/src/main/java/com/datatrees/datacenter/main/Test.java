@@ -33,8 +33,8 @@ public class Test {
         //LOG.info("compare finished");
        /* BaseDataReader dataReader = new OrcDataReader();
         ((OrcDataReader) dataReader).readDestData("coll_account_age/year=2018/month=5/day=18/delta_0000009_0000009_0000/bucket_00000");*/
-        BaseDataReader dataReader = new OrcDataReader();
-        ((OrcDataReader) dataReader).readDestData("/orc-test/part-00008-478c4d75-3839-461b-bcf4-83009ca3bbd0.snappy.orc");
+        /*BaseDataReader dataReader = new OrcDataReader();
+        ((OrcDataReader) dataReader).readDestData("/orc-test/part-00008-478c4d75-3839-461b-bcf4-83009ca3bbd0.snappy.orc");*/
 
         //AvroDataReader.readAllDataFromAvro("hdfs://cloudera3/data/warehouse/update/antifraud/antifraud/atf_commerce_record/year=2018/month=8/day=8/1533712536-mysql-bin.000326.avro");
         /*try {
@@ -46,5 +46,7 @@ public class Test {
         } catch (SQLException e) {
             e.printStackTrace();
         }*/
+
+
     }
 }
