@@ -33,7 +33,7 @@ start()
                 echo "==========================="
         else
                 echo "binlog process is starting ..."
-                nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} > ${LOG_FILE} 2>&1 &
+                nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} $2 > ${LOG_FILE} 2>&1 &
 
                 checkpid
 
@@ -108,6 +108,6 @@ case "$1" in
      status
      ;;
   *)
-     echo "Usage: $0 {start|stop|restart|status|info}"
+     echo "Usage: $0 {start|stop|restart|status|info} {filePath[eg:/data/warehouse/update]}"
      exit 1
 esac
