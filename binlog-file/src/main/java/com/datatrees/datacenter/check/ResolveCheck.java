@@ -19,24 +19,29 @@ public class ResolveCheck {
     private static final String HDFS_ROOT_PATH = properties.getProperty("AVRO_HDFS_PATH");
 
     public static void main(String[] args) {
+        System.out.println(args.length);
+        System.out.println(HDFS_ROOT_PATH);
         if (args.length != 0) {
             String filePath = args[0];
             FileSystem fs = HDFSFileUtility.getFileSystem(HDFS_ROOT_PATH);
             Path path = new Path(filePath);
             iteratorCheckFiles(fs, path);
         } else {
-            LOG.error("please input file path [eg:/data/warehouse/update]");
+            LOG.error("please input file path [ eg:/data/warehouse/update]");
         }
+       /* FileSystem fs = HDFSFileUtility.getFileSystem(HDFS_ROOT_PATH);
+        Path path = new Path("/data/warehouse/update");
+        iteratorCheckFiles(fs, path);*/
     }
 
-    private static void iteratorCheckFiles(FileSystem hdfs, Path path) {
+    private static void iteratorCheckFiles(FileSystem fs, Path path) {
         List<String> zeroScaleIndex;
         List<Map<String, Object>> recordList;
         try {
-            if (hdfs == null || path == null) {
+            if (fs == null || path == null) {
                 return;
             }
-            FileStatus[] files = hdfs.listStatus(path);
+            FileStatus[] files = fs.listStatus(path);
             int length = files.length;
             if (length > 0) {
                 List<Integer> fileNumList = new ArrayList<>();
@@ -45,7 +50,7 @@ public class ResolveCheck {
                     try {
                         if (files[i].isDirectory()) {
                             //递归调用
-                            iteratorCheckFiles(hdfs, files[i].getPath());
+                            iteratorCheckFiles(fs, files[i].getPath());
                         } else if (files[i].isFile()) {
                             int fileNum = Integer.valueOf(files[i].getPath().toString().split("\\.")[1]);
                             fileNumList.add(fileNum);
@@ -69,6 +74,7 @@ public class ResolveCheck {
                                             LOG.info("*****************");
                                             String fileUnexsist = String.join(",", zeroScaleIndex);
                                             recordMap = new HashMap<>(7);
+                                            recordMap.put("type", type);
                                             recordMap.put("db_instance", dbInstance);
                                             recordMap.put("database_name", dataBase);
                                             recordMap.put("table_name", tableName);
