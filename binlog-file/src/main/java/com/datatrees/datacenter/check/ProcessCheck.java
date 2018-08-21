@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.transfer.process;
+package com.datatrees.datacenter.check;
 
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
