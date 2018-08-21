@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.check;
+package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
@@ -19,8 +19,6 @@ public class ResolveCheck {
     private static final String HDFS_ROOT_PATH = properties.getProperty("AVRO_HDFS_PATH");
 
     public static void main(String[] args) {
-        System.out.println(args.length);
-        System.out.println(HDFS_ROOT_PATH);
         if (args.length != 0) {
             String filePath = args[0];
             FileSystem fs = HDFSFileUtility.getFileSystem(HDFS_ROOT_PATH);

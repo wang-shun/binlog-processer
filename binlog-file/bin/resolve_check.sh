@@ -34,7 +34,8 @@ start()
         else
                 echo "binlog process is starting ..."
 
-                nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} $2 > ${LOG_FILE} 2>&1 &
+                echo $2
+                nohup java -server -Xms2g -Xmx4g -classpath ${CONF_DIR}:${LIB_JARS} ${APP_MAIN_CLASS} $1 > ${LOG_FILE} 2>&1 &
 
                 checkpid
 
