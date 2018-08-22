@@ -72,7 +72,7 @@ public class HiveCompare extends BaseDataCompare {
         Map<String, Long> resultMap = new HashMap<>();
         Map<String, Long> sameIdMap = this.retainCompare(srcMap, destMap);
         for (String key : sameIdMap.keySet()) {
-            Long srcLastTime = sameIdMap.get(key);
+            Long srcLastTime = srcMap.get(key);
             Long destLastTime = sameIdMap.get(key);
             if (srcLastTime > destLastTime) {
                 resultMap.put(key, srcLastTime);

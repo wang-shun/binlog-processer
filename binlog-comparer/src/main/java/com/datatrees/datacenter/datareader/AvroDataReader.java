@@ -59,43 +59,44 @@ public class AvroDataReader extends BaseDataReader {
         if (null != recordId && null != recordLastUpdateTime) {
             Map<String, Long> uniqueMap = new HashMap<>();
             Map<String, Long> deleteMap = new HashMap<>();
+
+            DataFileStream<Object> reader = null;
             try {
-                DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());
-                Iterator<Object> iterator = reader.iterator();
-                while (iterator.hasNext()) {
-                    Object o = iterator.next();
-                    GenericRecord r = (GenericRecord) o;
-                    String operator = r.get(2).toString();
-                    JSONObject jsonObject;
-                    if (null != r.get(1)) {
-                        jsonObject = JSONObject.parseObject(r.get(1).toString());
-                    } else {
-                        jsonObject = JSONObject.parseObject(r.get(0).toString());
-                    }
-                    String id = String.valueOf(jsonObject.get(recordId));
-                    long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
-                    switch (operator) {
-                        case "Create":
-                        case "Update":
-                            uniqueMap.put(id, lastUpdateTime);
-                            break;
-                        case "Delete":
-                            uniqueMap.put(id, lastUpdateTime);
-                            deleteMap.put(id, lastUpdateTime);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                IOUtils.cleanup(null, is);
-                IOUtils.cleanup(null, reader);
-                recordMap.put(OperateType.Unique.toString(), uniqueMap);
-                recordMap.put(OperateType.Delete.toString(), deleteMap);
-                return recordMap;
-            } catch (Exception e) {
-                LOG.info("can't read the avro file");
-                return null;
+                reader = new DataFileStream<>(is, new GenericDatumReader<>());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+            Iterator<Object> iterator = reader.iterator();
+            while (iterator.hasNext()) {
+                Object o = iterator.next();
+                GenericRecord r = (GenericRecord) o;
+                String operator = r.get(2).toString();
+                JSONObject jsonObject;
+                if (null != r.get(1)) {
+                    jsonObject = JSONObject.parseObject(r.get(1).toString());
+                } else {
+                    jsonObject = JSONObject.parseObject(r.get(0).toString());
+                }
+                String id = String.valueOf(jsonObject.get(recordId));
+                long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
+                switch (operator) {
+                    case "Create":
+                    case "Update":
+                        uniqueMap.put(id, lastUpdateTime);
+                        break;
+                    case "Delete":
+                        uniqueMap.put(id, lastUpdateTime);
+                        deleteMap.put(id, lastUpdateTime);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            IOUtils.cleanup(null, is);
+            IOUtils.cleanup(null, reader);
+            recordMap.put(OperateType.Unique.toString(), uniqueMap);
+            recordMap.put(OperateType.Delete.toString(), deleteMap);
+            return recordMap;
         }
         return null;
 
@@ -124,7 +125,6 @@ public class AvroDataReader extends BaseDataReader {
                     } else {
                         jsonObject = JSONObject.parseObject(r.get(0).toString());
                     }
-                    Map<String, Object> record = new HashMap<>();
                     switch (operator) {
                         case "Create":
                             createList.add(jsonObject.entrySet());

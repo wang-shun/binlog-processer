@@ -19,7 +19,7 @@ import java.util.concurrent.*;
 public abstract class BaseDataCompare implements DataCheck {
 
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private final int fileNum = Integer.valueOf(properties.getProperty("FILE_NUM"));
+    private final int fileNum = Integer.parseInt(properties.getProperty("FILE_NUM"));
     private final int recordNum = Integer.valueOf(properties.getProperty("RECORD_NUM"));
     private static String dataBase = properties.getProperty("jdbc.database");
     private static String processLogTable = CheckTable.BINLOG_PROCESS_LOG_TABLE;
@@ -218,7 +218,7 @@ public abstract class BaseDataCompare implements DataCheck {
         return resultMap;
     }
 
-    class BatchSearchCallable implements Callable<Map<String, Long>> {
+    static class BatchSearchCallable implements Callable<Map<String, Long>> {
         private List<String> ids;
         private String tableName;
         private String columnFamily;

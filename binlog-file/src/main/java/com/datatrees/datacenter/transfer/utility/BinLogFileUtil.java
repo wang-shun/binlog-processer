@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class BinLogFileUtil {
     private static Logger LOG = LoggerFactory.getLogger(BinLogFileUtil.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private static final int PAGE_SIZE = Integer.valueOf(properties.getProperty("PAGE_SIZE"));
+    private static final int PAGE_SIZE = Integer.parseInt(properties.getProperty("PAGE_SIZE"));
 
     /**
      * 从URL中解析下载的文件名

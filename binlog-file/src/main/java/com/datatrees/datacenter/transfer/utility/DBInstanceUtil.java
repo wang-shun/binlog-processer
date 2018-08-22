@@ -21,7 +21,7 @@ import java.util.*;
 public class DBInstanceUtil {
     private static Logger LOG = LoggerFactory.getLogger(DBInstance.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private static final int PAGE_SIZE = Integer.valueOf(properties.getProperty("PAGE_SIZE"));
+    private static final int PAGE_SIZE = Integer.parseInt(properties.getProperty("PAGE_SIZE"));
     private static final String DBINSTANCE_LIST = properties.getProperty("DBINSTANCE_LIST");
     private static IAcsClient client = AliYunConfig.getClient();
     private static DefaultProfile profile = AliYunConfig.getProfile();

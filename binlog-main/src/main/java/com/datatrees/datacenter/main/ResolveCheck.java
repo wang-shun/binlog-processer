@@ -11,6 +11,8 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 
 public class ResolveCheck {
@@ -35,63 +37,65 @@ public class ResolveCheck {
     private static void iteratorCheckFiles(FileSystem fs, Path path) {
         List<String> zeroScaleIndex;
         List<Map<String, Object>> recordList;
+        if (fs == null || path == null) {
+            return;
+        }
+        FileStatus[] files = new FileStatus[0];
         try {
-            if (fs == null || path == null) {
-                return;
-            }
-            FileStatus[] files = fs.listStatus(path);
-            int length = files.length;
-            if (length > 0) {
-                List<Integer> fileNumList = new ArrayList<>();
-                recordList = new ArrayList<>();
-                for (int i = 0; i <= length - 1; i++) {
-                    try {
-                        if (files[i].isDirectory()) {
-                            //递归调用
-                            iteratorCheckFiles(fs, files[i].getPath());
-                        } else if (files[i].isFile()) {
-                            int fileNum = Integer.valueOf(files[i].getPath().toString().split("\\.")[1]);
-                            fileNumList.add(fileNum);
-                            if (i == length - 1) {
-                                if (fileNumList.size() > 0) {
-                                    Map<String, Object> recordMap;
-                                    String filePath = files[i].getPath().toString();
-                                    String[] filePathInfo = filePath.split("/");
-                                    if (filePathInfo.length > 11) {
-                                        String type = filePathInfo[5];
-                                        String dbInstance = filePathInfo[6];
-                                        String dataBase = filePathInfo[7];
-                                        String tableName = filePathInfo[8];
-                                        String year = filePathInfo[9];
-                                        String month = filePathInfo[10];
-                                        String day = filePathInfo[11];
-                                        String partition = year + "/" + month + "/" + day;
-                                        LOG.info(dbInstance + "---" + dataBase + "---" + tableName + "---" + partition);
-                                        zeroScaleIndex = findUnexsistFileNum(fileNumList);
-                                        if (zeroScaleIndex != null && zeroScaleIndex.size() > 0) {
-                                            LOG.info("*****************");
-                                            String fileUnexsist = String.join(",", zeroScaleIndex);
-                                            recordMap = new HashMap<>(7);
-                                            recordMap.put("type", type);
-                                            recordMap.put("db_instance", dbInstance);
-                                            recordMap.put("database_name", dataBase);
-                                            recordMap.put("table_name", tableName);
-                                            recordMap.put("file_partitions", partition);
-                                            recordMap.put("un_exsist_files", fileUnexsist);
-                                            recordList.add(recordMap);
-                                        }
-                                    }
+            files = fs.listStatus(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int length = files.length;
+        if (length > 0) {
+            List<Integer> fileNumList = new ArrayList<>();
+            recordList = new ArrayList<>();
+            for (int i = 0; i <= length - 1; i++) {
+
+                if (files[i].isDirectory()) {
+                    //递归调用
+                    iteratorCheckFiles(fs, files[i].getPath());
+                } else if (files[i].isFile()) {
+                    int fileNum = Integer.parseInt((files[i].getPath().toString().split("\\.")[1]));
+                    fileNumList.add(fileNum);
+                    if (i == length - 1) {
+                        if (fileNumList.size() > 0) {
+                            Map<String, Object> recordMap;
+                            String filePath = files[i].getPath().toString();
+                            String[] filePathInfo = filePath.split("/");
+                            if (filePathInfo.length > 11) {
+                                String type = filePathInfo[5];
+                                String dbInstance = filePathInfo[6];
+                                String dataBase = filePathInfo[7];
+                                String tableName = filePathInfo[8];
+                                String year = filePathInfo[9];
+                                String month = filePathInfo[10];
+                                String day = filePathInfo[11];
+                                String partition = year + "/" + month + "/" + day;
+                                LOG.info(dbInstance + "---" + dataBase + "---" + tableName + "---" + partition);
+                                zeroScaleIndex = findUnexsistFileNum(fileNumList);
+                                if (zeroScaleIndex != null && zeroScaleIndex.size() > 0) {
+                                    LOG.info("*****************");
+                                    String fileUnexsist = String.join(",", zeroScaleIndex);
+                                    recordMap = new HashMap<>(7);
+                                    recordMap.put("type", type);
+                                    recordMap.put("db_instance", dbInstance);
+                                    recordMap.put("database_name", dataBase);
+                                    recordMap.put("table_name", tableName);
+                                    recordMap.put("file_partitions", partition);
+                                    recordMap.put("un_exsist_files", fileUnexsist);
+                                    recordList.add(recordMap);
                                 }
                             }
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
-                DBUtil.insertAll(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_resolve_check", recordList);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            try {
+                DBUtil.insertAll(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_resolve_check", recordList);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -119,7 +123,7 @@ public class ResolveCheck {
                             zeroSpan = String.valueOf(fileNumList.get(0) + zeroIndex.get(0));
                         }
                         zeroScale.add(zeroSpan);
-                        zeroIndex.removeAll(zeroIndex);
+                        zeroIndex.clear();
                     }
                 }
             }

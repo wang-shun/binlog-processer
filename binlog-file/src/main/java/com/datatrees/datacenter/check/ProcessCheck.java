@@ -22,7 +22,7 @@ public class ProcessCheck {
     private static final Logger LOG = LoggerFactory.getLogger(ProcessCheck.class);
     private Properties properties = PropertiesUtility.defaultProperties();
     private String dataBase=properties.getProperty("jdbc.database");
-    private String DEST = properties != null ? properties.getProperty("HDFS_PATH") : null;
+    private String DEST = properties.getProperty("HDFS_PATH");
     private int interval = Integer.parseInt(properties.getProperty("process.check.interval"));
     private String TIME_SCALE = properties.getProperty("process.check.time.scale");
     private long INITIAL_DELAY = Integer.parseInt(properties.getProperty("process.check.schedule.task.initaildelay"));

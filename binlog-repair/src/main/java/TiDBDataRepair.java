@@ -131,7 +131,7 @@ public class TiDBDataRepair extends BaseDataRepair {
                     .append("(");
             for (int i = 0; i < dataList.size(); i++) {
                 Object object = dataList.get(i);
-                int id = Integer.valueOf(object.toString());
+                int id = Integer.parseInt(object.toString());
                 if (i < dataList.size() - 1) {
                     stringBuilder.append(id)
                             .append(",");
