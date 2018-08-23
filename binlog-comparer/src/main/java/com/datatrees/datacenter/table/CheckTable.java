@@ -15,6 +15,5 @@ public class CheckTable {
     public static final String LAST_UPDATE_TIME="last_update_time";
     public static final String PROCESS_LOG_STATUS="status";
     public static final String PARTITION_TYPE="type";
-    public static final String FILE_PARTITIONS="file_partition";
     public static final String FILE_LAST_NAME=".avro";
 }

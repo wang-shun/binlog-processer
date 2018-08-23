@@ -21,14 +21,14 @@ public class Test {
 
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
-           /* BaseDataCompare dataCompare = new TiDBCompare();
-            dataCompare.binLogCompare("1534491345-mysql-bin.001317","create");*/
+        BaseDataCompare dataCompare = new TiDBCompare();
+        dataCompare.binLogCompare("1534812634-mysql-bin.000454", "update");
         //AvroDataReader reader=new AvroDataReader();
         //reader.readSrcData("hdfs://cloudera3/data/warehouse/create/basisdataoperator/operator/t_tel_call_sheet/year=2017/month=10/day=18/1532831715-mysql-bin.000735.avro");
 
-        BaseDataCompare dataCompare1 = new TiDBCompareByDate();
-        dataCompare1.binLogCompare("ecommerce", "", "year=2018/month=8/day=22", "update");
-        // dataCompare.binLogCompare("1531931491-mysql-bin.000764");
+       /* BaseDataCompare dataCompare1 = new TiDBCompareByDate();
+        dataCompare1.binLogCompare("ecommerce", "", "year=2018/month=8/day=22", "update");*/
+        //dataCompare.binLogCompare("1531931491-mysql-bin.000764");
         //1530494870-mysql-bin.001132.tar,1530496380-mysql-bin.000811.tar
         //LOG.info("compare finished");
        /* BaseDataReader dataReader = new OrcDataReader();

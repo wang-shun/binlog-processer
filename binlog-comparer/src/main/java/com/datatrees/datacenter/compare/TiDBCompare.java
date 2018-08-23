@@ -60,11 +60,11 @@ public class TiDBCompare extends BaseDataCompare {
                 String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
                 String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
                 String fileName = String.valueOf(recordMap.get(CheckTable.FILE_NAME));
-                Set<String> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
-                recordId = FieldNameOp.getFieldName(allFieldSet, idList);
-                recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
-                if (null != recordId && null != recordLastUpdateTime) {
-                    if (partitions.length > 0) {
+                if (partitions.length > 0) {
+                    Set<String> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
+                    recordId = FieldNameOp.getFieldName(allFieldSet, idList);
+                    recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
+                    if (null != recordId && null != recordLastUpdateTime) {
                         Map<String, Long> allCreateData = new HashMap<>();
                         Map<String, Long> allUpdateData = new HashMap<>();
                         Map<String, Long> allDeleteData = new HashMap<>();
@@ -94,7 +94,7 @@ public class TiDBCompare extends BaseDataCompare {
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                             if (null != avroData) {
                                 Map<String, Long> create = avroData.get(OperateType.Create.toString());
-                                Map<String, Long> update = avroData.get(OperateType.Create.toString());
+                                Map<String, Long> update = avroData.get(OperateType.Update.toString());
                                 Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
                                 if (null != create) {
                                     allCreateData.putAll(create);
@@ -167,7 +167,7 @@ public class TiDBCompare extends BaseDataCompare {
                     checkDataMap = new HashMap<>();
                     for (Map<String, Object> errorRecord : resultList) {
                         String recordId = String.valueOf(errorRecord.get(this.recordId));
-                        long upDateTime = (Long) errorRecord.get("avroTime")*1000;
+                        long upDateTime = (Long) errorRecord.get("avroTime") * 1000;
                         checkDataMap.put(recordId, upDateTime);
                     }
                 } else {
