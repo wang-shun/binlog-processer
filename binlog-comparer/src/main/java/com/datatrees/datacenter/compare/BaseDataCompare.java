@@ -20,7 +20,7 @@ public abstract class BaseDataCompare implements DataCheck {
 
     private static Properties properties = PropertiesUtility.defaultProperties();
     private final int fileNum = Integer.parseInt(properties.getProperty("FILE_NUM"));
-    private final int recordNum = Integer.valueOf(properties.getProperty("RECORD_NUM"));
+    private final int recordNum = Integer.parseInt(properties.getProperty("RECORD_NUM"));
     private static String dataBase = properties.getProperty("jdbc.database");
     private static String processLogTable = CheckTable.BINLOG_PROCESS_LOG_TABLE;
     final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
@@ -62,7 +62,7 @@ public abstract class BaseDataCompare implements DataCheck {
     List<Map<String, Object>> getCurrentTableInfo(String fileName, String type) {
         List<Map<String, Object>> partitionInfo = null;
         String sql = "select db_instance,database_name,table_name,file_name,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,GROUP_CONCAT(file_partitions) as partitions from " +
-                " (select * from " + processLogTable + " where type=" + "'" + type + "'" + " and file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
+                " (select * from " + processLogTable + " where type=" + "'" + type + "'" + " and file_name=" + "'" + fileName + "'" + " and status=0 ) as temp group by db_instance,database_name,table_name having sum_cnt>" + recordNum;
         try {
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (SQLException e1) {
@@ -139,23 +139,24 @@ public abstract class BaseDataCompare implements DataCheck {
      * @param destMap
      * @return
      */
-    public Map<String, Long> diffCompare(Map<String, Long> srcMap, Map<String, Long> destMap) {
-
-        Set<Map.Entry<String, Long>> avroSet = srcMap.entrySet();
-        Set<Map.Entry<String, Long>> orcSet = destMap.entrySet();
+    public static Map<String, Long> diffCompare(Map<String, Long> srcMap, Map<String, Long> destMap) {
         Map<String, Long> diffMaps = null;
-        if (srcMap.size() > 0 && destMap.size() > 0) {
-            if (avroSet.removeAll(orcSet)) {
-                diffMaps = new HashMap<>();
-                for (Map.Entry entry : avroSet) {
-                    diffMaps.put(entry.getKey().toString(), Long.valueOf(entry.getValue().toString()));
+        if (srcMap != null && srcMap.size() > 0) {
+            if (destMap != null && destMap.size() > 0) {
+                Set<Map.Entry<String, Long>> avroSet = srcMap.entrySet();
+                Set<Map.Entry<String, Long>> orcSet = destMap.entrySet();
+                if (avroSet.removeAll(orcSet)) {
+                    diffMaps = new HashMap<>();
+                    for (Map.Entry entry : avroSet) {
+                        diffMaps.put(entry.getKey().toString(), Long.valueOf(entry.getValue().toString()));
+                    }
                 }
-            }
-        } else {
-            if (srcMap.size() > 0) {
-                return srcMap;
             } else {
-                return null;
+                if (srcMap.size() > 0) {
+                    return srcMap;
+                } else {
+                    return null;
+                }
             }
         }
         return diffMaps;
@@ -168,7 +169,7 @@ public abstract class BaseDataCompare implements DataCheck {
      * @param map2
      * @return
      */
-    public Map<String, Long> retainCompare(Map<String, Long> map1, Map<String, Long> map2) {
+    public static Map<String, Long> retainCompare(Map<String, Long> map1, Map<String, Long> map2) {
         Set<Map.Entry<String, Long>> set1 = map1.entrySet();
         Set<Map.Entry<String, Long>> set2 = map2.entrySet();
         Map<String, Long> diffMaps = new HashMap<>();

@@ -70,7 +70,7 @@ public class HiveCompare extends BaseDataCompare {
      */
     private Map<String, Long> compareByValue(Map<String, Long> srcMap, Map<String, Long> destMap) {
         Map<String, Long> resultMap = new HashMap<>();
-        Map<String, Long> sameIdMap = this.retainCompare(srcMap, destMap);
+        Map<String, Long> sameIdMap = this.retainCompareHive(srcMap, destMap);
         for (String key : sameIdMap.keySet()) {
             Long srcLastTime = srcMap.get(key);
             Long destLastTime = sameIdMap.get(key);
@@ -88,8 +88,7 @@ public class HiveCompare extends BaseDataCompare {
      * @param destMap 被比较的Map
      * @return
      */
-    @Override
-    public Map<String, Long> retainCompare(Map<String, Long> srcMap, Map<String, Long> destMap) {
+    public Map<String, Long> retainCompareHive(Map<String, Long> srcMap, Map<String, Long> destMap) {
         Set<String> set1 = srcMap.keySet();
         Set<String> set2 = srcMap.keySet();
         Map<String, Long> diffMaps = new HashMap<>();

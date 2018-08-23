@@ -29,9 +29,6 @@ public class ResolveCheck {
         } else {
             LOG.error("please input file path [ eg:/data/warehouse/update]");
         }
-       /* FileSystem fs = HDFSFileUtility.getFileSystem(HDFS_ROOT_PATH);
-        Path path = new Path("/data/warehouse/update");
-        iteratorCheckFiles(fs, path);*/
     }
 
     private static void iteratorCheckFiles(FileSystem fs, Path path) {

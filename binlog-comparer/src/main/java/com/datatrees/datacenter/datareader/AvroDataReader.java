@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.datareader;
 
 import com.alibaba.fastjson.JSONObject;
+import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.operate.OperateType;
@@ -57,7 +58,8 @@ public class AvroDataReader extends BaseDataReader {
     private Map<String, Map<String, Long>> readFromAvro(InputStream is) {
         Map<String, Map<String, Long>> recordMap = new HashMap<>(2);
         if (null != recordId && null != recordLastUpdateTime) {
-            Map<String, Long> uniqueMap = new HashMap<>();
+            Map<String, Long> createMap = new HashMap<>();
+            Map<String, Long> updateMap = new HashMap<>();
             Map<String, Long> deleteMap = new HashMap<>();
 
             DataFileStream<Object> reader = null;
@@ -66,36 +68,50 @@ public class AvroDataReader extends BaseDataReader {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Iterator<Object> iterator = reader.iterator();
-            while (iterator.hasNext()) {
-                Object o = iterator.next();
-                GenericRecord r = (GenericRecord) o;
-                String operator = r.get(2).toString();
-                JSONObject jsonObject;
-                if (null != r.get(1)) {
-                    jsonObject = JSONObject.parseObject(r.get(1).toString());
-                } else {
-                    jsonObject = JSONObject.parseObject(r.get(0).toString());
-                }
-                String id = String.valueOf(jsonObject.get(recordId));
-                long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
-                switch (operator) {
-                    case "Create":
-                    case "Update":
-                        uniqueMap.put(id, lastUpdateTime);
-                        break;
-                    case "Delete":
-                        uniqueMap.put(id, lastUpdateTime);
-                        deleteMap.put(id, lastUpdateTime);
-                        break;
-                    default:
-                        break;
+            Iterator<Object> iterator = null;
+            if (reader != null) {
+                iterator = reader.iterator();
+            }
+            if (iterator != null) {
+                while (iterator.hasNext()) {
+                    Object o = iterator.next();
+                    GenericRecord r = (GenericRecord) o;
+                    String operator = r.get(2).toString();
+                    JSONObject jsonObject;
+                    if (null != r.get(1)) {
+                        jsonObject = JSONObject.parseObject(r.get(1).toString());
+                    } else {
+                        jsonObject = JSONObject.parseObject(r.get(0).toString());
+                    }
+                    if (jsonObject != null) {
+                        String id = String.valueOf(jsonObject.get(recordId));
+                        long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
+                        switch (operator) {
+                            case "Create":
+                                createMap.put(id, lastUpdateTime);
+                                break;
+                            case "Update":
+                                updateMap.put(id, lastUpdateTime);
+                                break;
+                            case "Delete":
+                                deleteMap.put(id, lastUpdateTime);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                 }
             }
             IOUtils.cleanup(null, is);
             IOUtils.cleanup(null, reader);
-            recordMap.put(OperateType.Unique.toString(), uniqueMap);
+            createMap = BaseDataCompare.diffCompare(createMap, updateMap);
+            if (createMap != null) {
+                createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
+            }
+            updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
             recordMap.put(OperateType.Delete.toString(), deleteMap);
+            recordMap.put(OperateType.Create.toString(), createMap);
+            recordMap.put(OperateType.Update.toString(), updateMap);
             return recordMap;
         }
         return null;
@@ -139,8 +155,8 @@ public class AvroDataReader extends BaseDataReader {
                             break;
                     }
                 }
-                updateList.addAll(createList);
-                updateList.addAll(updateList);
+                upsertList.addAll(createList);
+                upsertList.addAll(updateList);
                 oprRecordMap = new HashMap<>(3);
                 oprRecordMap.put(OperateType.Unique.toString(), upsertList);
                 oprRecordMap.put(OperateType.Delete.toString(), deleteList);

@@ -19,8 +19,10 @@ public class FieldNameOp {
     public static String getFieldName(Set<String> allFieldName, List<String> configField) {
         Set<String> fieldSets = configField.stream().collect(Collectors.toSet());
         if (null != allFieldName && allFieldName.size() > 0) {
-            if (allFieldName.retainAll(fieldSets)) {
-                return String.valueOf(fieldSets.toArray()[0]);
+            if (fieldSets.retainAll(allFieldName)) {
+                if(fieldSets!=null&&fieldSets.size()>0) {
+                    return String.valueOf(fieldSets.toArray()[0]);
+                }
             }
         }
         return null;

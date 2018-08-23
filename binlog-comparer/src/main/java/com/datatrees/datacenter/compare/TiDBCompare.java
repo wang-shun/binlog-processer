@@ -9,6 +9,7 @@ import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,19 +32,23 @@ public class TiDBCompare extends BaseDataCompare {
 
     @Override
     public void binLogCompare(String fileName, String type) {
-        partitionType = type;
+        this.partitionType = type;
         List<Map<String, Object>> tableInfo = getCurrentTableInfo(fileName, type);
-        dataCheck(tableInfo);
-        Map<String, Object> whereMap = new HashMap<>(1);
-        whereMap.put(CheckTable.FILE_NAME, fileName);
-        whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
-        Map<String, Object> valueMap = new HashMap<>(1);
-        valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
-        try {
-            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
-            LOG.info("compare finished !");
-        } catch (SQLException e) {
-            LOG.info("change status from 0 to 1 failed of file: " + fileName);
+        if (tableInfo != null && tableInfo.size() > 0) {
+            dataCheck(tableInfo);
+            Map<String, Object> whereMap = new HashMap<>(1);
+            whereMap.put(CheckTable.FILE_NAME, fileName);
+            whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+            Map<String, Object> valueMap = new HashMap<>(1);
+            valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
+            try {
+                DBUtil.update(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
+                LOG.info("compare finished !");
+            } catch (SQLException e) {
+                LOG.info("change status from 0 to 1 failed of file: " + fileName);
+            }
+        } else {
+            Log.info("no file find need to be check");
         }
     }
 
@@ -60,7 +65,8 @@ public class TiDBCompare extends BaseDataCompare {
                 recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
                 if (null != recordId && null != recordLastUpdateTime) {
                     if (partitions.length > 0) {
-                        Map<String, Long> allUniqueData = new HashMap<>();
+                        Map<String, Long> allCreateData = new HashMap<>();
+                        Map<String, Long> allUpdateData = new HashMap<>();
                         Map<String, Long> allDeleteData = new HashMap<>();
                         AvroDataReader avroDataReader = new AvroDataReader();
                         List<String> partitionList = Arrays.asList(partitions);
@@ -87,27 +93,35 @@ public class TiDBCompare extends BaseDataCompare {
 
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                             if (null != avroData) {
-                                Map<String, Long> unique = avroData.get(OperateType.Unique.toString());
+                                Map<String, Long> create = avroData.get(OperateType.Create.toString());
+                                Map<String, Long> update = avroData.get(OperateType.Create.toString());
                                 Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
-                                if (null != unique) {
-                                    allUniqueData.putAll(unique);
+                                if (null != create) {
+                                    allCreateData.putAll(create);
+                                }
+                                if (null != update) {
+                                    allUpdateData.putAll(update);
                                 }
                                 if (null != delete) {
                                     allDeleteData.putAll(delete);
                                 }
                             }
                         }
-                        Map<String, Long> filterDeleteMap = diffCompare(allUniqueData, allDeleteData);
+                        allCreateData = BaseDataCompare.diffCompare(allCreateData, allUpdateData);
+                        allCreateData = BaseDataCompare.diffCompare(allCreateData, allDeleteData);
+                        allUpdateData = BaseDataCompare.diffCompare(allUpdateData, allDeleteData);
                         CheckResult checkResult = new CheckResult();
                         checkResult.setDataBase(dataBase);
                         checkResult.setTableName(tableName);
                         checkResult.setFileName(fileName);
                         checkResult.setDbInstance(dbInstance);
-                        checkResult.setOpType(OperateType.Unique.toString());
-                        checkAndSaveErrorData(checkResult, filterDeleteMap, OperateType.Unique, CheckTable.BINLOG_CHECK_TABLE);
-                        checkResult.setOpType(OperateType.Delete.toString());
                         checkResult.setFilePartition(Arrays.toString(partitions));
-                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_DATE_TABLE);
+                        checkResult.setOpType(OperateType.Create.toString());
+                        checkAndSaveErrorData(checkResult, allCreateData, OperateType.Create, CheckTable.BINLOG_CHECK_TABLE);
+                        checkResult.setOpType(OperateType.Update.toString());
+                        checkAndSaveErrorData(checkResult, allUpdateData, OperateType.Update, CheckTable.BINLOG_CHECK_TABLE);
+                        checkResult.setOpType(OperateType.Delete.toString());
+                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_TABLE);
                     }
                 }
             }
@@ -125,7 +139,12 @@ public class TiDBCompare extends BaseDataCompare {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
             LOG.info("本次采样得到的数据量为：" + sampleData.size());
             Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleData, op);
-            batchInsert(checkResult, afterCompare, saveTable);
+            if (OperateType.Create.equals(op)) {
+                Map<String, Long> creteNotFound = BaseDataCompare.diffCompare(dataMap, afterCompare);
+                batchInsert(checkResult, creteNotFound, saveTable);
+            } else {
+                batchInsert(checkResult, afterCompare, saveTable);
+            }
         }
     }
 
@@ -148,7 +167,7 @@ public class TiDBCompare extends BaseDataCompare {
                     checkDataMap = new HashMap<>();
                     for (Map<String, Object> errorRecord : resultList) {
                         String recordId = String.valueOf(errorRecord.get(this.recordId));
-                        long upDateTime = (Long) errorRecord.get("avroTime");
+                        long upDateTime = (Long) errorRecord.get("avroTime")*1000;
                         checkDataMap.put(recordId, upDateTime);
                     }
                 } else {
@@ -170,7 +189,7 @@ public class TiDBCompare extends BaseDataCompare {
         if (null != sampleData && sampleData.size() > 0) {
             int sampleDataSize = sampleData.size();
             switch (op) {
-                case Unique: {
+                case Update: {
                     for (int i = 0; i < sampleDataSize; i++) {
                         Map.Entry record = sampleData.get(i);
                         long timeStamp = (Long) record.getValue() / 1000;
@@ -208,6 +227,7 @@ public class TiDBCompare extends BaseDataCompare {
                     }
                     break;
                 }
+                case Create:
                 case Delete: {
                     for (int i = 0; i < sampleDataSize; i++) {
                         Map.Entry record = sampleData.get(i);
@@ -250,7 +270,8 @@ public class TiDBCompare extends BaseDataCompare {
                 dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
                 dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
                 dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
-                dataMap.put(CheckTable.PARTITION_TYPE,partitionType);
+                dataMap.put(CheckTable.PARTITION_TYPE, partitionType);
+                dataMap.put(CheckTable.FILE_PARTITION, result.getFilePartition());
                 long time = entry.getValue();
                 if (String.valueOf(time).length() == 10) {
                     dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue() * 1000));

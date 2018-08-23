@@ -5,6 +5,7 @@ cd `dirname $0`
 BIN_DIR=`pwd`
 cd ..
 DEPLOY_DIR=`pwd`
+#HADOOP_CONF_DIR==/etc/hadoop/conf
 CONF_DIR=${DEPLOY_DIR}/conf
 LOG_DIR=${DEPLOY_DIR}/logs
 LIB_DIR=${DEPLOY_DIR}/lib
