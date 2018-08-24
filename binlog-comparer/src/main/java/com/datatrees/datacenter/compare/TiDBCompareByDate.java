@@ -24,11 +24,10 @@ public class TiDBCompareByDate extends TiDBCompare {
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
     private String recordId;
     private String recordLastUpdateTime;
-    private String partitionType;
 
     @Override
     public void binLogCompare(String dataBase, String table, String partition, String type) {
-        this.partitionType = type;
+        super.partitionType = type;
         List<Map<String, Object>> specifiedDateTable = BaseDataCompare.getSpecifiedDateTableInfo(dataBase, table, partition, type);
         dataCheck(specifiedDateTable);
         Map<String, Object> whereMap = new HashMap<>();
@@ -61,7 +60,7 @@ public class TiDBCompareByDate extends TiDBCompare {
                 if (filePaths.length > 0) {
                     List<String> fileList = Arrays.asList(filePaths);
                     Collections.sort(fileList);
-                    Set<String> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
+                    Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
                     recordId = FieldNameOp.getFieldName(allFieldSet, idList);
                     recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
                     if (null != recordId && null != recordLastUpdateTime) {

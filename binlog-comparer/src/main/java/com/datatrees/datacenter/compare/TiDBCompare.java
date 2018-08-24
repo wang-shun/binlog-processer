@@ -28,7 +28,7 @@ public class TiDBCompare extends BaseDataCompare {
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
     String recordId;
     String recordLastUpdateTime;
-    private String partitionType;
+    public String partitionType;
 
     @Override
     public void binLogCompare(String fileName, String type) {
@@ -61,7 +61,7 @@ public class TiDBCompare extends BaseDataCompare {
                 String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
                 String fileName = String.valueOf(recordMap.get(CheckTable.FILE_NAME));
                 if (partitions.length > 0) {
-                    Set<String> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
+                    Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
                     recordId = FieldNameOp.getFieldName(allFieldSet, idList);
                     recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
                     if (null != recordId && null != recordLastUpdateTime) {
@@ -138,12 +138,25 @@ public class TiDBCompare extends BaseDataCompare {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
             LOG.info("本次采样得到的数据量为：" + sampleData.size());
+            String dataBase = checkResult.getDataBase();
+            String table = checkResult.getTableName();
+            String tableFieldSql = "select * from " + "`" + dataBase + "`." + table + " limit 1";
             Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleData, op);
-            if (OperateType.Create.equals(op)) {
-                Map<String, Long> creteNotFound = BaseDataCompare.diffCompare(dataMap, afterCompare);
-                batchInsert(checkResult, creteNotFound, saveTable);
+            List<Map<String, Object>> mapList = null;
+            try {
+                mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            if (mapList != null && mapList.size() > 0) {
+                if (OperateType.Create.equals(op)) {
+                    Map<String, Long> creteNotFound = BaseDataCompare.diffCompare(dataMap, afterCompare);
+                    batchInsert(checkResult, creteNotFound, saveTable);
+                } else {
+                    batchInsert(checkResult, afterCompare, saveTable);
+                }
             } else {
-                batchInsert(checkResult, afterCompare, saveTable);
+                batchInsert(checkResult, dataMap, saveTable);
             }
         }
     }
@@ -168,6 +181,8 @@ public class TiDBCompare extends BaseDataCompare {
                     for (Map<String, Object> errorRecord : resultList) {
                         String recordId = String.valueOf(errorRecord.get(this.recordId));
                         long upDateTime = (Long) errorRecord.get("avroTime") * 1000;
+                        // TODO: 2018/8/24
+                        System.out.println(upDateTime);
                         checkDataMap.put(recordId, upDateTime);
                     }
                 } else {

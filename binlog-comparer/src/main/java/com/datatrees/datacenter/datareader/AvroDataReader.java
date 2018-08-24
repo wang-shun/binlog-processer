@@ -86,18 +86,20 @@ public class AvroDataReader extends BaseDataReader {
                     if (jsonObject != null) {
                         String id = String.valueOf(jsonObject.get(recordId));
                         long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
-                        switch (operator) {
-                            case "Create":
-                                createMap.put(id, lastUpdateTime);
-                                break;
-                            case "Update":
-                                updateMap.put(id, lastUpdateTime);
-                                break;
-                            case "Delete":
-                                deleteMap.put(id, lastUpdateTime);
-                                break;
-                            default:
-                                break;
+                        if (id != null && Long.valueOf(lastUpdateTime) != null) {
+                            switch (operator) {
+                                case "Create":
+                                    createMap.put(id, lastUpdateTime);
+                                    break;
+                                case "Update":
+                                    updateMap.put(id, lastUpdateTime);
+                                    break;
+                                case "Delete":
+                                    deleteMap.put(id, lastUpdateTime);
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                     }
                 }
@@ -130,7 +132,6 @@ public class AvroDataReader extends BaseDataReader {
                 List<Set<Map.Entry<String, Object>>> createList = new ArrayList<>();
                 List<Set<Map.Entry<String, Object>>> updateList = new ArrayList<>();
                 List<Set<Map.Entry<String, Object>>> deleteList = new ArrayList<>();
-                List<Set<Map.Entry<String, Object>>> upsertList = new ArrayList<>();
                 while (iterator.hasNext()) {
                     Object o = iterator.next();
                     GenericRecord r = (GenericRecord) o;
@@ -155,10 +156,9 @@ public class AvroDataReader extends BaseDataReader {
                             break;
                     }
                 }
-                upsertList.addAll(createList);
-                upsertList.addAll(updateList);
                 oprRecordMap = new HashMap<>(3);
-                oprRecordMap.put(OperateType.Unique.toString(), upsertList);
+                oprRecordMap.put(OperateType.Create.toString(), createList);
+                oprRecordMap.put(OperateType.Update.toString(), updateList);
                 oprRecordMap.put(OperateType.Delete.toString(), deleteList);
 
             } catch (IOException e) {

@@ -20,10 +20,25 @@
     </default-config>
 
     <!-- 命名配置，如果有多个数据库，可以使用命名配置来区分 -->
-    <named-config name="TIDB">
+    <!--<named-config name="TIDB">
         <property name="jdbcUrl">jdbc:mysql://TiDB1:3306/loandb?useUnicode=true&amp;characterEncoding=utf-8</property>
         <property name="user">tidb_rd</property>
         <property name="password">T87MQVWJKUo8VXeV</property>
+        <property name="driverClass">com.mysql.jdbc.Driver</property>
+
+        <property name="initialPoolSize">10</property>
+        <property name="maxPoolSize">1000</property>
+        <property name="checkoutTimeout">30000</property>
+        <property name="testConnectionOnCheckin">true</property>
+        <property name="testConnectionOnCheckout">false</property>
+        <property name="idleConnectionTestPeriod">60</property>
+        <property name="maxIdleTime">3000</property>
+        <property name="breakAfterAcquireFailure">true</property>
+    </named-config>-->
+    <named-config name="TIDB">
+        <property name="jdbcUrl">jdbc:mysql://TiDB1:3306/INFORMATION_SCHEMA?useUnicode=true&amp;characterEncoding=utf-8</property>
+        <property name="user">root</property>
+        <property name="password">tf@007001</property>
         <property name="driverClass">com.mysql.jdbc.Driver</property>
 
         <property name="initialPoolSize">10</property>

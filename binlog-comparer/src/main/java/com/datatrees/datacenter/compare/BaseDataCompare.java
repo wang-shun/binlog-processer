@@ -74,19 +74,18 @@ public abstract class BaseDataCompare implements DataCheck {
     /**
      * 查询指定库、表、分区以及分区类型的信息
      *
-     * @param instance
      * @param tableName
      * @param partitions
      * @param partitionType
      * @return
      */
-    public static List<Map<String, Object>> getSpecifiedDateTableInfo(String instance, String tableName, String partitions, String partitionType) {
+    public static List<Map<String, Object>> getSpecifiedDateTableInfo(String dataBase, String tableName, String partitions, String partitionType) {
         List<Map<String, Object>> partitionInfo = null;
         Map<String, String> whereMap = new HashMap<>();
-        whereMap.put(CheckTable.DATA_BASE, instance);
+        whereMap.put(CheckTable.DATA_BASE, dataBase);
         whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.FILE_PARTITION, partitions);
-        whereMap.put("type", partitionType);
+        whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
         StringBuilder whereExpress = getStringBuilder(whereMap);
         try {
           /*  String maxLen = "SET GLOBAL group_concat_max_len = 102400";

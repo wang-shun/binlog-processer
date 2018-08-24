@@ -6,6 +6,9 @@ import com.datatrees.datacenter.compare.TiDBCompareByDate;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.datareader.BaseDataReader;
 import com.datatrees.datacenter.datareader.OrcDataReader;
+
+
+import com.datatrees.datacenter.repair.TiDBDataRepair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,13 +24,14 @@ public class Test {
 
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
-        BaseDataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1534812634-mysql-bin.000454", "update");
+        /*BaseDataCompare dataCompare = new TiDBCompare();
+        dataCompare.binLogCompare("1534812634-mysql-bin.000454", "update");*/
         //AvroDataReader reader=new AvroDataReader();
         //reader.readSrcData("hdfs://cloudera3/data/warehouse/create/basisdataoperator/operator/t_tel_call_sheet/year=2017/month=10/day=18/1532831715-mysql-bin.000735.avro");
 
-       /* BaseDataCompare dataCompare1 = new TiDBCompareByDate();
-        dataCompare1.binLogCompare("ecommerce", "", "year=2018/month=8/day=22", "update");*/
+        /*BaseDataCompare dataCompare1 = new TiDBCompareByDate();
+        dataCompare1.binLogCompare("test_db", "zz", "year=2018/month=8/day=20", "update");*/
+
         //dataCompare.binLogCompare("1531931491-mysql-bin.000764");
         //1530494870-mysql-bin.001132.tar,1530496380-mysql-bin.000811.tar
         //LOG.info("compare finished");
@@ -46,7 +50,7 @@ public class Test {
         } catch (SQLException e) {
             e.printStackTrace();
         }*/
-
-
+        TiDBDataRepair tiDBDataRepair = new TiDBDataRepair();
+        tiDBDataRepair.repairByTime("test_db", "zz", "year=2018/month=8/day=20", "update");
     }
 }
