@@ -3,10 +3,25 @@
     <!-- 默认配置 -->
     <!-- 属性规则：name值和方法名称相同 -->
     <default-config name="MYSQL">
-        <property name="jdbcUrl">jdbc:mysql://cloudera3:3306/binlog?useUnicode=true&amp;characterEncoding=utf-8
+        <!--<property name="jdbcUrl">jdbc:mysql://cloudera3:3306/binlog?useUnicode=true&amp;characterEncoding=utf-8-->
+        <!--</property>-->
+        <!--<property name="user">root</property>-->
+        <!--<property name="password">dashu0701</property>-->
+        <!--<property name="driverClass">com.mysql.jdbc.Driver</property>-->
+
+        <!--<property name="initialPoolSize">10</property>-->
+        <!--<property name="maxPoolSize">1000</property>-->
+        <!--<property name="checkoutTimeout">30000</property>-->
+        <!--<property name="testConnectionOnCheckin">true</property>-->
+        <!--<property name="testConnectionOnCheckout">false</property>-->
+        <!--<property name="idleConnectionTestPeriod">60</property>-->
+        <!--<property name="maxIdleTime">3000</property>-->
+        <!--<property name="breakAfterAcquireFailure">true</property>-->
+
+        <property name="jdbcUrl">jdbc:mysql://localhost:3307/binlog?useUnicode=true&amp;characterEncoding=utf-8
         </property>
         <property name="user">root</property>
-        <property name="password">dashu0701</property>
+        <property name="password">123456</property>
         <property name="driverClass">com.mysql.jdbc.Driver</property>
 
         <property name="initialPoolSize">10</property>
