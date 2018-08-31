@@ -159,7 +159,7 @@ public class DBbiz {
       if (ignore.size() > 0) {
         Object ignoreDatabases = ignore.get(0).get("database_name");
         if (null != ignoreDatabases) {
-          Arrays.asList(ignoreDatabases.toString().split(","));
+          return Arrays.asList(ignoreDatabases.toString().split(","));
         }
       }
     } catch (Exception e) {
