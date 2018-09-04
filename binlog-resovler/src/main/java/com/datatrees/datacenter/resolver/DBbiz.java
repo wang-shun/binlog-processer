@@ -157,7 +157,10 @@ public class DBbiz {
         .query(DBServer.DBServerType.MYSQL.toString(), dataBase, "t_binlog_ignore",
           ImmutableMap.<String, Object>builder().put("file_name", file).build());
       if (ignore.size() > 0) {
-        return Arrays.asList(ignore.get(0).get("database_name").toString().split(","));
+        Object ignoreDatabases = ignore.get(0).get("database_name");
+        if (null != ignoreDatabases) {
+          return Arrays.asList(ignoreDatabases.toString().split(","));
+        }
       }
     } catch (Exception e) {
       logger.error(String
@@ -175,14 +178,16 @@ public class DBbiz {
         .query(DBServer.DBServerType.MYSQL.toString(), dataBase, "t_binlog_ignore",
           ImmutableMap.<String, Object>builder().put("file_name", file).build());
       if (ignore.size() > 0) {
-        return Arrays.asList(ignore.get(0).get("table_name").toString().split(","));
+        Object ignoreTables = ignore.get(0).get("table_name");
+        if (null != ignoreTables) {
+          return Arrays.asList(ignoreTables.toString().split(","));
+        }
       }
     } catch (Exception e) {
       logger.error(String
         .format("error to report status"), e);
     }
     return emptyList();
-//    return new ArrayList<>();
   }
 
   public static void updateIgnore(String file, Map<String, AtomicLong> ignoreMessage) {

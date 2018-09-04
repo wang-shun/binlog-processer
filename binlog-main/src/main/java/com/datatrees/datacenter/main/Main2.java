@@ -170,14 +170,25 @@ public class Main2 {
 //        }).start();
 
 //        new Thread(() -> {
-//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.001012.tar", "rm-bp101325tnut8me53_1529811602-mysql-bin.001012.tar", "acrm-usercenter.mysql.rds.aliyuncs.com");
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000327", "rm-bp1x3mt0ogici00l5_1529811602-mysql-bin.000270.tar", "basisdataoperator3.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+//
+//        new Thread(() -> {
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000933", "rm-bp1py1768bl28z5zs_1529811602-mysql-bin.000933.tar", "basisdataoperator4.mysql.rds.aliyuncs.com");
 //            TaskDispensor.defaultDispensor().dispense(binlog);
 //        }).start();
 
-        new Thread(() -> {
-            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.000203", "rm-bp101325tnut8me53_1529811602-mysql-bin.000203.tar", "basisdataoperator3.mysql.rds.aliyuncs.com");
-            TaskDispensor.defaultDispensor().dispense(binlog);
-        }).start();
+//        new Thread(() -> {
+//            Binlog binlog = new Binlog("hdfs://localhost:9000/pc/1533220479-mysql-bin.001160", "rm-bp114u46sxgr719pf_1533220479-mysql-bin.001160", "acrm-usercenter.mysql.rds.aliyuncs.com");
+//            TaskDispensor.defaultDispensor().dispense(binlog);
+//        }).start();
+
+      new Thread(() -> {
+        Binlog binlog = new Binlog("hdfs://localhost:9000/pc/1535168038-mysql-bin.000951", "rdspp6t6sg70l3aw79gs_1535168038-mysql-bin.000951", "gongfudai.mysql.rds.aliyuncs.com");
+        TaskDispensor.defaultDispensor().dispense(binlog);
+      }).start();
+
 
     }
 }
