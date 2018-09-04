@@ -172,7 +172,7 @@ public class TiDBCompare extends BaseDataCompare {
     private void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTable) {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
-            LOG.info("the number of sampled data is ：" + sampleData.size() + " the operate type is ：" + op.toString());
+            LOG.info("the number of sampled data is ：[" + sampleData.size() + "], the operate type is ：[" + op.toString()+"]");
             List<List<Map.Entry<String, Long>>> splitData = Lists.partition(sampleData, 10000);
             if (OperateType.Create.equals(op)) {
                 Map<String, Long> allNoFoundCreate = new HashMap<>();

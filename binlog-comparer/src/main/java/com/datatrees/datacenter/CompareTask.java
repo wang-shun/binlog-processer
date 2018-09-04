@@ -14,6 +14,11 @@ public class CompareTask implements TaskRunner {
                     @Override
                     public void onMessageReceived(String desc) {
                         BaseDataCompare compare = new TiDBCompare();
+                        try {
+                            Thread.sleep(10000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         compare.binLogCompare(desc, "update");
                     }
                 }).process();

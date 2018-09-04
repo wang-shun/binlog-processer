@@ -28,10 +28,12 @@ public class Test {
         // TODO: 2018/8/27 新版本发布前需要检查配置文件是否需要更新
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
-        /*BaseDataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1535419127-mysql-bin.000405", "update");*/
-        //AvroDataReader reader=new AvroDataReader();
-        //reader.readSrcData("hdfs://cloudera3/data/warehouse/create/basisdataoperator/operator/t_tel_call_sheet/year=2017/month=10/day=18/1532831715-mysql-bin.000735.avro");
+
+        BaseDataCompare dataCompare = new TiDBCompare();
+        dataCompare.binLogCompare("1536058717-mysql-bin.000997", "update");
+
+       /* AvroDataReader reader=new AvroDataReader();
+        reader.readSrcData("hdfs://cloudera3/data/warehouse/update/gongfudai/loandb/t_user_blacklist/year=2018/month=7/day=5/1536058717-mysql-bin.000997.avro");*/
 
         //dataCompare1.binLogCompare("ecommerce", "t_taobao_address", "year=2018/month=8/day=20", "update");
 
@@ -68,7 +70,8 @@ public class Test {
         idList.add("216486752306237458");
         AvroDataReader.filterDataByIdList("hdfs://cloudera3/data/warehouse/update/dataplatform/basisdata/wy_basic_shopping_sheet/year=2018/month=8/day=21", "basisdata", "wy_basic_shopping_sheet", idList);*/
 
-        CheckResult checkResult = new CheckResult();
+        //repair test
+       /* CheckResult checkResult = new CheckResult();
         String dbInstance = "gongfudai";
         String dataBase = "test_db";
         String partition = "year=2018/month=8/day=20";
@@ -100,7 +103,7 @@ public class Test {
             e.printStackTrace();
         }
         TiDBDataRepair repair = new TiDBDataRepair();
-        repair.repairByIdList(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);
+        repair.repairByIdList(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);*/
 
        /* Map<String, List<Set<Map.Entry<String, Object>>>> dataRecord = AvroDataReader.readAvroDataById(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);
         List<Set<Map.Entry<String, Object>>> dataMap = dataRecord.get(OperateType.Create.toString());
