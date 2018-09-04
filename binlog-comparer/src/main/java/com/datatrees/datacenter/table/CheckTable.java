@@ -20,4 +20,5 @@ public class CheckTable {
     public static final String FILES_PATH="files_path";
     public static final String ID_LIST="id_list";
     public static final String DATA_COUNT="data_count";
+    public static final String STATUS="repair_status";
 }

@@ -11,20 +11,20 @@ public class StringBuilderUtil {
      * @param whereMap
      * @return
      */
-    public static StringBuilder getStringBuilder(Map<String, String> whereMap) {
+    public static StringBuilder getStringBuilder(Map<String, Object> whereMap) {
         whereMap.values().remove("");
-        List<Map.Entry<String, String>> map2List;
+        List<Map.Entry<String, Object>> map2List;
         map2List = new ArrayList<>(whereMap.entrySet());
         StringBuilder whereExpress = new StringBuilder();
         if (whereMap.size() > 0) {
             whereExpress.append(" where ");
             for (int i = 0, length = map2List.size(); i < length; i++) {
-                Map.Entry<String, String> express = map2List.get(i);
+                Map.Entry<String, Object> express = map2List.get(i);
                 whereExpress
                         .append(express.getKey())
                         .append("=")
                         .append("'")
-                        .append(express.getValue())
+                        .append(String.valueOf(express.getValue()))
                         .append("'")
                         .append(" ");
                 if (i < map2List.size() - 1) {

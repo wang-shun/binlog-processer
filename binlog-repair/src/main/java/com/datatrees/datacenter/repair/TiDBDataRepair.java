@@ -12,6 +12,8 @@ import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
+import javafx.beans.binding.ObjectExpression;
+import org.apache.hive.com.esotericsoftware.minlog.Log;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -54,7 +56,7 @@ public class TiDBDataRepair implements BaseDataRepair {
     @Override
     public void repairByFile(String fileName, String partitionType) {
         //读取某个文件，并将所有记录解析出来重新插入到数据库
-        Map<String, String> whereMap = new HashMap<>(6);
+        Map<String, Object> whereMap = new HashMap<>(6);
         whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
         whereMap.put(CheckTable.DATA_BASE, dataBase);
         whereMap.put(CheckTable.TABLE_NAME, tableName);
@@ -133,6 +135,26 @@ public class TiDBDataRepair implements BaseDataRepair {
                         e.printStackTrace();
                     }
                 }
+            }
+            Map<String, Object> whereMap = new HashMap<>();
+            String dbInstance = checkResult.getDbInstance();
+            String tableName = checkResult.getTableName();
+            String partition = checkResult.getFilePartition();
+            String partitionType = checkResult.getPartitionType();
+            whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
+            whereMap.put(CheckTable.DATA_BASE, dataBase);
+            whereMap.put(CheckTable.TABLE_NAME, tableName);
+            whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+            whereMap.put(CheckTable.FILE_PARTITION, partition);
+            whereMap.values().remove("");
+            StringBuilder whereExpress = StringBuilderUtil.getStringBuilder(whereMap);
+            String sql = "select id_list,files_path,operate_type from " + checkTable + " " + whereExpress;
+            Map<String, Object> valueMap = new HashMap<>();
+            valueMap.put(CheckTable.STATUS, 1);
+            try {
+                DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, checkTable, valueMap, whereMap);
+            } catch (SQLException e) {
+                Log.error("update repaired record in " + checkTable + " failed with Exception :", e);
             }
         }
     }
@@ -225,7 +247,7 @@ public class TiDBDataRepair implements BaseDataRepair {
                         if (value instanceof JSONObject) {
                             String valueStr = null;
                             try {
-                                valueStr = new String(((JSONObject) value).getString("bytes").getBytes("iso8859-1"),"utf-8");
+                                valueStr = new String(((JSONObject) value).getString("bytes").getBytes("iso8859-1"), "utf-8");
                             } catch (UnsupportedEncodingException e) {
                                 e.printStackTrace();
                             }

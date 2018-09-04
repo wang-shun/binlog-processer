@@ -186,7 +186,7 @@ public class AvroDataReader extends BaseDataReader {
     }
 
     public static Map<String, List<Set<Map.Entry<String, Object>>>> readAvroDataById(CheckResult checkResult, String checkTable) {
-        Map<String, String> whereMap = new HashMap<>();
+        Map<String, Object> whereMap = new HashMap<>();
         String dbInstance = checkResult.getDbInstance();
         String dataBase = checkResult.getDataBase();
         String tableName = checkResult.getTableName();

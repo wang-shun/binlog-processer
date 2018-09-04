@@ -85,7 +85,7 @@ public abstract class BaseDataCompare implements DataCheck {
      */
     public static List<Map<String, Object>> getSpecifiedDateTableInfo(String dataBase, String tableName, String partitions, String partitionType) {
         List<Map<String, Object>> partitionInfo = null;
-        Map<String, String> whereMap = new HashMap<>();
+        Map<String, Object> whereMap = new HashMap<>();
         whereMap.put(CheckTable.DATA_BASE, dataBase);
         whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.FILE_PARTITION, partitions);

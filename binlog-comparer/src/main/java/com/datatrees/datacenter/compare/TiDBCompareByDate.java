@@ -127,7 +127,6 @@ public class TiDBCompareByDate extends TiDBCompare {
                                 }
                             }
                         }
-
                         allCreate = BaseDataCompare.diffCompare(allCreate, allUpdate);
                         allCreate = BaseDataCompare.diffCompare(allCreate, allDelete);
                         allUpdate = BaseDataCompare.diffCompare(allUpdate, allDelete);

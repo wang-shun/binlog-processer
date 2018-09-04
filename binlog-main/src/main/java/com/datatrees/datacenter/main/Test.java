@@ -35,9 +35,9 @@ public class Test {
 
         //dataCompare1.binLogCompare("ecommerce", "t_taobao_address", "year=2018/month=8/day=20", "update");
 
-        BaseDataCompare dataCompare1 = new TiDBCompareByDate();
-        dataCompare1.binLogCompare("antifraud", "atf_cautious_hit_record", "year=2018/month=8/day=28", "update");
-
+       /* BaseDataCompare dataCompare1 = new TiDBCompareByDate();
+        dataCompare1.binLogCompare("test_db", "zz", "year=2018/month=8/day=20", "update");
+*/
         //dataCompare.binLogCompare("1531931491-mysql-bin.000764");
         //1530494870-mysql-bin.001132.tar,1530496380-mysql-bin.000811.tar
         //LOG.info("compare finished");
@@ -68,12 +68,12 @@ public class Test {
         idList.add("216486752306237458");
         AvroDataReader.filterDataByIdList("hdfs://cloudera3/data/warehouse/update/dataplatform/basisdata/wy_basic_shopping_sheet/year=2018/month=8/day=21", "basisdata", "wy_basic_shopping_sheet", idList);*/
 
-        /*CheckResult checkResult = new CheckResult();
-        String dbInstance = "dataplatform";
-        String dataBase = "basisdata";
-        String partition = "year=2018/month=8/day=21";
+        CheckResult checkResult = new CheckResult();
+        String dbInstance = "gongfudai";
+        String dataBase = "test_db";
+        String partition = "year=2018/month=8/day=20";
         String partitionType = "update";
-        String tableName = "wy_basic_shopping_sheet";
+        String tableName = "zz";
         checkResult.setDbInstance(dbInstance);
         checkResult.setDataBase(dataBase);
         checkResult.setFilePartition(partition);
@@ -100,7 +100,7 @@ public class Test {
             e.printStackTrace();
         }
         TiDBDataRepair repair = new TiDBDataRepair();
-        repair.repairByIdList(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);*/
+        repair.repairByIdList(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);
 
        /* Map<String, List<Set<Map.Entry<String, Object>>>> dataRecord = AvroDataReader.readAvroDataById(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);
         List<Set<Map.Entry<String, Object>>> dataMap = dataRecord.get(OperateType.Create.toString());
