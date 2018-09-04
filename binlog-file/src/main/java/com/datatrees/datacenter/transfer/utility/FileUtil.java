@@ -21,7 +21,7 @@ public class FileUtil {
      * @return 文件大小
      */
     public long getFileSize(String path) {
-        int len = -1;
+        Long len = -1L;
         try {
             URL url = new URL(path);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -39,7 +39,7 @@ public class FileUtil {
                 header = connection.getHeaderFieldKey(i);
                 if (header != null) {
                     if ("Content-Length".equals(header)) {
-                        len = Integer.parseInt(connection.getHeaderField(header));
+                        len = Long.parseLong(connection.getHeaderField(header));
                         break;
                     }
                 } else {

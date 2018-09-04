@@ -49,7 +49,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private String endTime;
     private String dataBase = properties.getProperty("jdbc.database");
 
-
     @Override
     public void process() {
 
