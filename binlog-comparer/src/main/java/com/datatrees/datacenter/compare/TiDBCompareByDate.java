@@ -64,13 +64,7 @@ public class TiDBCompareByDate extends TiDBCompare {
                     recordId = FieldNameOp.getFieldName(allFieldSet, idList);
                     recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, updateTimeList);
                     if (null != recordId && null != recordLastUpdateTime) {
-                        String tableFieldSql = "select * from " + "`" + dataBase + "`." + tableName + " limit 1";
-                        List<Map<String, Object>> mapList = null;
-                        try {
-                            mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
+                        List<Map<String, Object>> mapList = this.getOneRecordFromTable(dataBase, tableName);
                         super.recordId = recordId;
                         super.recordLastUpdateTime = recordLastUpdateTime;
                         AvroDataReader avroDataReader = new AvroDataReader();

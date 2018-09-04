@@ -34,7 +34,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
     private Properties properties = PropertiesUtility.defaultProperties();
     private final String REGEX_PATTERN = properties.getProperty("REGEX_PATTERN");
-    private final String BINLOG_ACTION_NAME = properties.getProperty("BINLOG_ACTION_NAME");
+    private final String BINLOG_ACTION_NAME = "DescribeBinlogFiles";
     private final String HDFS_PATH = properties.getProperty("HDFS_PATH");
     private final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
     private int retryTimes = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));

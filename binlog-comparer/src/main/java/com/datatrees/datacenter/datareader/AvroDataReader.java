@@ -99,9 +99,6 @@ public class AvroDataReader extends BaseDataReader {
                     }
                     if (jsonObject != null) {
                         String id = String.valueOf(jsonObject.get(recordId));
-                        if("218992516807696384".equals(id)){
-                            System.out.println(id);
-                        }
                         long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
                         if (id != null && Long.valueOf(lastUpdateTime) != null) {
                             switch (operator) {
@@ -177,7 +174,6 @@ public class AvroDataReader extends BaseDataReader {
                 oprRecordMap.put(OperateType.Create.toString(), createList);
                 oprRecordMap.put(OperateType.Update.toString(), updateList);
                 oprRecordMap.put(OperateType.Delete.toString(), deleteList);
-
             } catch (IOException e) {
                 e.printStackTrace();
             }

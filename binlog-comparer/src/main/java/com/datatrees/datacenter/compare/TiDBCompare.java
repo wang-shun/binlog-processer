@@ -25,7 +25,6 @@ public class TiDBCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
     private final String sampleFlag = properties.getProperty("SAMPLE_FLAG");
-    private final String sampleDefalut = "yes";
     private static String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
@@ -68,19 +67,13 @@ public class TiDBCompare extends BaseDataCompare {
                     recordId = FieldNameOp.getFieldName(allFieldSet, idList);
                     recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
                     if (null != recordId && null != recordLastUpdateTime) {
-
-                        String tableFieldSql = "select * from " + "`" + dataBase + "`." + tableName + " limit 1";
-                        List<Map<String, Object>> mapList = null;
-                        try {
-                            mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
+                        List<Map<String, Object>> mapList = getOneRecordFromTable(dataBase, tableName);
                         Map<String, Long> allCreate = new HashMap<>();
                         Map<String, Long> allUpdate = new HashMap<>();
                         Map<String, Long> allDelete = new HashMap<>();
                         AvroDataReader avroDataReader = new AvroDataReader();
-                        List<String> partitionList = Arrays.asList(partitions);
+                        List<String> partitionList;
+                        partitionList = Arrays.asList(partitions);
                         partitionList.remove(null);
 
                         CheckResult checkResult = new CheckResult();
@@ -176,12 +169,11 @@ public class TiDBCompare extends BaseDataCompare {
      * @param checkResult 结果对象
      * @param dataMap     待抽样数据
      */
-    void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTable) {
+    private void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTable) {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
-            LOG.info("本次采样得到的数据量为：" + sampleData.size());
+            LOG.info("the number of sampled data is ：" + sampleData.size() + " the operate type is ：" + op.toString());
             List<List<Map.Entry<String, Long>>> splitData = Lists.partition(sampleData, 10000);
-
             if (OperateType.Create.equals(op)) {
                 Map<String, Long> allNoFoundCreate = new HashMap<>();
                 for (List<Map.Entry<String, Long>> oneSplit : splitData) {
@@ -228,9 +220,8 @@ public class TiDBCompare extends BaseDataCompare {
         List<Map<String, Object>> resultList;
         List<String> assembleSql = assembleSql(sampleData, op, dataBase, tableName);
         if (assembleSql != null && assembleSql.size() > 0) {
-            allCheckDataMap = new HashMap<>();
-            for (int i = 0; i < assembleSql.size(); i++) {
-                String splitSql = assembleSql.get(i);
+            allCheckDataMap = new HashMap<>(sampleData.size());
+            for (String splitSql : assembleSql) {
                 try {
                     resultList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, splitSql);
                     if (null != resultList && resultList.size() > 0) {
@@ -331,13 +322,15 @@ public class TiDBCompare extends BaseDataCompare {
                     }
                     break;
                 }
+                case Unique:
+                    break;
                 default:
             }
         }
         return assembleSql;
     }
 
-    public static void resultInsert(CheckResult result, Map<String, Long> afterComp, String tableName) {
+    private static void resultInsert(CheckResult result, Map<String, Long> afterComp, String tableName) {
 
         if (afterComp != null && afterComp.size() > 0) {
             Map<String, Object> dataMap = new HashMap<>();
@@ -382,6 +375,7 @@ public class TiDBCompare extends BaseDataCompare {
         List<Map.Entry<String, Long>> copy = new ArrayList<>(lst);
         int dataSize = lst.size();
         int n = 0;
+        String sampleDefalut = "yes";
         if (sampleDefalut.equalsIgnoreCase(sampleFlag)) {
             if (dataSize > 0) {
                 Collections.shuffle(copy);
@@ -407,4 +401,21 @@ public class TiDBCompare extends BaseDataCompare {
         return dataList;
     }
 
+    /**
+     * get one record from database.tablename
+     *
+     * @param dataBase  database
+     * @param tableName table
+     * @return the record
+     */
+    List<Map<String, Object>> getOneRecordFromTable(String dataBase, String tableName) {
+        String tableFieldSql = "select * from " + "`" + dataBase + "`." + tableName + " limit 1";
+        List<Map<String, Object>> mapList = null;
+        try {
+            mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return mapList;
+    }
 }

@@ -29,7 +29,7 @@ import java.util.Properties;
  */
 public class TransThread implements Serializable, Runnable {
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private static final int BUFFER_SIZE = Integer.parseInt(properties.getProperty("BUFFER_SIZE"));
+    private static final int BUFFER_SIZE = 1024;
     private static Logger LOG = LoggerFactory.getLogger(TransThread.class);
     private FileSystem fs;
     private String dataBase=properties.getProperty("jdbc.database");
