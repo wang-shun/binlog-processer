@@ -2,29 +2,43 @@ package com.datatrees.datacenter.datareader;
 
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.compare.BaseDataCompare;
+import com.datatrees.datacenter.core.utility.DBServer;
+import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.HDFSFileUtility;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.operate.OperateType;
+import com.datatrees.datacenter.table.CheckResult;
+import com.datatrees.datacenter.table.CheckTable;
+import com.datatrees.datacenter.table.FieldNameOp;
+import com.datatrees.datacenter.utility.StringBuilderUtil;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.mchange.v1.identicator.IdList;
 import javafx.beans.binding.ObjectExpression;
-import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.io.HdfsUtils;
 import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class AvroDataReader extends BaseDataReader {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
     private static final Properties properties = PropertiesUtility.defaultProperties();
     private static final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
+    private static final List<String> idColumnList = FieldNameOp.getConfigField("id");
     private String dataBase;
     private String tableName;
     private String recordId;
@@ -85,6 +99,9 @@ public class AvroDataReader extends BaseDataReader {
                     }
                     if (jsonObject != null) {
                         String id = String.valueOf(jsonObject.get(recordId));
+                        if("218992516807696384".equals(id)){
+                            System.out.println(id);
+                        }
                         long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
                         if (id != null && Long.valueOf(lastUpdateTime) != null) {
                             switch (operator) {
@@ -161,6 +178,93 @@ public class AvroDataReader extends BaseDataReader {
                 oprRecordMap.put(OperateType.Update.toString(), updateList);
                 oprRecordMap.put(OperateType.Delete.toString(), deleteList);
 
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return oprRecordMap;
+    }
+
+    public static Map<String, List<Set<Map.Entry<String, Object>>>> readAvroDataById(CheckResult checkResult, String checkTable) {
+        Map<String, String> whereMap = new HashMap<>();
+        String dbInstance = checkResult.getDbInstance();
+        String dataBase = checkResult.getDataBase();
+        String tableName = checkResult.getTableName();
+        String partition = checkResult.getFilePartition();
+        String partitionType = checkResult.getPartitionType();
+        whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
+        whereMap.put(CheckTable.DATA_BASE, dataBase);
+        whereMap.put(CheckTable.TABLE_NAME, tableName);
+        whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+        whereMap.put(CheckTable.FILE_PARTITION, partition);
+        whereMap.values().remove("");
+        StringBuilder whereExpress = StringBuilderUtil.getStringBuilder(whereMap);
+        String sql = "select id_list,files_path,operate_type from " + checkTable + " " + whereExpress;
+        Map<String, List<Set<Map.Entry<String, Object>>>> dataRecord = null;
+        try {
+            List<Map<String, Object>> missingData = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, sql);
+            if (missingData != null && missingData.size() > 0) {
+                Map<String, List<String>> opIdMap = new HashMap<>(missingData.size());
+                String filesPath = null;
+                for (Map<String, Object> record : missingData) {
+                    String[] idArr = record.get(CheckTable.ID_LIST).toString().replace("[", "").replace("]", "").split(",");
+                    List<String> idList = Arrays.asList(idArr);
+                    List<String> idListNew = idList.stream().map(x -> x.trim()).collect(Collectors.toList());
+                    filesPath = (String) record.get(CheckTable.FILES_PATH);
+                    String operateType = (String) record.get(CheckTable.OP_TYPE);
+                    opIdMap.put(operateType, idListNew);
+                }
+                dataRecord = filterDataByIdList(filesPath, dataBase, tableName, opIdMap);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return dataRecord;
+    }
+
+    public static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String dataBase, String tableName, Map<String, List<String>> opIdMap) {
+        InputStream is;
+        List<String> fileList = HDFSFileUtility.getFilesPath(filePath);
+        Collections.sort(fileList);
+        Map<String, List<Set<Map.Entry<String, Object>>>> oprRecordMap = new HashMap<>(opIdMap.size());
+        for (String key : opIdMap.keySet()) {
+            List<Set<Map.Entry<String, Object>>> recordList = new ArrayList<>();
+            oprRecordMap.put(key, recordList);
+        }
+        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+        if (null != fs) {
+            try {
+                Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
+                String recordId = FieldNameOp.getFieldName(allFieldSet, idColumnList);
+                for (int i = 0; i < fileList.size(); i++) {
+                    System.out.println("read file:" + fileList.get(i));
+                    Path path = new Path(fileList.get(i));
+                    is = fs.open(path);
+                    DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());
+                    Iterator<Object> iterator = reader.iterator();
+                    while (iterator.hasNext()) {
+                        Object o = iterator.next();
+                        GenericRecord r = (GenericRecord) o;
+                        JSONObject jsonObject;
+                        if (null != r.get(1)) {
+                            jsonObject = JSONObject.parseObject(r.get(1).toString());
+                        } else {
+                            jsonObject = JSONObject.parseObject(r.get(0).toString());
+                        }
+                        String id = String.valueOf(jsonObject.get(recordId));
+                        for (Map.Entry operateRecord : opIdMap.entrySet()) {
+                            String operateType = String.valueOf(operateRecord.getKey());
+                            List<String> idList = (List<String>) operateRecord.getValue();
+                            if (idList.contains(id)) {
+                                String operator = r.get(2).toString();
+                                if (operateType.equals(operator)) {
+                                    oprRecordMap.get(operateType).add(jsonObject.entrySet());
+                                }
+                            }
+                        }
+
+                    }
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

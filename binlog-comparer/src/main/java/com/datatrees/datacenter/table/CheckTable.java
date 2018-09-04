@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.table;
 
 public class CheckTable {
+    public static final String BINLOG_DATABASE="binlog";
     public static final String BINLOG_CHECK_TABLE = "t_binlog_check_tidb";
     public static final String BINLOG_CHECK_DATE_TABLE = "t_binlog_check_tidb_date";
     public static final String BINLOG_PROCESS_LOG_TABLE="t_binlog_process_log";
@@ -16,4 +17,7 @@ public class CheckTable {
     public static final String PROCESS_LOG_STATUS="status";
     public static final String PARTITION_TYPE="type";
     public static final String FILE_LAST_NAME=".avro";
+    public static final String FILES_PATH="files_path";
+    public static final String ID_LIST="id_list";
+    public static final String DATA_COUNT="data_count";
 }

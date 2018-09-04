@@ -8,7 +8,19 @@ public class CheckResult {
     private String tableName;
     private String filePartition;
     private String opType;
+    private String partitionType;
     private String lastUpdateTime;
+    private String filesPath;
+    private int dataCount;
+    private String saveTable;
+
+    public String getPartitionType() {
+        return partitionType;
+    }
+
+    public void setPartitionType(String partitionType) {
+        this.partitionType = partitionType;
+    }
 
     public CheckResult() {
     }
@@ -76,5 +88,29 @@ public class CheckResult {
 
     public void setOldId(String oldId) {
         this.oldId = oldId;
+    }
+
+    public String getFilesPath() {
+        return filesPath;
+    }
+
+    public void setFilesPath(String filesPath) {
+        this.filesPath = filesPath;
+    }
+
+    public int getDataCount() {
+        return dataCount;
+    }
+
+    public void setDataCount(int dataCount) {
+        this.dataCount = dataCount;
+    }
+
+    public String getSaveTable() {
+        return saveTable;
+    }
+
+    public void setSaveTable(String saveTable) {
+        this.saveTable = saveTable;
     }
 }

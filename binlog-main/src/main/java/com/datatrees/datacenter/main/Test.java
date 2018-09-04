@@ -3,34 +3,40 @@ package com.datatrees.datacenter.main;
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.TiDBCompare;
 import com.datatrees.datacenter.compare.TiDBCompareByDate;
+import com.datatrees.datacenter.core.utility.DBServer;
+import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.datareader.BaseDataReader;
 import com.datatrees.datacenter.datareader.OrcDataReader;
 
 
+import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.repair.TiDBDataRepair;
+import com.datatrees.datacenter.table.CheckResult;
+import com.datatrees.datacenter.table.CheckTable;
+import javafx.beans.binding.ObjectExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tukaani.xz.check.Check;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Test {
     private static Logger LOG = LoggerFactory.getLogger(Test.class);
 
     public static void main(String[] args) {
-
+        // TODO: 2018/8/27 新版本发布前需要检查配置文件是否需要更新
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
         /*BaseDataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1534812634-mysql-bin.000454", "update");*/
+        dataCompare.binLogCompare("1535419127-mysql-bin.000405", "update");*/
         //AvroDataReader reader=new AvroDataReader();
         //reader.readSrcData("hdfs://cloudera3/data/warehouse/create/basisdataoperator/operator/t_tel_call_sheet/year=2017/month=10/day=18/1532831715-mysql-bin.000735.avro");
 
-        /*BaseDataCompare dataCompare1 = new TiDBCompareByDate();
-        dataCompare1.binLogCompare("test_db", "zz", "year=2018/month=8/day=20", "update");*/
+        //dataCompare1.binLogCompare("ecommerce", "t_taobao_address", "year=2018/month=8/day=20", "update");
+
+        BaseDataCompare dataCompare1 = new TiDBCompareByDate();
+        dataCompare1.binLogCompare("antifraud", "atf_cautious_hit_record", "year=2018/month=8/day=28", "update");
 
         //dataCompare.binLogCompare("1531931491-mysql-bin.000764");
         //1530494870-mysql-bin.001132.tar,1530496380-mysql-bin.000811.tar
@@ -50,7 +56,60 @@ public class Test {
         } catch (SQLException e) {
             e.printStackTrace();
         }*/
-        TiDBDataRepair tiDBDataRepair = new TiDBDataRepair();
-        tiDBDataRepair.repairByTime("test_db", "zz", "year=2018/month=8/day=20", "update");
+
+        //tiDBDataRepair.repairByTime("test_db", "zz", "year=2018/month=8/day=20", "update");
+
+        /*TiDBDataRepair tiDBDataRepair = new TiDBDataRepair();
+        tiDBDataRepair.repairByTime("test_db", "zz", "year=2018/month=8/day=20", "update");*/
+        /*List<String> idList = new ArrayList<>();
+        idList.add("216486752306237456");
+        idList.add(" 216486752306237457");
+        idList.add("216486752297844822");
+        idList.add("216486752306237458");
+        AvroDataReader.filterDataByIdList("hdfs://cloudera3/data/warehouse/update/dataplatform/basisdata/wy_basic_shopping_sheet/year=2018/month=8/day=21", "basisdata", "wy_basic_shopping_sheet", idList);*/
+
+        /*CheckResult checkResult = new CheckResult();
+        String dbInstance = "dataplatform";
+        String dataBase = "basisdata";
+        String partition = "year=2018/month=8/day=21";
+        String partitionType = "update";
+        String tableName = "wy_basic_shopping_sheet";
+        checkResult.setDbInstance(dbInstance);
+        checkResult.setDataBase(dataBase);
+        checkResult.setFilePartition(partition);
+        checkResult.setPartitionType(partitionType);
+        checkResult.setTableName(tableName);
+        Map<String, Object> whereMap = new HashMap<>();
+        whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
+        whereMap.put(CheckTable.DATA_BASE, dataBase);
+        whereMap.put(CheckTable.FILE_PARTITION, partition);
+        whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+        whereMap.put(CheckTable.TABLE_NAME, tableName);
+        whereMap.values().remove("");
+        try {
+            List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, CheckTable.BINLOG_CHECK_DATE_TABLE, whereMap);
+            TiDBDataRepair repair = new TiDBDataRepair();
+            if (list != null && list.size() > 0) {
+                for (int i = 0; i < list.size(); i++) {
+                    String table = (String) list.get(i).get(CheckTable.TABLE_NAME);
+                    checkResult.setTableName(table);
+                    repair.repairByIdList(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        TiDBDataRepair repair = new TiDBDataRepair();
+        repair.repairByIdList(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);*/
+
+       /* Map<String, List<Set<Map.Entry<String, Object>>>> dataRecord = AvroDataReader.readAvroDataById(checkResult, CheckTable.BINLOG_CHECK_DATE_TABLE);
+        List<Set<Map.Entry<String, Object>>> dataMap = dataRecord.get(OperateType.Create.toString());
+         System.out.println(dataMap.size());
+        Set<Map.Entry<String, Object>> sets = dataMap.get(0);
+        System.out.println(sets.size());*/
+
+        // TODO: 2018/9/3 新增修复结果保存到数据库
+
+
     }
 }

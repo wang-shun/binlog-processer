@@ -122,7 +122,20 @@ public class TimeUtil {
         res = sf.format(date);
         Date  newDate = null;
         try {
-           newDate= sf.parse(res);
+            newDate= sf.parse(res);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return newDate;
+    }
+    public static Date stampToDate(long s,String format){
+        String res;
+        SimpleDateFormat sf = new SimpleDateFormat(format);
+        Date date = new Date(s);
+        res = sf.format(date);
+        Date  newDate = null;
+        try {
+            newDate= sf.parse(res);
         } catch (ParseException e) {
             e.printStackTrace();
         }

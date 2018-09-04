@@ -6,6 +6,9 @@ import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.utility.HBaseHelper;
+import com.datatrees.datacenter.utility.StringBuilderUtil;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
@@ -15,6 +18,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public abstract class BaseDataCompare implements DataCheck {
 
@@ -86,11 +90,11 @@ public abstract class BaseDataCompare implements DataCheck {
         whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.FILE_PARTITION, partitions);
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
-        StringBuilder whereExpress = getStringBuilder(whereMap);
+        StringBuilder whereExpress = StringBuilderUtil.getStringBuilder(whereMap);
         try {
           /*  String maxLen = "SET GLOBAL group_concat_max_len = 102400";
             DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, maxLen);*/
-            String sql = "select db_instance,database_name,table_name,GROUP_CONCAT(file_name) as files,file_partitions from " + processLogTable + " " + whereExpress.toString() + " group by database_name,table_name";
+            String sql = "select db_instance,database_name,table_name,GROUP_CONCAT(file_name) as files,file_partitions from " + processLogTable + " " + whereExpress.toString() + " group by database_name,table_name,file_partitions";
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,38 +102,7 @@ public abstract class BaseDataCompare implements DataCheck {
         return partitionInfo;
     }
 
-    /**
-     * 组装where语句
-     *
-     * @param whereMap
-     * @return
-     */
-    public static StringBuilder getStringBuilder(Map<String, String> whereMap) {
-        whereMap.values().remove("");
-        List<Map.Entry<String, String>> map2List;
-        map2List = new ArrayList<>(whereMap.entrySet());
-        StringBuilder whereExpress = new StringBuilder();
-        if (whereMap.size() > 0) {
-            whereExpress.append(" where ");
-            for (int i = 0, length = map2List.size(); i < length; i++) {
-                Map.Entry<String, String> express = map2List.get(i);
-                whereExpress
-                        .append(express.getKey())
-                        .append("=")
-                        .append("'")
-                        .append(express.getValue())
-                        .append("'")
-                        .append(" ");
-                if (i < map2List.size() - 1) {
-                    whereExpress
-                            .append(" ")
-                            .append("and")
-                            .append(" ");
-                }
-            }
-        }
-        return whereExpress;
-    }
+
 
     /**
      * find the key-value that in avroMap but not int orcMap
@@ -142,20 +115,17 @@ public abstract class BaseDataCompare implements DataCheck {
         Map<String, Long> diffMaps = null;
         if (srcMap != null && srcMap.size() > 0) {
             if (destMap != null && destMap.size() > 0) {
-                Set<Map.Entry<String, Long>> avroSet = srcMap.entrySet();
-                Set<Map.Entry<String, Long>> orcSet = destMap.entrySet();
-                if (avroSet.removeAll(orcSet)) {
-                    diffMaps = new HashMap<>();
-                    for (Map.Entry entry : avroSet) {
-                        diffMaps.put(entry.getKey().toString(), Long.valueOf(entry.getValue().toString()));
+                MapDifference<String, Long> diff=Maps.difference(srcMap,destMap);
+                Set<String> keysOnlyInSource = diff.entriesOnlyOnLeft().keySet();
+                if(keysOnlyInSource!=null&&keysOnlyInSource.size()>0) {
+                    diffMaps=new HashMap<>(keysOnlyInSource.size());
+                    for (String id : keysOnlyInSource) {
+                        diffMaps.put(id, srcMap.get(id));
                     }
                 }
             } else {
-                if (srcMap.size() > 0) {
-                    return srcMap;
-                } else {
-                    return null;
-                }
+                srcMap.size();
+                return srcMap;
             }
         }
         return diffMaps;

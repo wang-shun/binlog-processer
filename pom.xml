@@ -53,6 +53,7 @@
         <dropwizard.metrics>4.0.2</dropwizard.metrics>
         <metrics.ganglia>3.2.5</metrics.ganglia>
         <hive.jdbc>3.0.0</hive.jdbc>
+        <jSch.version>0.1.54</jSch.version>
         <!--<io.prometheus>0.4.1-SNAPSHOT</io.prometheus>-->
         <io.prometheus>0.4.0</io.prometheus>
         <logback.version>1.1.7</logback.version>

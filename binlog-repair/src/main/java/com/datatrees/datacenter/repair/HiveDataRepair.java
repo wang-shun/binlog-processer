@@ -1,6 +1,9 @@
 package com.datatrees.datacenter.repair;
 
 
+import com.datatrees.datacenter.table.CheckResult;
+
+
 public class HiveDataRepair implements BaseDataRepair {
 
 
@@ -11,6 +14,11 @@ public class HiveDataRepair implements BaseDataRepair {
 
     @Override
     public void repairByFile(String fileName, String partitionType) {
+
+    }
+
+    @Override
+    public void repairByIdList(CheckResult checkResult, String checkTable) {
 
     }
 }

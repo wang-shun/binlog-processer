@@ -20,7 +20,7 @@ public class FieldNameOp {
         if (null != allFieldName && allFieldName.size() > 0) {
             allFieldName.stream().collect(Collectors.toSet());
             if (fieldSets.retainAll(allFieldName)) {
-                if (fieldSets != null && fieldSets.size() > 0) {
+                if(fieldSets.size()>0) {
                     return String.valueOf(fieldSets.toArray()[0]);
                 }
             }
@@ -41,7 +41,7 @@ public class FieldNameOp {
                 String tableFieldSql = "select COLUMN_NAME from INFORMATION_SCHEMA.Columns where table_name='" + tableName + "' and table_schema='" + dataBase + "'";
                 List<Map<String, Object>> mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
                 if (null != mapList) {
-                    List<Object> columns = mapList.stream().map(Map::values).flatMap(values->values.stream())
+                    List<Object> columns = mapList.stream().map(Map::values).flatMap(values -> values.stream())
                             .collect(Collectors.toList());
                     return columns;
                 }

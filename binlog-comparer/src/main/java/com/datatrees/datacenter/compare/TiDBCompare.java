@@ -9,6 +9,9 @@ import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import org.apache.zookeeper.Op;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,15 +23,15 @@ import java.util.stream.Collectors;
 
 public class TiDBCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
-    private Properties properties = PropertiesUtility.defaultProperties();
+    private static Properties properties = PropertiesUtility.defaultProperties();
     private final String sampleFlag = properties.getProperty("SAMPLE_FLAG");
     private final String sampleDefalut = "yes";
-    private String binLogDataBase = properties.getProperty("jdbc.database");
+    private static String binLogDataBase = properties.getProperty("jdbc.database");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
     String recordId;
     String recordLastUpdateTime;
-    public String partitionType;
+    String partitionType;
 
     @Override
     public void binLogCompare(String fileName, String type) {
@@ -65,18 +68,35 @@ public class TiDBCompare extends BaseDataCompare {
                     recordId = FieldNameOp.getFieldName(allFieldSet, idList);
                     recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
                     if (null != recordId && null != recordLastUpdateTime) {
-                        Map<String, Long> allCreateData = new HashMap<>();
-                        Map<String, Long> allUpdateData = new HashMap<>();
-                        Map<String, Long> allDeleteData = new HashMap<>();
+
+                        String tableFieldSql = "select * from " + "`" + dataBase + "`." + tableName + " limit 1";
+                        List<Map<String, Object>> mapList = null;
+                        try {
+                            mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                        Map<String, Long> allCreate = new HashMap<>();
+                        Map<String, Long> allUpdate = new HashMap<>();
+                        Map<String, Long> allDelete = new HashMap<>();
                         AvroDataReader avroDataReader = new AvroDataReader();
                         List<String> partitionList = Arrays.asList(partitions);
                         partitionList.remove(null);
+
+                        CheckResult checkResult = new CheckResult();
+                        checkResult.setDataBase(dataBase);
+                        checkResult.setTableName(tableName);
+                        checkResult.setDbInstance(dbInstance);
+                        checkResult.setFilePartition(Arrays.toString(partitions));
+                        checkResult.setPartitionType(this.partitionType);
+                        checkResult.setSaveTable(CheckTable.BINLOG_CHECK_TABLE);
+                        checkResult.setFileName(fileName);
+                        avroDataReader.setDataBase(dataBase);
+                        avroDataReader.setTableName(tableName);
+                        avroDataReader.setRecordId(recordId);
+                        avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
                         for (String partition : partitionList) {
-                            avroDataReader.setDataBase(dataBase);
-                            avroDataReader.setTableName(tableName);
-                            avroDataReader.setRecordId(recordId);
-                            avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
-                            String filePath = super.AVRO_HDFS_PATH +
+                            String partitionPath = super.AVRO_HDFS_PATH +
                                     File.separator +
                                     partitionType +
                                     File.separator +
@@ -86,44 +106,66 @@ public class TiDBCompare extends BaseDataCompare {
                                     File.separator +
                                     tableName +
                                     File.separator +
-                                    partition +
+                                    partition;
+
+                            String filePath = partitionPath +
                                     File.separator +
                                     fileName.replace(".tar", "")
-                                    + ".avro";
+                                    + CheckTable.FILE_LAST_NAME;
 
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                             if (null != avroData) {
                                 Map<String, Long> create = avroData.get(OperateType.Create.toString());
                                 Map<String, Long> update = avroData.get(OperateType.Update.toString());
                                 Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
-                                if (null != create) {
-                                    allCreateData.putAll(create);
+                                if (null != create && create.size() > 0) {
+                                    allCreate.putAll(create);
                                 }
                                 if (null != update) {
-                                    allUpdateData.putAll(update);
+                                    allUpdate.putAll(update);
                                 }
                                 if (null != delete) {
-                                    allDeleteData.putAll(delete);
+                                    allDelete.putAll(delete);
                                 }
                             }
                         }
-                        allCreateData = BaseDataCompare.diffCompare(allCreateData, allUpdateData);
-                        allCreateData = BaseDataCompare.diffCompare(allCreateData, allDeleteData);
-                        allUpdateData = BaseDataCompare.diffCompare(allUpdateData, allDeleteData);
-                        CheckResult checkResult = new CheckResult();
-                        checkResult.setDataBase(dataBase);
-                        checkResult.setTableName(tableName);
-                        checkResult.setFileName(fileName);
-                        checkResult.setDbInstance(dbInstance);
-                        checkResult.setFilePartition(Arrays.toString(partitions));
-                        checkResult.setOpType(OperateType.Create.toString());
-                        checkAndSaveErrorData(checkResult, allCreateData, OperateType.Create, CheckTable.BINLOG_CHECK_TABLE);
-                        checkResult.setOpType(OperateType.Update.toString());
-                        checkAndSaveErrorData(checkResult, allUpdateData, OperateType.Update, CheckTable.BINLOG_CHECK_TABLE);
-                        checkResult.setOpType(OperateType.Delete.toString());
-                        checkAndSaveErrorData(checkResult, allDeleteData, OperateType.Delete, CheckTable.BINLOG_CHECK_TABLE);
+                        allCreate = BaseDataCompare.diffCompare(allCreate, allUpdate);
+                        allCreate = BaseDataCompare.diffCompare(allCreate, allDelete);
+                        allUpdate = BaseDataCompare.diffCompare(allUpdate, allDelete);
+                        checkEvent(mapList, allCreate, allUpdate, allDelete, checkResult);
                     }
                 }
+            }
+        }
+    }
+
+    public void checkEvent(List<Map<String, Object>> mapList, Map<String, Long> allCreate, Map<String, Long> allUpdate, Map<String, Long> allDelete, CheckResult checkResult) {
+        String saveTable = checkResult.getSaveTable();
+        if (mapList != null && mapList.size() > 0) {
+            if (allCreate != null && allCreate.size() > 0) {
+                checkResult.setOpType(OperateType.Create.toString());
+                checkAndSaveErrorData(checkResult, allCreate, OperateType.Create, saveTable);
+            }
+            if (allUpdate != null && allUpdate.size() > 0) {
+                checkResult.setOpType(OperateType.Update.toString());
+                checkAndSaveErrorData(checkResult, allUpdate, OperateType.Update, saveTable);
+            }
+            if (allDelete.size() > 0) {
+                checkResult.setOpType(OperateType.Delete.toString());
+                checkAndSaveErrorData(checkResult, allDelete, OperateType.Delete, saveTable);
+            }
+        } else {
+            if (allCreate != null && allCreate.size() > 0) {
+                checkResult.setOpType(OperateType.Create.toString());
+                resultInsert(checkResult, allCreate, saveTable);
+            }
+            if (allUpdate != null && allUpdate.size() > 0) {
+                checkResult.setOpType(OperateType.Update.toString());
+                resultInsert(checkResult, allUpdate, saveTable);
+            }
+            if (allDelete.size() > 0) {
+                checkResult.setOpType(OperateType.Delete.toString());
+                resultInsert(checkResult, allDelete, saveTable);
             }
         }
     }
@@ -138,27 +180,39 @@ public class TiDBCompare extends BaseDataCompare {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
             LOG.info("本次采样得到的数据量为：" + sampleData.size());
-            String dataBase = checkResult.getDataBase();
-            String table = checkResult.getTableName();
-            String tableFieldSql = "select * from " + "`" + dataBase + "`." + table + " limit 1";
-            Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), sampleData, op);
-            List<Map<String, Object>> mapList = null;
-            try {
-                mapList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, tableFieldSql);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            if (mapList != null && mapList.size() > 0) {
-                if (OperateType.Create.equals(op)) {
-                    Map<String, Long> creteNotFound = BaseDataCompare.diffCompare(dataMap, afterCompare);
-                    batchInsert(checkResult, creteNotFound, saveTable);
-                } else {
-                    batchInsert(checkResult, afterCompare, saveTable);
+            List<List<Map.Entry<String, Long>>> splitData = Lists.partition(sampleData, 10000);
+
+            if (OperateType.Create.equals(op)) {
+                Map<String, Long> allNoFoundCreate = new HashMap<>();
+                for (List<Map.Entry<String, Long>> oneSplit : splitData) {
+                    Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), oneSplit, op);
+                    Map<String, Long> oneSplitMap = oneSplit.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    Map<String, Long> createNotFound = BaseDataCompare.diffCompare(oneSplitMap, afterCompare);
+                    if (createNotFound != null) {
+                        allNoFoundCreate.putAll(createNotFound);
+                    }
                 }
-            } else {
-                batchInsert(checkResult, dataMap, saveTable);
+                resultInsert(checkResult, allNoFoundCreate, saveTable);
+            } else if (op.equals(OperateType.Update)) {
+                Map<String, Long> allUpdate = new HashMap<>();
+                for (List<Map.Entry<String, Long>> oneSplit : splitData) {
+                    Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), oneSplit, op);
+                    Map<String, Long> oneSplitMap = oneSplit.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    Map<String, Long> existData = BaseDataCompare.diffCompare(oneSplitMap, afterCompare);
+                    allUpdate.putAll(afterCompare);
+                    checkAndSaveErrorData(checkResult, existData, OperateType.Create, CheckTable.BINLOG_CHECK_DATE_TABLE);
+                }
+                resultInsert(checkResult, allUpdate, saveTable);
+            } else if (op.equals(OperateType.Delete)) {
+                Map<String, Long> allDelete = new HashMap<>();
+                for (List<Map.Entry<String, Long>> oneSplit : splitData) {
+                    Map<String, Long> afterCompare = batchCheck(checkResult.getDataBase(), checkResult.getTableName(), oneSplit, op);
+                    allDelete.putAll(afterCompare);
+                }
+                resultInsert(checkResult, allDelete, saveTable);
             }
         }
+
     }
 
     /**
@@ -169,142 +223,141 @@ public class TiDBCompare extends BaseDataCompare {
      * @param sampleData 采样后的数据
      */
     private Map<String, Long> batchCheck(String dataBase, String tableName, List<Map.Entry<String, Long>> sampleData, OperateType op) {
+        Map<String, Long> allCheckDataMap = null;
         Map<String, Long> checkDataMap = null;
         List<Map<String, Object>> resultList;
-        String sql = assembleSql(sampleData, op, dataBase, tableName);
-        if (sql.length() > 0) {
-            try {
-                resultList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sql);
-                Map<String, Long> collectMap = sampleData.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                if (null != resultList && resultList.size() > 0) {
-                    checkDataMap = new HashMap<>();
-                    for (Map<String, Object> errorRecord : resultList) {
-                        String recordId = String.valueOf(errorRecord.get(this.recordId));
-                        long upDateTime = (Long) errorRecord.get("avroTime") * 1000;
-                        // TODO: 2018/8/24
-                        System.out.println(upDateTime);
-                        checkDataMap.put(recordId, upDateTime);
+        List<String> assembleSql = assembleSql(sampleData, op, dataBase, tableName);
+        if (assembleSql != null && assembleSql.size() > 0) {
+            allCheckDataMap = new HashMap<>();
+            for (int i = 0; i < assembleSql.size(); i++) {
+                String splitSql = assembleSql.get(i);
+                try {
+                    resultList = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, splitSql);
+                    if (null != resultList && resultList.size() > 0) {
+                        checkDataMap = new HashMap<>();
+                        for (Map<String, Object> errorRecord : resultList) {
+                            String recordId = errorRecord.get(this.recordId).toString();
+                            long upDateTime = (Long) errorRecord.get("avroTime") * 1000;
+                            checkDataMap.put(recordId, upDateTime);
+                        }
                     }
-                } else {
-                    String sqlLimit = "select * from " + "`" + dataBase + "`" + "." + tableName + " limit 1";
-                    List<Map<String, Object>> list = DBUtil.query(DBServer.DBServerType.TIDB.toString(), dataBase, sqlLimit);
-                    if (list == null) {
-                        checkDataMap = collectMap;
-                    }
+                } catch (Exception e) {
+                    LOG.info(e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                LOG.info(e.getMessage(), e);
+                if (null != checkDataMap) {
+                    allCheckDataMap.putAll(checkDataMap);
+                }
             }
         }
-        return checkDataMap;
+        return allCheckDataMap;
     }
 
-    private String assembleSql(List<Map.Entry<String, Long>> sampleData, OperateType op, String dataBase, String tableName) {
-        StringBuilder sql = new StringBuilder();
+    private List<String> assembleSql(List<Map.Entry<String, Long>> sampleData, OperateType op, String dataBase, String tableName) {
+        List<String> assembleSql = null;
+        StringBuilder sql;
         if (null != sampleData && sampleData.size() > 0) {
-            int sampleDataSize = sampleData.size();
+            assembleSql = new ArrayList<>();
+            List<List<Map.Entry<String, Long>>> splitSampleData = Lists.partition(sampleData, 5000);
             switch (op) {
                 case Update: {
-                    for (int i = 0; i < sampleDataSize; i++) {
-                        Map.Entry record = sampleData.get(i);
-                        long timeStamp = (Long) record.getValue() / 1000;
-                        sql.append("select ")
-                                .append(recordId)
-                                .append(" , ")
-                                .append("UNIX_TIMESTAMP(")
-                                .append(recordLastUpdateTime)
-                                .append(")")
-                                .append(" as time_stamp ")
-                                .append(",")
-                                .append(timeStamp)
-                                .append(" as avroTime ")
-                                .append(" from ")
-                                .append("`")
-                                .append(dataBase)
-                                .append("`")
-                                .append(".")
-                                .append(tableName)
-                                .append(" where ")
-                                .append(recordId)
-                                .append("=")
-                                .append("'")
-                                .append(record.getKey())
-                                .append("'")
-                                .append(" and ")
-                                .append("UNIX_TIMESTAMP(")
-                                .append(recordLastUpdateTime)
-                                .append(")")
-                                .append("<")
-                                .append(timeStamp);
-                        if (i < sampleDataSize - 1) {
-                            sql.append(" union ");
+                    for (List<Map.Entry<String, Long>> aSplitSampleData : splitSampleData) {
+                        sql = new StringBuilder();
+                        for (int j = 0; j < aSplitSampleData.size(); j++) {
+                            Map.Entry record = aSplitSampleData.get(j);
+                            long timeStamp = (Long) record.getValue() / 1000;
+                            sql.append("select ")
+                                    .append(recordId)
+                                    .append(" , ")
+                                    .append("UNIX_TIMESTAMP(")
+                                    .append(recordLastUpdateTime)
+                                    .append(")")
+                                    .append(" as time_stamp ")
+                                    .append(",")
+                                    .append(timeStamp)
+                                    .append(" as avroTime ")
+                                    .append(" from ")
+                                    .append("`")
+                                    .append(dataBase)
+                                    .append("`")
+                                    .append(".")
+                                    .append(tableName)
+                                    .append(" where ")
+                                    .append(recordId)
+                                    .append("=")
+                                    .append("'")
+                                    .append(record.getKey())
+                                    .append("'")
+                                    .append(" and ")
+                                    .append("UNIX_TIMESTAMP(")
+                                    .append(recordLastUpdateTime)
+                                    .append(")")
+                                    .append("<")
+                                    .append(timeStamp);
+                            if (j < aSplitSampleData.size() - 1) {
+                                sql.append(" union ");
+                            }
                         }
+                        assembleSql.add(sql.toString());
                     }
                     break;
                 }
                 case Create:
                 case Delete: {
-                    for (int i = 0; i < sampleDataSize; i++) {
-                        Map.Entry record = sampleData.get(i);
-                        long timeStamp = (Long) record.getValue() / 1000;
-                        sql.append("select ")
-                                .append(recordId)
-                                .append(",")
-                                .append(timeStamp)
-                                .append(" as avroTime ")
-                                .append(" from ")
-                                .append("`")
-                                .append(dataBase)
-                                .append("`")
-                                .append(".")
-                                .append(tableName)
-                                .append(" where ")
-                                .append(recordId)
-                                .append("=")
-                                .append(record.getKey());
-                        if (i < sampleDataSize - 1) {
-                            sql.append(" union ");
+                    for (List<Map.Entry<String, Long>> aSplitSampleData : splitSampleData) {
+                        sql = new StringBuilder();
+                        for (int j = 0; j < aSplitSampleData.size(); j++) {
+                            Map.Entry record = aSplitSampleData.get(j);
+                            long timeStamp = (Long) record.getValue() / 1000;
+                            sql.append("select ")
+                                    .append(recordId)
+                                    .append(",")
+                                    .append(timeStamp)
+                                    .append(" as avroTime ")
+                                    .append(" from ")
+                                    .append("`")
+                                    .append(dataBase)
+                                    .append("`")
+                                    .append(".")
+                                    .append(tableName)
+                                    .append(" where ")
+                                    .append(recordId)
+                                    .append("=")
+                                    .append(record.getKey());
+                            if (j < aSplitSampleData.size() - 1) {
+                                sql.append(" union ");
+                            }
                         }
+                        assembleSql.add(sql.toString());
                     }
                     break;
                 }
                 default:
             }
-
         }
-        return sql.toString();
+        return assembleSql;
     }
 
-    private void batchInsert(CheckResult result, Map<String, Long> afterComp, String tableName) {
-        List<Map<String, Object>> resultMap = new ArrayList<>();
-        if (afterComp != null) {
-            for (Map.Entry<String, Long> entry : afterComp.entrySet()) {
-                Map<String, Object> dataMap = new HashMap<>();
-                dataMap.put(CheckTable.OLD_ID, entry.getKey());
-                dataMap.put(CheckTable.FILE_NAME, result.getFileName());
-                dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
-                dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
-                dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
-                dataMap.put(CheckTable.PARTITION_TYPE, partitionType);
-                dataMap.put(CheckTable.FILE_PARTITION, result.getFilePartition());
-                long time = entry.getValue();
-                if (String.valueOf(time).length() == 10) {
-                    dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue() * 1000));
-                } else {
-                    dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(entry.getValue()));
-                }
-                dataMap.put(CheckTable.OP_TYPE, result.getOpType());
-                resultMap.add(dataMap);
-            }
+    public static void resultInsert(CheckResult result, Map<String, Long> afterComp, String tableName) {
+
+        if (afterComp != null && afterComp.size() > 0) {
+            Map<String, Object> dataMap = new HashMap<>();
+            dataMap.put(CheckTable.FILE_NAME, result.getFileName());
+            dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
+            dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
+            dataMap.put(CheckTable.TABLE_NAME, result.getTableName());
+            dataMap.put(CheckTable.PARTITION_TYPE, result.getPartitionType());
+            dataMap.put(CheckTable.FILE_PARTITION, result.getFilePartition());
+            dataMap.put(CheckTable.OP_TYPE, result.getOpType());
+            dataMap.put(CheckTable.ID_LIST, afterComp.keySet().toString());
+            dataMap.put(CheckTable.FILES_PATH, result.getFilesPath());
+            dataMap.put(CheckTable.DATA_COUNT, afterComp.size());
             try {
-                /*String maxLen="SET GLOBAL group_concat_max_len = 102400";
-                DBUtil.query(DBServer.DBServerType.MYSQL.toString(), binLogDataBase,maxLen);*/
-                DBUtil.insertAll(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, tableName, resultMap);
+                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, tableName, dataMap);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         } else {
-            LOG.info("no error record find from file: " + result.getFileName());
+            LOG.info("no error record find from : " + result.getDataBase() + "." + result.getTableName());
         }
     }
 

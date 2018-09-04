@@ -16,7 +16,7 @@ public class DBUtil {
     /**
      * the pattern of limit
      */
-    private static final Pattern sLimitPattern =
+    private static final Pattern S_LIMIT_PATTERN =
             Pattern.compile("\\s*\\d+\\s*(,\\s*\\d+\\s*)?");
     private static Logger LOG = LoggerFactory.getLogger(DBUtil.class);
 
@@ -52,16 +52,16 @@ public class DBUtil {
         //开始拼插入的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ");
-        sql.append("`" + dataBase + "`." + tableName);
+        sql.append("`").append(dataBase).append("`.").append(tableName);
         sql.append(" (");
         sql.append(columnSql);
         sql.append(" )  VALUES (");
         sql.append(unknownMarkSql);
         sql.append(" )");
-        return executeUpdate(dbSource, dataBase, sql.toString(), bindArgs);
+        return executeUpdate(dbSource, sql.toString(), bindArgs);
     }
 
-    public static int upsert(String dbSource, String dataBase, String tableName, Map<String, Object> valueMap) throws SQLException {
+    public static int upsert(String dbSource, String dataBase, String tableName, Map<String, Object> valueMap, String lastUpdate) throws SQLException {
 
         //获取数据库插入的Map的键值对的值
         Set<String> keySet = valueMap.keySet();
@@ -83,13 +83,13 @@ public class DBUtil {
             bindArgs[i] = valueMap.get(key);
 
             upsertSql.append(i == 0 ? "" : ",");
-            upsertSql.append(key + "=values(" + key + ")");
+            upsertSql.append(key).append("=values(").append(key).append(")");
             i++;
         }
         //开始拼插入的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ");
-        sql.append("`" + dataBase + "`." + tableName);
+        sql.append("`").append(dataBase).append("`.").append(tableName);
         sql.append(" (");
         sql.append(columnSql);
         sql.append(" )  VALUES (");
@@ -97,7 +97,11 @@ public class DBUtil {
         sql.append(" )");
         sql.append(" on duplicate key update ");
         sql.append(upsertSql);
-        return executeUpdate(dbSource, dataBase, sql.toString(), bindArgs);
+        sql.append(" WHERE ");
+        sql.append(lastUpdate);
+        sql.append("<");
+        sql.append("values(").append(lastUpdate).append(")");
+        return executeUpdate(dbSource, sql.toString(), bindArgs);
     }
 
 
@@ -142,7 +146,7 @@ public class DBUtil {
                 //开始拼插入的sql语句
                 StringBuilder sql = new StringBuilder();
                 sql.append("INSERT INTO ");
-                sql.append("`" + dataBase + "`." + tableName);
+                sql.append("`").append(dataBase).append("`.").append(tableName);
                 sql.append(" (");
                 sql.append(columnSql);
                 sql.append(" )  VALUES (");
@@ -150,21 +154,32 @@ public class DBUtil {
                 sql.append(" )");
 
                 //执行SQL预编译
-                preparedStatement = connection.prepareStatement(sql.toString());
-                //设置不自动提交，以便于在出现异常的时候数据库回滚
-                connection.setAutoCommit(false);
-                System.out.println(sql.toString());
-                for (int j = 0; j < datas.size(); j++) {
-                    for (int k = 0; k < keys.length; k++) {
-                        preparedStatement.setObject(k + 1, datas.get(j).get(keys[k]));
+                if (connection != null) {
+                    preparedStatement = connection.prepareStatement(sql.toString());
+                    //设置不自动提交，以便于在出现异常的时候数据库回滚
+                    connection.setAutoCommit(false);
+
+                    for (int j = 0; j < datas.size(); j++) {
+                        for (int k = 0; k < keys.length; k++) {
+                            preparedStatement.setObject(k + 1, datas.get(j).get(keys[k]));
+                        }
+                        preparedStatement.addBatch();
+                        if ((j + 1) % 5000 == 0) {
+                            int[] arr = preparedStatement.executeBatch();
+                            connection.commit();
+                            affectRowCount = arr.length;
+                            LOG.info("成功了插入了" + affectRowCount + "行");
+                            System.out.println();
+                            preparedStatement.clearBatch();
+                        }
+
                     }
-                    preparedStatement.addBatch();
+                    int[] arr = preparedStatement.executeBatch();
+                    connection.commit();
+                    affectRowCount = arr.length;
+                    LOG.info("成功了插入了" + affectRowCount + "行");
+                    System.out.println();
                 }
-                int[] arr = preparedStatement.executeBatch();
-                connection.commit();
-                affectRowCount = arr.length;
-                LOG.info("成功了插入了" + affectRowCount + "行");
-                System.out.println();
             } catch (Exception e) {
                 LOG.error("error to insert all", e);
                 if (connection != null) {
@@ -192,7 +207,7 @@ public class DBUtil {
      * @return 影响的行数
      * @throws SQLException SQL异常
      */
-    public static int upsertAll(String dbSource, String dataBase, String tableName, List<Map<String, Object>> datas)
+    public static int upsertAll(String dbSource, String dataBase, String tableName, List<Map<String, Object>> datas, String lastUpdate)
             throws SQLException {
         //影响的行数
         int affectRowCount = -1;
@@ -222,17 +237,20 @@ public class DBUtil {
 
                     unknownMarkSql.append(i == 0 ? "" : ",");
                     unknownMarkSql.append("?");
-
+                    //id不变
                     upsertSql.append(i == 0 ? "" : ",");
-                    upsertSql.append(key + "=values(" + key + ")");
-
+                    upsertSql.append(key);
+                    upsertSql.append("=IF(");
+                    upsertSql.append(lastUpdate);
+                    upsertSql.append("<values(").append(lastUpdate).append("),");
+                    upsertSql.append("values(").append(key).append("), ").append(key).append(")");
                     i++;
 
                 }
                 //开始拼插入的sql语句
                 StringBuilder sql = new StringBuilder();
                 sql.append("INSERT INTO ");
-                sql.append("`" + dataBase + "`." + tableName);
+                sql.append("`").append(dataBase).append("`.").append(tableName);
                 sql.append(" (");
                 sql.append(columnSql);
                 sql.append(" )  VALUES (");
@@ -242,21 +260,33 @@ public class DBUtil {
                 sql.append(upsertSql);
 
                 //执行SQL预编译
-                preparedStatement = connection.prepareStatement(sql.toString());
-                //设置不自动提交，以便于在出现异常的时候数据库回滚
-                connection.setAutoCommit(false);
-                System.out.println(sql.toString());
-                for (int j = 0; j < datas.size(); j++) {
-                    for (int k = 0; k < keys.length; k++) {
-                        preparedStatement.setObject(k + 1, datas.get(j).get(keys[k]));
+                if (connection != null) {
+                    preparedStatement = connection.prepareStatement(sql.toString());
+                    //设置不自动提交，以便于在出现异常的时候数据库回滚
+                    connection.setAutoCommit(false);
+                    //System.out.println(sql.toString());
+                    for (int j = 0, size = datas.size(); j < size; j++) {
+                        for (int k = 0, keyLength = keys.length; k < keyLength; k++) {
+                            Map<String, Object> dataRecord = datas.get(j);
+                            preparedStatement.setObject(k + 1, dataRecord.get(keys[k]));
+                        }
+                        preparedStatement.addBatch();
+                        if ((j + 1) % 5000 == 0) {
+                            int[] arr = preparedStatement.executeBatch();
+                            connection.commit();
+                            affectRowCount = arr.length;
+                            LOG.info("成功了插入了" + affectRowCount + "行");
+                            preparedStatement.clearBatch();
+                        }
+
                     }
-                    preparedStatement.addBatch();
+                    int[] arr = preparedStatement.executeBatch();
+                    connection.commit();
+                    affectRowCount = arr.length;
+                    LOG.info("成功了插入了" + affectRowCount + "行");
+                    System.out.println();
                 }
-                int[] arr = preparedStatement.executeBatch();
-                connection.commit();
-                affectRowCount = arr.length;
-                LOG.info("成功了插入了" + affectRowCount + "行");
-                System.out.println();
+
             } catch (Exception e) {
                 LOG.error("error to insert all", e);
                 if (connection != null) {
@@ -293,7 +323,7 @@ public class DBUtil {
         //开始拼插入的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("UPDATE ");
-        sql.append("`" + dataBase + "`." + tableName);
+        sql.append("`").append(dataBase).append("`.").append(tableName);
         sql.append(" SET ");
 
         //要更改的的字段sql，其实就是用key拼起来的
@@ -324,7 +354,7 @@ public class DBUtil {
             }
             sql.append(whereSql);
         }
-        return executeUpdate(dbSource, dataBase, sql.toString(), objects.toArray());
+        return executeUpdate(dbSource, sql.toString(), objects.toArray());
     }
 
     /**
@@ -339,7 +369,7 @@ public class DBUtil {
         //准备删除的sql语句
         StringBuilder sql = new StringBuilder();
         sql.append("DELETE FROM ");
-        sql.append("`" + dataBase + "`." + tableName);
+        sql.append("`").append(dataBase).append("`.").append(tableName);
 
         //更新的条件:要更改的的字段sql，其实就是用key拼起来的
         StringBuilder whereSql = new StringBuilder();
@@ -354,13 +384,13 @@ public class DBUtil {
             while (iterator.hasNext()) {
                 String key = iterator.next();
                 whereSql.append(i == 0 ? "" : " AND ");
-                whereSql.append(key + " = ? ");
+                whereSql.append(key).append(" = ? ");
                 bindArgs[i] = whereMap.get(key);
                 i++;
             }
             sql.append(whereSql);
         }
-        return executeUpdate(dbSource, dataBase, sql.toString(), bindArgs);
+        return executeUpdate(dbSource, sql.toString(), bindArgs);
     }
 
     /**
@@ -371,38 +401,40 @@ public class DBUtil {
      * @return 影响的行数
      * @throws SQLException SQL异常
      */
-    private static int executeUpdate(String dbSource, String dataBase, String sql, Object[] bindArgs) throws SQLException {
+    private static int executeUpdate(String dbSource, String sql, Object[] bindArgs) throws SQLException {
         //影响的行数
-        int affectRowCount;
+        int affectRowCount = 0;
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try {
             //从数据库连接池中获取数据库连接
             connection = ConnOfC3P0Util.getInstance().getConnection(dbSource);
             //执行SQL预编译
-            preparedStatement = connection.prepareStatement(sql);
-            //设置不自动提交，以便于在出现异常的时候数据库回滚
-            connection.setAutoCommit(false);
-            LOG.info(getExecSQL(sql, bindArgs));
-            if (bindArgs != null) {
-                //绑定参数设置sql占位符中的值
-                for (int i = 0; i < bindArgs.length; i++) {
-                    preparedStatement.setObject(i + 1, bindArgs[i]);
+            if (connection != null) {
+                preparedStatement = connection.prepareStatement(sql);
+                //设置不自动提交，以便于在出现异常的时候数据库回滚
+                connection.setAutoCommit(false);
+                LOG.info(getExecSQL(sql, bindArgs));
+                if (bindArgs != null) {
+                    //绑定参数设置sql占位符中的值
+                    for (int i = 0; i < bindArgs.length; i++) {
+                        preparedStatement.setObject(i + 1, bindArgs[i]);
+                    }
                 }
+                //执行sql
+                affectRowCount = preparedStatement.executeUpdate();
+                connection.commit();
+                String operate;
+                if (sql.toUpperCase().contains("DELETE FROM")) {
+                    operate = "删除";
+                } else if (sql.toUpperCase().contains("INSERT INTO")) {
+                    operate = "新增";
+                } else {
+                    operate = "修改";
+                }
+                LOG.info("成功" + operate + "了" + affectRowCount + "行");
+                System.out.println();
             }
-            //执行sql
-            affectRowCount = preparedStatement.executeUpdate();
-            connection.commit();
-            String operate;
-            if (sql.toUpperCase().contains("DELETE FROM")) {
-                operate = "删除";
-            } else if (sql.toUpperCase().contains("INSERT INTO")) {
-                operate = "新增";
-            } else {
-                operate = "修改";
-            }
-            LOG.info("成功" + operate + "了" + affectRowCount + "行");
-            System.out.println();
         } catch (Exception e) {
             if (connection != null) {
                 connection.rollback();
@@ -462,8 +494,7 @@ public class DBUtil {
                                                   String having,
                                                   String orderBy,
                                                   String limit) throws SQLException {
-        String sql = buildQueryString(distinct, "`" + dataBase + "`." + tableName, columns, selection, groupBy, having, orderBy,
-                limit);
+        String sql = buildQueryString(distinct, "`" + dataBase + "`." + tableName, columns, selection, groupBy, having, orderBy, limit);
         return executeQuery(dbSource, dataBase, sql, selectionArgs);
 
     }
@@ -485,8 +516,9 @@ public class DBUtil {
                         preparedStatement.setObject(i + 1, bindArgs[i]);
                     }
                 }
-                LOG.info(getExecSQL(sql, bindArgs));
+                //LOG.info(getExecSQL(sql, bindArgs));
                 //执行sql语句，获取结果集
+
                 resultSet = preparedStatement.executeQuery();
                 datas = getDatas(resultSet);
             }
@@ -525,10 +557,10 @@ public class DBUtil {
                 datas.add(rowMap);
             }
             LOG.info("成功查询到了" + datas.size() + "行数据");
-            for (int i = 0; i < datas.size(); i++) {
+           /* for (int i = 0; i < datas.size(); i++) {
                 Map<String, Object> map = datas.get(i);
                 System.out.println("第" + (i + 1) + "行：" + map);
-            }
+            }*/
         }
         return datas;
     }
@@ -566,7 +598,7 @@ public class DBUtil {
             throw new IllegalArgumentException(
                     "HAVING clauses are only permitted when using a groupBy clause");
         }
-        if (!isEmpty(limit) && !sLimitPattern.matcher(limit).matches()) {
+        if (!isEmpty(limit) && !S_LIMIT_PATTERN.matcher(limit).matches()) {
             throw new IllegalArgumentException("invalid LIMIT clauses:" + limit);
         }
 
@@ -646,9 +678,9 @@ public class DBUtil {
         StringBuilder sb = new StringBuilder(sql);
         if (bindArgs != null && bindArgs.length > 0) {
             int index = 0;
-            for (int i = 0; i < bindArgs.length; i++) {
+            for (Object bindArg : bindArgs) {
                 index = sb.indexOf("?", index);
-                sb.replace(index, index + 1, String.valueOf(bindArgs[i]));
+                sb.replace(index, index + 1, String.valueOf(bindArg));
             }
         }
         return sb.toString();

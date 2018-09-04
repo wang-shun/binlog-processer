@@ -20,14 +20,12 @@ public class ConnOfC3P0Util {
     public final synchronized Connection getConnection(String type) {
         try {
             if (DBServer.DBServerType.TIDB.toString().equals(type)) {
-                logger.info("ds2.getDataSourceName():" + ds2.getDataSourceName());
                 return ds2.getConnection();
             } else {
-                logger.info("ds.getDataSourceName():" + ds.getDataSourceName());
                 return ds.getConnection();
             }
         } catch (SQLException e) {
-            logger.info(e.getMessage());
+            logger.info("can't get connection of server type : " + type, e);
         }
         return null;
     }

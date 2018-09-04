@@ -65,16 +65,10 @@ public class OrcDataReader extends BaseDataReader {
             String idField = null;
             String timeField = null;
             if (idList.retainAll(fieldList)) {
-                if (null != idList && idList.size() > 0) {
-                    idField = idList.get(0);
-                    System.out.println(idField);
-                }
+                idField = idList.get(0);
             }
             if (timeList.retainAll(fieldList)) {
-                if (null != timeList && timeList.size() > 0) {
-                    timeField = timeList.get(0);
-                    System.out.println(timeField);
-                }
+                timeField = timeList.get(0);
             }
             if (null != idField && null != timeField) {
                 while (records.hasNext()) {
