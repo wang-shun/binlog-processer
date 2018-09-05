@@ -516,9 +516,6 @@ public class DBUtil {
                         preparedStatement.setObject(i + 1, bindArgs[i]);
                     }
                 }
-                //LOG.info(getExecSQL(sql, bindArgs));
-                //执行sql语句，获取结果集
-
                 resultSet = preparedStatement.executeQuery();
                 datas = getDatas(resultSet);
             }
@@ -557,10 +554,6 @@ public class DBUtil {
                 datas.add(rowMap);
             }
             LOG.info("成功查询到了" + datas.size() + "行数据");
-           /* for (int i = 0; i < datas.size(); i++) {
-                Map<String, Object> map = datas.get(i);
-                System.out.println("第" + (i + 1) + "行：" + map);
-            }*/
         }
         return datas;
     }
