@@ -132,6 +132,15 @@ public class TiDBCompare extends BaseDataCompare {
         }
     }
 
+    /**
+     * 根据DDL类型分类检测
+     *
+     * @param mapList     表中是否有数据
+     * @param allCreate   所有插入操作
+     * @param allUpdate   所有更行操作
+     * @param allDelete   所有删除操作
+     * @param checkResult 检测结果
+     */
     public void checkEvent(List<Map<String, Object>> mapList, Map<String, Long> allCreate, Map<String, Long> allUpdate, Map<String, Long> allDelete, CheckResult checkResult) {
         String saveTable = checkResult.getSaveTable();
         if (mapList != null && mapList.size() > 0) {
@@ -164,7 +173,7 @@ public class TiDBCompare extends BaseDataCompare {
     }
 
     /**
-     * 将查询得到的错误数据记录到数据库
+     * 具体的检测操作并将查询得到的错误数据记录到数据库
      *
      * @param checkResult 结果对象
      * @param dataMap     待抽样数据
@@ -172,7 +181,7 @@ public class TiDBCompare extends BaseDataCompare {
     private void checkAndSaveErrorData(CheckResult checkResult, Map<String, Long> dataMap, OperateType op, String saveTable) {
         if (null != dataMap) {
             List<Map.Entry<String, Long>> sampleData = dataSample(dataMap);
-            LOG.info("the number of sampled data is ：[" + sampleData.size() + "], the operate type is ：[" + op.toString()+"]");
+            LOG.info("the number of sampled data is ：[" + sampleData.size() + "], the operate type is ：[" + op.toString() + "]");
             List<List<Map.Entry<String, Long>>> splitData = Lists.partition(sampleData, 10000);
             if (OperateType.Create.equals(op)) {
                 Map<String, Long> allNoFoundCreate = new HashMap<>();
@@ -208,7 +217,7 @@ public class TiDBCompare extends BaseDataCompare {
     }
 
     /**
-     * 对插入更新记录进行检查
+     * 通过查询目标库进行检查
      *
      * @param dataBase   数据库
      * @param tableName  表
@@ -344,6 +353,8 @@ public class TiDBCompare extends BaseDataCompare {
             dataMap.put(CheckTable.ID_LIST, afterComp.keySet().toString());
             dataMap.put(CheckTable.FILES_PATH, result.getFilesPath());
             dataMap.put(CheckTable.DATA_COUNT, afterComp.size());
+            long currentTime = System.currentTimeMillis();
+            dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(currentTime));
             try {
                 DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), binLogDataBase, tableName, dataMap);
             } catch (SQLException e) {
@@ -375,8 +386,8 @@ public class TiDBCompare extends BaseDataCompare {
         List<Map.Entry<String, Long>> copy = new ArrayList<>(lst);
         int dataSize = lst.size();
         int n = 0;
-        String sampleDefalut = "yes";
-        if (sampleDefalut.equalsIgnoreCase(sampleFlag)) {
+        String sampleDefault = "yes";
+        if (sampleDefault.equalsIgnoreCase(sampleFlag)) {
             if (dataSize > 0) {
                 Collections.shuffle(copy);
                 n = (int) Math.sqrt(dataSize);
