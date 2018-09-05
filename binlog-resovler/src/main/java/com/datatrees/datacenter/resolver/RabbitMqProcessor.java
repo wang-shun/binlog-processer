@@ -214,7 +214,7 @@ public class RabbitMqProcessor extends TaskProcessor {
       try {
         GaugeMetricFamily gaugeMetricFamily = new GaugeMetricFamily("binlog_local_pool_size",
           "Summary of the local thread pool", newArrayList("type"));
-        gaugeMetricFamily.addMetric(newArrayList("taskQueueSize"), taskQueue.size());
+        gaugeMetricFamily.addMetric(newArrayList(" "), taskQueue.size());
         gaugeMetricFamily
           .addMetric(newArrayList("poolTaskCount"), threadPoolExecutor.getTaskCount());
         gaugeMetricFamily

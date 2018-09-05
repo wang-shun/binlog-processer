@@ -58,7 +58,7 @@ public class AvroDataReader extends BaseDataReader {
                 }
             }
         } catch (IOException e) {
-            LOG.info("file " + filePath + " doesn't exist",e);
+            LOG.info("file " + filePath + " doesn't exist");
         }
         return null;
     }

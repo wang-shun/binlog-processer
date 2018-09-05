@@ -30,7 +30,7 @@ public class Test {
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
 
         BaseDataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1536058717-mysql-bin.000997", "update");
+        dataCompare.binLogCompare("1536119295-mysql-bin.001425", "update");
 
        /* AvroDataReader reader=new AvroDataReader();
         reader.readSrcData("hdfs://cloudera3/data/warehouse/update/gongfudai/loandb/t_user_blacklist/year=2018/month=7/day=5/1536058717-mysql-bin.000997.avro");*/
