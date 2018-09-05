@@ -303,9 +303,13 @@ public final class BinlogFileReader implements Runnable {
         /**
          * for compare
          */
-        TaskDispensor.defaultDispensor().dispense("local_topic", binlog.getIdentity1());
+
       }
       onFinished();
+      if (currentStatus == Status.SUCCESS) {
+        TaskDispensor.defaultDispensor().dispense("local_topic", binlog.getIdentity1());
+      }
+
       timer.setDuration();
       removeMetricsLabel();
     }

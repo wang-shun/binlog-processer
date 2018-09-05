@@ -185,7 +185,7 @@ public class Main2 {
 //        }).start();
 
       new Thread(() -> {
-        Binlog binlog = new Binlog("hdfs://localhost:9000/pc/1535168038-mysql-bin.000951", "rdspp6t6sg70l3aw79gs_1535168038-mysql-bin.000951", "gongfudai.mysql.rds.aliyuncs.com");
+        Binlog binlog = new Binlog("hdfs://localhost:9000/pc/mysql-bin.001321", "rdspp6t6sg70l3aw79gs_mysql-bin.001321", "dataplatform.mysql.rds.aliyuncs.com");
         TaskDispensor.defaultDispensor().dispense(binlog);
       }).start();
 
