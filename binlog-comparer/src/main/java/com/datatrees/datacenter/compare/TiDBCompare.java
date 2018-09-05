@@ -59,75 +59,73 @@ public class TiDBCompare extends BaseDataCompare {
             for (Map<String, Object> recordMap : tableInfo) {
                 String dataBase = String.valueOf(recordMap.get(CheckTable.DATA_BASE));
                 String tableName = String.valueOf(recordMap.get(CheckTable.TABLE_NAME));
-                if ("t_credit_education".equals(tableName)) {
-                    String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
-                    String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
-                    String fileName = String.valueOf(recordMap.get(CheckTable.FILE_NAME));
-                    if (partitions.length > 0) {
-                        Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
-                        recordId = FieldNameOp.getFieldName(allFieldSet, idList);
-                        recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
-                        if (null != recordId && null != recordLastUpdateTime) {
-                            List<Map<String, Object>> mapList = getOneRecordFromTable(dataBase, tableName);
-                            Map<String, Long> allCreate = new HashMap<>();
-                            Map<String, Long> allUpdate = new HashMap<>();
-                            Map<String, Long> allDelete = new HashMap<>();
-                            AvroDataReader avroDataReader = new AvroDataReader();
-                            List<String> partitionList;
-                            partitionList = Arrays.asList(partitions);
-                            partitionList.remove(null);
+                String[] partitions = String.valueOf(recordMap.get("partitions")).split(",");
+                String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
+                String fileName = String.valueOf(recordMap.get(CheckTable.FILE_NAME));
+                if (partitions.length > 0) {
+                    Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
+                    recordId = FieldNameOp.getFieldName(allFieldSet, idList);
+                    recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
+                    if (null != recordId && null != recordLastUpdateTime) {
+                        List<Map<String, Object>> mapList = getOneRecordFromTable(dataBase, tableName);
+                        Map<String, Long> allCreate = new HashMap<>();
+                        Map<String, Long> allUpdate = new HashMap<>();
+                        Map<String, Long> allDelete = new HashMap<>();
+                        AvroDataReader avroDataReader = new AvroDataReader();
+                        List<String> partitionList;
+                        partitionList = Arrays.asList(partitions);
+                        partitionList.remove(null);
 
-                            CheckResult checkResult = new CheckResult();
-                            checkResult.setDataBase(dataBase);
-                            checkResult.setTableName(tableName);
-                            checkResult.setDbInstance(dbInstance);
-                            checkResult.setFilePartition(Arrays.toString(partitions));
-                            checkResult.setPartitionType(this.partitionType);
-                            checkResult.setSaveTable(CheckTable.BINLOG_CHECK_TABLE);
-                            checkResult.setFileName(fileName);
-                            avroDataReader.setDataBase(dataBase);
-                            avroDataReader.setTableName(tableName);
-                            avroDataReader.setRecordId(recordId);
-                            avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
-                            for (String partition : partitionList) {
-                                String partitionPath = super.AVRO_HDFS_PATH +
-                                        File.separator +
-                                        partitionType +
-                                        File.separator +
-                                        dbInstance +
-                                        File.separator +
-                                        dataBase +
-                                        File.separator +
-                                        tableName +
-                                        File.separator +
-                                        partition;
+                        CheckResult checkResult = new CheckResult();
+                        checkResult.setDataBase(dataBase);
+                        checkResult.setTableName(tableName);
+                        checkResult.setDbInstance(dbInstance);
+                        checkResult.setFilePartition(Arrays.toString(partitions));
+                        checkResult.setPartitionType(this.partitionType);
+                        checkResult.setSaveTable(CheckTable.BINLOG_CHECK_TABLE);
+                        checkResult.setFileName(fileName);
+                        avroDataReader.setDataBase(dataBase);
+                        avroDataReader.setTableName(tableName);
+                        avroDataReader.setRecordId(recordId);
+                        avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
+                        for (String partition : partitionList) {
+                            String partitionPath = super.AVRO_HDFS_PATH +
+                                    File.separator +
+                                    partitionType +
+                                    File.separator +
+                                    dbInstance +
+                                    File.separator +
+                                    dataBase +
+                                    File.separator +
+                                    tableName +
+                                    File.separator +
+                                    partition;
 
-                                String filePath = partitionPath +
-                                        File.separator +
-                                        fileName.replace(".tar", "")
-                                        + CheckTable.FILE_LAST_NAME;
+                            String filePath = partitionPath +
+                                    File.separator +
+                                    fileName.replace(".tar", "")
+                                    + CheckTable.FILE_LAST_NAME;
 
-                                Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
-                                if (null != avroData) {
-                                    Map<String, Long> create = avroData.get(OperateType.Create.toString());
-                                    Map<String, Long> update = avroData.get(OperateType.Update.toString());
-                                    Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
-                                    if (null != create && create.size() > 0) {
-                                        allCreate.putAll(create);
-                                    }
-                                    if (null != update) {
-                                        allUpdate.putAll(update);
-                                    }
-                                    if (null != delete) {
-                                        allDelete.putAll(delete);
-                                    }
+                            Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
+                            if (null != avroData) {
+                                Map<String, Long> create = avroData.get(OperateType.Create.toString());
+                                Map<String, Long> update = avroData.get(OperateType.Update.toString());
+                                Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
+                                if (null != create && create.size() > 0) {
+                                    allCreate.putAll(create);
+                                }
+                                if (null != update) {
+                                    allUpdate.putAll(update);
+                                }
+                                if (null != delete) {
+                                    allDelete.putAll(delete);
                                 }
                             }
-                            allCreate = BaseDataCompare.diffCompare(allCreate, allUpdate);
-                            allCreate = BaseDataCompare.diffCompare(allCreate, allDelete);
-                            allUpdate = BaseDataCompare.diffCompare(allUpdate, allDelete);
-                            checkEvent(mapList, allCreate, allUpdate, allDelete, checkResult);
                         }
+                        allCreate = BaseDataCompare.diffCompare(allCreate, allUpdate);
+                        allCreate = BaseDataCompare.diffCompare(allCreate, allDelete);
+                        allUpdate = BaseDataCompare.diffCompare(allUpdate, allDelete);
+                        checkEvent(mapList, allCreate, allUpdate, allDelete, checkResult);
                     }
                 }
             }
