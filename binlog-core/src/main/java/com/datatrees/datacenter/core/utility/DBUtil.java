@@ -103,7 +103,45 @@ public class DBUtil {
         sql.append("values(").append(lastUpdate).append(")");
         return executeUpdate(dbSource, sql.toString(), bindArgs);
     }
+    public static int upsert(String dbSource, String dataBase, String tableName, Map<String, Object> valueMap) throws SQLException {
 
+        //获取数据库插入的Map的键值对的值
+        Set<String> keySet = valueMap.keySet();
+        Iterator<String> iterator = keySet.iterator();
+        //要插入的字段sql，其实就是用key拼起来的
+        StringBuilder columnSql = new StringBuilder();
+        //要插入的字段值，其实就是？
+        StringBuilder unknownMarkSql = new StringBuilder();
+        StringBuilder upsertSql = new StringBuilder();
+        Object[] bindArgs = new Object[valueMap.size()];
+        int i = 0;
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            columnSql.append(i == 0 ? "" : ",");
+            columnSql.append(key);
+
+            unknownMarkSql.append(i == 0 ? "" : ",");
+            unknownMarkSql.append("?");
+            bindArgs[i] = valueMap.get(key);
+
+            upsertSql.append(i == 0 ? "" : ",");
+            upsertSql.append(key).append("=values(").append(key).append(")");
+            i++;
+        }
+        //开始拼插入的sql语句
+        StringBuilder sql = new StringBuilder();
+        sql.append("INSERT INTO ");
+        sql.append("`").append(dataBase).append("`.").append(tableName);
+        sql.append(" (");
+        sql.append(columnSql);
+        sql.append(" )  VALUES (");
+        sql.append(unknownMarkSql);
+        sql.append(" )");
+        sql.append(" on duplicate key update ");
+        sql.append(upsertSql);
+
+        return executeUpdate(dbSource, sql.toString(), bindArgs);
+    }
 
     /**
      * 执行数据库插入操作

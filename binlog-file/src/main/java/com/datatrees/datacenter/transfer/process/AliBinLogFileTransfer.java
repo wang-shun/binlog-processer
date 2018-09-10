@@ -37,7 +37,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private final String BINLOG_ACTION_NAME = "DescribeBinlogFiles";
     private final String HDFS_PATH = properties.getProperty("HDFS_PATH");
     private final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
-    private int retryTimes = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
+    private int retryTimes = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry","1"));
     private final long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
     private final long TIMEHOURS_DIFF = -8L;
     private long currentTime = System.currentTimeMillis() - TIMESTAMP_DIFF;
@@ -47,7 +47,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     private final String EXCLUDE_TIME_START = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.start");
     private final String EXCLUDE_TIME_END = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.end");
     private String endTime;
-    private String dataBase = properties.getProperty("jdbc.database");
+    private String dataBase = properties.getProperty("jdbc.database","binlog");
 
     @Override
     public void process() {

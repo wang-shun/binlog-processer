@@ -12,7 +12,6 @@ import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
-import javafx.beans.binding.ObjectExpression;
 import org.apache.hive.com.esotericsoftware.minlog.Log;
 
 import java.io.File;
@@ -22,7 +21,7 @@ import java.util.*;
 
 public class TiDBDataRepair implements BaseDataRepair {
     private Properties properties = PropertiesUtility.defaultProperties();
-    private String mysqlDataBase = properties.getProperty("jdbc.database");
+    private String mysqlDataBase = properties.getProperty("jdbc.database","binlog");
     private String avroHDFSPath = properties.getProperty("AVRO_HDFS_PATH");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> updateTimeList = FieldNameOp.getConfigField("update");

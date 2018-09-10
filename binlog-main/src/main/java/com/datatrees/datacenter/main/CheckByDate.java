@@ -10,7 +10,7 @@ public class CheckByDate {
                 BaseDataCompare compare = new TiDBCompareByDate();
                 compare.binLogCompare(args[0], "", args[1], args[2]);
             } else {
-                System.out.print("please enter database tablename partition partitiontype");
+                System.out.print("please enter dataBase tableName partition partitionType");
                 System.exit(1);
             }
         } else {

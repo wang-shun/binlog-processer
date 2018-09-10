@@ -1,25 +1,8 @@
 package com.datatrees.datacenter.main;
 
-import com.datatrees.datacenter.compare.BaseDataCompare;
-import com.datatrees.datacenter.compare.TiDBCompare;
-import com.datatrees.datacenter.compare.TiDBCompareByDate;
-import com.datatrees.datacenter.core.utility.DBServer;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.datareader.AvroDataReader;
-import com.datatrees.datacenter.datareader.BaseDataReader;
-import com.datatrees.datacenter.datareader.OrcDataReader;
-
-
-import com.datatrees.datacenter.operate.OperateType;
-import com.datatrees.datacenter.repair.TiDBDataRepair;
-import com.datatrees.datacenter.table.CheckResult;
-import com.datatrees.datacenter.table.CheckTable;
-import javafx.beans.binding.ObjectExpression;
+import com.datatrees.datacenter.transfer.process.local.LocalDataCenterTransfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tukaani.xz.check.Check;
-
-import java.util.*;
 
 public class Test {
     private static Logger LOG = LoggerFactory.getLogger(Test.class);
@@ -29,8 +12,8 @@ public class Test {
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
 
-        BaseDataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1536127046-mysql-bin.001426", "update");
+        /*BaseDataCompare dataCompare = new TiDBCompare();
+        dataCompare.binLogCompare("1536127046-mysql-bin.001426", "update");*/
 
        /* AvroDataReader reader=new AvroDataReader();
         reader.readSrcData("hdfs://cloudera3/data/warehouse/update/gongfudai/loandb/t_user_blacklist/year=2018/month=7/day=5/1536058717-mysql-bin.000997.avro");*/
@@ -111,8 +94,8 @@ public class Test {
         Set<Map.Entry<String, Object>> sets = dataMap.get(0);
         System.out.println(sets.size());*/
 
-        // TODO: 2018/9/3 新增修复结果保存到数据库
-
+        LocalDataCenterTransfer localDataCenterTransfer=new LocalDataCenterTransfer();
+        localDataCenterTransfer.transfer();
 
     }
 }

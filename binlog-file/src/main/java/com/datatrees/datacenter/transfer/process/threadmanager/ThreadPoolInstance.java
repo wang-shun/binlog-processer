@@ -14,9 +14,9 @@ public class ThreadPoolInstance {
     private static Logger LOG = LoggerFactory.getLogger(ThreadPoolInstance.class);
 
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private static int corePoolSize =Integer.parseInt(properties.getProperty("thread.pool.corePoolSize"));
+    private static int corePoolSize = Integer.parseInt(properties.getProperty("thread.pool.corePoolSize"));
     private static int maximumPoolSize = Integer.parseInt(properties.getProperty("thread.pool.maximumPoolSize"));
-    private static long keepAliveTime =Long.parseLong(properties.getProperty("thread.pool.keepAliveTime"));
+    private static long keepAliveTime = Long.parseLong(properties.getProperty("thread.pool.keepAliveTime"));
 
     private static class LazyHolder {
         private static final ThreadPoolExecutor executors = new ThreadPoolExecutor(corePoolSize,

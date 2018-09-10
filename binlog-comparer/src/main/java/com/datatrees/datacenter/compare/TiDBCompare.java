@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 public class TiDBCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private final String sampleFlag = properties.getProperty("SAMPLE_FLAG");
-    private static String binLogDataBase = properties.getProperty("jdbc.database");
+    private final String sampleFlag = properties.getProperty("SAMPLE_FLAG","no");
+    private static String binLogDataBase = properties.getProperty("jdbc.database","binlog");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
     String recordId;

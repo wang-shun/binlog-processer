@@ -23,9 +23,9 @@ import java.util.stream.Collectors;
 public abstract class BaseDataCompare implements DataCheck {
 
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private final int fileNum = Integer.parseInt(properties.getProperty("FILE_NUM"));
-    private final int recordNum = Integer.parseInt(properties.getProperty("RECORD_NUM"));
-    private static String dataBase = properties.getProperty("jdbc.database");
+    private final int fileNum = Integer.parseInt(properties.getProperty("FILE_NUM","0"));
+    private final int recordNum = Integer.parseInt(properties.getProperty("RECORD_NUM","0"));
+    private static String dataBase = properties.getProperty("jdbc.database","binlog");
     private static String processLogTable = CheckTable.BINLOG_PROCESS_LOG_TABLE;
     final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
 

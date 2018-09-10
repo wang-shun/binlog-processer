@@ -19,7 +19,7 @@ import java.util.*;
 public class TiDBCompareByDate extends TiDBCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompareByDate.class);
     private Properties properties = PropertiesUtility.defaultProperties();
-    private String binLogDataBase = properties.getProperty("jdbc.database");
+    private String binLogDataBase = properties.getProperty("jdbc.database","binlog");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> updateTimeList = FieldNameOp.getConfigField("update");
     private String recordId;

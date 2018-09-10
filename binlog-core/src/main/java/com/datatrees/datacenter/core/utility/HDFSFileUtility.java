@@ -44,9 +44,12 @@ public class HDFSFileUtility {
     public static boolean put2HDFS(String src, String des, Configuration conf) {
         try {
             FileSystem fileSystem = FileSystem.get(URI.create(des), conf);
+            Path srcPath = new Path(src);
             Path desPath = new Path(des);
-            fileSystem.copyFromLocalFile(false, new Path(src), desPath);
-
+            if (!fileSystem.exists(desPath)) {
+                fileSystem.mkdirs(desPath);
+            }
+            fileSystem.moveFromLocalFile(srcPath, desPath);
         } catch (IOException ie) {
             ie.printStackTrace();
             return false;
@@ -153,11 +156,10 @@ public class HDFSFileUtility {
             FileStatus[] files = fs.listStatus(new Path(path));
             //开始调用打印函数
             for (FileStatus file : files) {
-                String filePath=file.getPath().toString();
-                if(fs.isFile(file.getPath())){
+                String filePath = file.getPath().toString();
+                if (fs.isFile(file.getPath())) {
                     fileList.add(filePath);
-                }
-                else {
+                } else {
                     fileList.addAll(printHdfs(file, fs, fileList));
                 }
             }
@@ -166,10 +168,11 @@ public class HDFSFileUtility {
         }
         return fileList;
     }
-    public static FileSystem getFileSystem(String path){
+
+    public static FileSystem getFileSystem(String path) {
         FileSystem fs = null;
         try {
-           fs = FileSystem.get(URI.create(path),conf);
+            fs = FileSystem.get(URI.create(path), conf);
         } catch (IOException e) {
             Log.info(e.getMessage());
         }

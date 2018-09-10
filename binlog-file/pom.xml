@@ -52,13 +52,13 @@
         <dependency>
             <groupId>ch.ethz.ganymed</groupId>
             <artifactId>ganymed-ssh2</artifactId>
-            <version>262</version>
+            <version>build210</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>${jSch.version}</version>
-        </dependency>
+        </dependency>-->
 
         <!--<dependency>-->
             <!--<groupId>com.datatrees.datacenter.binlog</groupId>-->
