@@ -23,6 +23,7 @@ public class TransferTimerTask implements TaskRunner {
     private Properties properties = PropertiesUtility.defaultProperties();
     private long INITIAL_DELAY = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.initaildelay"));
     private long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
+    private String REMOTE_SERVER = properties.getProperty("SERVER_TYPE", "idc");
 
     ProcessCheck processCheck;
     public static volatile Set processingSet = Collections.synchronizedSet(new HashSet<String>());
@@ -37,7 +38,12 @@ public class TransferTimerTask implements TaskRunner {
         Runnable runnable = () -> {
             try {
                 ServerTypeFactory factory = new ServerTypeFactory();
-                BinlogFileTransfer binlogFileTransfer = factory.getServerType("AliBinLogFileTransfer");
+                BinlogFileTransfer binlogFileTransfer = null;
+                if ("aliyun".equals(REMOTE_SERVER.toLowerCase())) {
+                    binlogFileTransfer = factory.getServerType("AliBinLogFileTransfer");
+                } else {
+                    binlogFileTransfer = factory.getServerType("LocalDataCenterTransfer");
+                }
                 binlogFileTransfer.transfer();
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
