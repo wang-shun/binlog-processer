@@ -4,7 +4,8 @@
 <configuration>
     <property>
         <name>hbase.rootdir</name>
-        <value>hdfs://nameservice1/hbase</value>
+        <!--<value>hdfs://nameservice1/hbase</value>-->
+         <value>hdfs://cloudera3/hbase</value>
     </property>
     <property>
         <name>hbase.client.write.buffer</name>

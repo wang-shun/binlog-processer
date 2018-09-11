@@ -130,7 +130,7 @@ public class AvroDataReader extends BaseDataReader {
             recordMap.put(OperateType.Update.toString(), updateMap);
             return recordMap;
         }
-        return null;
+        return recordMap;
 
     }
 

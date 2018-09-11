@@ -1,8 +1,16 @@
 package com.datatrees.datacenter.main;
 
+import com.datatrees.datacenter.compare.BaseDataCompare;
+import com.datatrees.datacenter.compare.HiveCompare;
 import com.datatrees.datacenter.transfer.process.local.LocalDataCenterTransfer;
+import com.datatrees.datacenter.utility.BatchGetFromHBase;
+import javafx.beans.binding.ObjectExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class Test {
     private static Logger LOG = LoggerFactory.getLogger(Test.class);
@@ -94,8 +102,19 @@ public class Test {
         Set<Map.Entry<String, Object>> sets = dataMap.get(0);
         System.out.println(sets.size());*/
 
-        LocalDataCenterTransfer localDataCenterTransfer=new LocalDataCenterTransfer();
-        localDataCenterTransfer.transfer();
+        //idc binlog下载
+        /*LocalDataCenterTransfer localDataCenterTransfer=new LocalDataCenterTransfer();
+        localDataCenterTransfer.transfer();*/
 
+        //batch read from hbase
+        /*BatchGetFromHBase batchGetFromHBase=new BatchGetFromHBase();
+        List<String> rowKeyList=new ArrayList<>();
+        rowKeyList.add("collection.coll_case_lifecycle_106567824424185856");
+
+        Map<String,Long> record=batchGetFromHBase.parrallelBatchSearch(rowKeyList,"streaming_warehouse_rowId2recId_tbl","f","update_time");
+        System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
+
+        BaseDataCompare dataCompare =new HiveCompare();
+        dataCompare.binLogCompare("1534553240-mysql-bin.000438","create");
     }
 }
