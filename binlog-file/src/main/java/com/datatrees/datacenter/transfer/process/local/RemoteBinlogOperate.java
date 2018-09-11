@@ -95,8 +95,13 @@ public class RemoteBinlogOperate implements Runnable {
                     if (!localPath.exists() && !localPath.isDirectory()) {
                         LOG.info("文件夹：" + localDirectory + " 不存在！");
                         LOG.info("创建文件夹：" + localDirectory + " ...");
-                        localPath.mkdir();
-                        LOG.info("文件夹：" + localDirectory + " 创建成功");
+                        boolean flag=localPath.mkdir();
+                        if(flag) {
+                            LOG.info("文件夹：" + localDirectory + " 创建成功");
+                        }
+                        else{
+                            LOG.error("文件夹：" + localDirectory + " 创建失败");
+                        }
                     }
                     scpClient.get(remoteFile, localDirectory);
                     Log.info("文件:" + remoteFile + " 下载完毕");
@@ -124,8 +129,12 @@ public class RemoteBinlogOperate implements Runnable {
                 if (!targetPath.exists() && !targetPath.isDirectory()) {
                     LOG.info("目标文件夹：" + localDirectory + " 不存在！");
                     LOG.info("创建目标文件夹：" + localDirectory + " ...");
-                    targetPath.mkdir();
-                    LOG.info("文件夹：" + localDirectory + " 创建成功");
+                    boolean flag=targetPath.mkdir();
+                    if(flag) {
+                        LOG.info("文件夹：" + localDirectory + " 创建成功");
+                    }else{
+                        LOG.error("文件夹：" + localDirectory + " 创建失败");
+                    }
                 }
                 scpClient.get(remoteFiles, localDirectory);
                 Log.info("从主机: [" + connection.getHostname() + "] 下载文件:" + Arrays.toString(remoteFiles) + " 下载完毕");
@@ -244,9 +253,15 @@ public class RemoteBinlogOperate implements Runnable {
                     LOG.info("the last download binlog file of :" + hostIp + " is :" + lastFileName);
                     if (lastFileName != null) {
                         int lastIndex = fileList.indexOf(lastFileName);
+                        System.out.println("lastIndex:" + lastIndex);
                         if (lastIndex > 1) {
                             subFileList = fileList.subList(1, fileList.indexOf(lastFileName));
                             recordExist = true;
+                        }
+                        if (lastIndex == -1) {
+                            if (fileList.size() > 1) {
+                                subFileList = fileList.subList(1, fileList.size());
+                            }
                         }
                     }
                 } else {
@@ -264,7 +279,6 @@ public class RemoteBinlogOperate implements Runnable {
                         subRemoteFileArr[i] = SERVER_BASEDIR + fileName;
                         subLocalFileList.add(CLIENT_BASEDIR + ipStr + File.separator + fileName);
                     }
-                    LOG.info(Arrays.toString(subRemoteFileArr));
                     getFiles(subRemoteFileArr, CLIENT_BASEDIR + ipStr, connection);
 
                     long downEnd = System.currentTimeMillis();
