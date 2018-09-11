@@ -4,12 +4,9 @@ import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.SCPClient;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
-import com.datatrees.datacenter.core.task.TaskDispensor;
-import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.LocalBinlogInfo;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
-import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +26,11 @@ public class RemoteBinlogOperate implements Runnable {
     private static final String DATABASE = properties.getProperty("jdbc.database", "binlog");
     private static final String SERVER_BASEDIR = properties.getProperty("SERVER_ROOT", "/data1/application/binlog-process/log");
     private static final String CLIENT_BASEDIR = properties.getProperty("CLIENT_ROOT", "/Users/personalc/test/");
-    private static final String HDFS_PATH = properties.getProperty("HDFS_PATH");
+    private static final String HDFS_PATH = properties.getProperty("HDFS_ROOT");
 
     private String hostIp;
     private static Map<String, String> hostFileMap = getHostFileMap();
-    private boolean recordExsist = false;
+    private boolean recordExist = false;
 
     /**
      * 本机的私钥文件
@@ -224,10 +221,8 @@ public class RemoteBinlogOperate implements Runnable {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        if (hostFileMap.size() > 0) {
-            if (dataRecord != null) {
-                dataRecord.stream().forEach(x -> hostFileMap.put(String.valueOf(x.get(LocalBinlogInfo.dbInstance)), String.valueOf(x.get(LocalBinlogInfo.fileName))));
-            }
+        if (dataRecord != null) {
+            dataRecord.stream().forEach(x -> hostFileMap.put(String.valueOf(x.get(LocalBinlogInfo.dbInstance)), String.valueOf(x.get(LocalBinlogInfo.fileName))));
         }
         return hostFileMap;
     }
@@ -247,65 +242,75 @@ public class RemoteBinlogOperate implements Runnable {
                 if (null != hostFileMap && hostFileMap.size() > 0) {
                     String lastFileName = hostFileMap.get(hostIp);
                     if (lastFileName != null) {
-                        subFileList = fileList.subList(1, fileList.indexOf(lastFileName));
-                        recordExsist = true;
+                        int lastIndex = fileList.indexOf(lastFileName);
+                        if (lastIndex > 1) {
+                            subFileList = fileList.subList(1, fileList.indexOf(lastFileName));
+                            recordExist = true;
+                        }
                     }
-                } else {
+                }
+                if (fileList.size() > 1) {
                     subFileList = fileList.subList(1, fileList.size());
                 }
-                subLocalFileList = new ArrayList<>(subFileList.size());
-                String[] subRemoteFileArr = new String[subFileList.size()];
+                if (null != subFileList && subFileList.size() > 0) {
+                    subLocalFileList = new ArrayList<>(subFileList.size());
+                    String[] subRemoteFileArr = new String[subFileList.size()];
 
-                for (int i = 0; i < subFileList.size(); i++) {
-                    String fileName = subFileList.get(i).split(" ")[2];
-                    subRemoteFileArr[i] = SERVER_BASEDIR + fileName;
-                    subLocalFileList.add(CLIENT_BASEDIR + ipStr + File.separator + fileName);
-                }
-                LOG.info(Arrays.toString(subRemoteFileArr));
-                getFiles(subRemoteFileArr, CLIENT_BASEDIR + ipStr, connection);
+                    for (int i = 0; i < subFileList.size(); i++) {
+                        String fileName = subFileList.get(i).split(" ")[2];
+                        subRemoteFileArr[i] = SERVER_BASEDIR + fileName;
+                        subLocalFileList.add(CLIENT_BASEDIR + ipStr + File.separator + fileName);
+                    }
+                    LOG.info(Arrays.toString(subRemoteFileArr));
+                    getFiles(subRemoteFileArr, CLIENT_BASEDIR + ipStr, connection);
 
-                long downEnd = System.currentTimeMillis();
-                Map<String, Object> valueMap = new HashMap<>(6);
-                valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
-                valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
-                valueMap.put(TableInfo.DB_INSTANCE, ipStr);
-                valueMap.put(TableInfo.HOST, IPUtility.ipAddress());
-                valueMap.put(TableInfo.BATCH_ID, TimeUtil.timeStamp2DateStr(downStart, "yyyy-MM-dd HH:mm:ss"));
+                    long downEnd = System.currentTimeMillis();
+                    Map<String, Object> valueMap = new HashMap<>(6);
+                    valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
+                    valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
+                    valueMap.put(TableInfo.DB_INSTANCE, ipStr);
+                    valueMap.put(TableInfo.HOST, IPUtility.ipAddress());
+                    valueMap.put(TableInfo.BATCH_ID, TimeUtil.timeStamp2DateStr(downStart, "yyyy-MM-dd HH:mm:ss"));
 
-                Map<String, Object> lastValueMap = new HashMap<>(3);
-                lastValueMap.put(LocalBinlogInfo.downloadIp, IPUtility.ipAddress());
-                Map<String, Object> whereMap = new HashMap<>(1);
-                whereMap.put(LocalBinlogInfo.dbInstance, hostIp);
-                //从最老的开始下载
-                Collections.reverse(subLocalFileList);
-                for (int i = 0; i < subLocalFileList.size(); i++) {
-                    String localFile = subLocalFileList.get(i);
-                    // TODO: 2018/9/7 暂时取IP地址最后一部分作为dbInstance
-                    String path = HDFS_PATH + File.separator + ipStr;
-                    Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFile, path, HDFSFileUtility.conf);
-                    if (uploadFlag) {
-                        lastValueMap.put(LocalBinlogInfo.fileName, localFile.substring(localFile.lastIndexOf("/") + 1, localFile.length()));
-                        LOG.info("文件：" + localFile + " 成功上传至HDFS！");
-                        String fileName = localFile.replace(CLIENT_BASEDIR + ipStr + File.separator, "");
-                        valueMap.put(TableInfo.FILE_NAME, localFile.replace(CLIENT_BASEDIR + ipStr + File.separator, ""));
-                        DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_record_copy", valueMap);
-                        long uploadTime = System.currentTimeMillis();
-                        lastValueMap.put(LocalBinlogInfo.downloadTime, TimeUtil.stampToDate(uploadTime));
-                        if (!recordExsist && i == 0) {
-                            lastValueMap.put(LocalBinlogInfo.dbInstance, hostIp);
-                            DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap);
+                    Map<String, Object> lastValueMap = new HashMap<>(3);
+                    lastValueMap.put(LocalBinlogInfo.downloadIp, IPUtility.ipAddress());
+                    Map<String, Object> whereMap = new HashMap<>(1);
+                    whereMap.put(LocalBinlogInfo.dbInstance, hostIp);
+                    //从最老的开始下载
+                    Collections.reverse(subLocalFileList);
+                    for (int i = 0; i < subLocalFileList.size(); i++) {
+                        String localFile = subLocalFileList.get(i);
+                        // TODO: 2018/9/7 暂时取IP地址最后一部分作为dbInstance
+                        String path;
+                        if (HDFS_PATH.endsWith("/")) {
+                            path = HDFS_PATH + ipStr;
                         } else {
-                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap, whereMap);
+                            path = HDFS_PATH + File.separator + ipStr;
                         }
-                        // TODO: 2018/9/10 发送至消息队列
-                        String filePath = path + fileName;
-                        TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, ""));
-                    } else {
-                        LOG.info("文件：" + localFile + "上传至HDFS失败！");
+                        Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFile, path, HDFSFileUtility.conf);
+                        if (uploadFlag) {
+                            lastValueMap.put(LocalBinlogInfo.fileName, localFile.substring(localFile.lastIndexOf("/") + 1, localFile.length()));
+                            LOG.info("文件：" + localFile + " 成功上传至HDFS！");
+                            String fileName = localFile.replace(CLIENT_BASEDIR + ipStr + File.separator, "");
+                            valueMap.put(TableInfo.FILE_NAME, localFile.replace(CLIENT_BASEDIR + ipStr + File.separator, ""));
+                            DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_record_copy", valueMap);
+                            long uploadTime = System.currentTimeMillis();
+                            lastValueMap.put(LocalBinlogInfo.downloadTime, TimeUtil.stampToDate(uploadTime));
+                            if (!recordExist && i == 0) {
+                                lastValueMap.put(LocalBinlogInfo.dbInstance, hostIp);
+                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap);
+                            } else {
+                                DBUtil.update(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap, whereMap);
+                            }
+                            // TODO: 2018/9/10 发送至消息队列
+                        /*String filePath = path + fileName;
+                        TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, ""));*/
+                        } else {
+                            LOG.info("文件：" + localFile + "上传至HDFS失败！");
+                        }
                     }
                 }
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }

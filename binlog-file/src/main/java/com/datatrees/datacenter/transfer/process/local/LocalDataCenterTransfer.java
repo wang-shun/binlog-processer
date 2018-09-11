@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService;
 public class LocalDataCenterTransfer implements TaskRunner, BinlogFileTransfer {
     private static Logger LOG = LoggerFactory.getLogger(LocalDataCenterTransfer.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private static final String[] Ips = properties.getProperty("SERVER_IP", "10.1.3.115").split(",");
+    private static final String[] Ips = properties.getProperty("SERVER_IP").split(",");
 
 
     @Override
@@ -23,8 +23,9 @@ public class LocalDataCenterTransfer implements TaskRunner, BinlogFileTransfer {
 
     @Override
     public void transfer() {
-        ExecutorService executorService=ThreadPoolInstance.getExecutors();
+        ExecutorService executorService = ThreadPoolInstance.getExecutors();
         for (String ip : Ips) {
+            LOG.info("start download binlog form :" + ip);
             RemoteBinlogOperate remoteBinlogOperate = new RemoteBinlogOperate();
             remoteBinlogOperate.setHostIp(ip.trim());
             executorService.execute(remoteBinlogOperate);

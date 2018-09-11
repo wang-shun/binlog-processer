@@ -27,13 +27,6 @@ public class BinlogMain {
       taskRunner.process();
 
       prometheusMetrics.start();
-//      TaskProcessor.defaultProcessor().setTopic("local_topic").registerListner(
-//        new TaskProcessorListner() {
-//          @Override
-//          public void onMessageReceived(String desc) {
-//            System.out.println(desc);
-//          }
-//        }).process();
     } catch (Exception e) {
       logger.error(e.getMessage(), e);
     }
