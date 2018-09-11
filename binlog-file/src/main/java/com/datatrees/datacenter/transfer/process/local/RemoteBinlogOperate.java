@@ -175,7 +175,7 @@ public class RemoteBinlogOperate implements Runnable {
                         break;
                     } else {
                         //首行统计信息输出是两个空格
-                        if (!"".equals(line)&&!line.contains("index")) {
+                        if (!"".equals(line) && !line.contains("index")) {
                             fileList.add(line);
                         }
                     }
@@ -255,6 +255,7 @@ public class RemoteBinlogOperate implements Runnable {
                     }
                 }
                 if (null != subFileList && subFileList.size() > 0) {
+                    LOG.info("需要下载的binlog文件有: " + subFileList.toString());
                     subLocalFileList = new ArrayList<>(subFileList.size());
                     String[] subRemoteFileArr = new String[subFileList.size()];
 
