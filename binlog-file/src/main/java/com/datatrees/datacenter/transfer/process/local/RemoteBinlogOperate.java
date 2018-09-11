@@ -175,7 +175,7 @@ public class RemoteBinlogOperate implements Runnable {
                         break;
                     } else {
                         //首行统计信息输出是两个空格
-                        if (!"".equals(line)) {
+                        if (!"".equals(line)&&!line.contains("index")) {
                             fileList.add(line);
                         }
                     }
@@ -241,6 +241,7 @@ public class RemoteBinlogOperate implements Runnable {
                 List<String> subFileList = null;
                 if (null != hostFileMap && hostFileMap.size() > 0) {
                     String lastFileName = hostFileMap.get(hostIp);
+                    LOG.info("the last download binlog file of :" + hostIp + " is :" + lastFileName);
                     if (lastFileName != null) {
                         int lastIndex = fileList.indexOf(lastFileName);
                         if (lastIndex > 1) {
@@ -311,6 +312,8 @@ public class RemoteBinlogOperate implements Runnable {
                         }
                     }
                 }
+            } else {
+                LOG.info("no new binlog file find in host: " + hostIp);
             }
         } catch (Exception e) {
             e.printStackTrace();
