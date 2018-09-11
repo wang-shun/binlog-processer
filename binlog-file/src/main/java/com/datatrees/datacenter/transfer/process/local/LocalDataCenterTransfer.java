@@ -25,7 +25,7 @@ public class LocalDataCenterTransfer implements TaskRunner, BinlogFileTransfer {
     public void transfer() {
         ExecutorService executorService = ThreadPoolInstance.getExecutors();
         for (String ip : Ips) {
-            LOG.info("start download binlog form :" + ip);
+            LOG.info("start download binlog from :" + ip);
             RemoteBinlogOperate remoteBinlogOperate = new RemoteBinlogOperate();
             remoteBinlogOperate.setHostIp(ip.trim());
             executorService.execute(remoteBinlogOperate);

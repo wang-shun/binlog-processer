@@ -246,8 +246,8 @@ public class RemoteBinlogOperate implements Runnable {
                 // TODO: 2018/9/7 暂时取IP地址最后一部分作为dbInstance
                 String ipStr = hostIp.split("\\.")[3];
                 List<String> subLocalFileList;
-                long downStart = System.currentTimeMillis();
                 List<String> subFileList = null;
+                long downStart = System.currentTimeMillis();
                 if (null != hostFileMap && hostFileMap.size() > 0) {
                     String lastFileName = hostFileMap.get(hostIp);
                     LOG.info("the last download binlog file of :" + hostIp + " is :" + lastFileName);
@@ -273,12 +273,12 @@ public class RemoteBinlogOperate implements Runnable {
                     LOG.info("需要下载的binlog文件有: " + subFileList.toString());
                     subLocalFileList = new ArrayList<>(subFileList.size());
                     String[] subRemoteFileArr = new String[subFileList.size()];
-
                     for (int i = 0; i < subFileList.size(); i++) {
                         String fileName = subFileList.get(i);
                         subRemoteFileArr[i] = SERVER_BASEDIR + fileName;
                         subLocalFileList.add(CLIENT_BASEDIR + ipStr + File.separator + fileName);
                     }
+
                     getFiles(subRemoteFileArr, CLIENT_BASEDIR + ipStr, connection);
 
                     long downEnd = System.currentTimeMillis();
