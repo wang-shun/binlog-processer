@@ -39,7 +39,7 @@ public class RemoteBinlogOperate implements Runnable {
     /**
      * 使用用户名和密码来进行登录验证。如果为true则通过用户名和密码登录，false则使用rsa免密码登录
      */
-    private static boolean usePassword = false;
+    private static boolean usePassword = properties.getProperty("USE_PASSWORD").equals("false") ? false : true;
 
     /**
      * ssh用户登录验证，使用用户名和密码来认证
@@ -165,7 +165,7 @@ public class RemoteBinlogOperate implements Runnable {
             if (isAuthed) {
                 Session sess = connection.openSession();
                 //执行 linux 命令
-                sess.execCommand("cd " + filePath + ";ls -t -l --time-style='+%Y-%m-%d %H:%M:%S' | awk '{print$6,$7,$8}'");
+                sess.execCommand("cd " + filePath + ";ls -t -l --time-style='+%Y-%m-%d %H:%M:%S' | awk '{print $8}'");
                 //获取命令行输出
                 InputStream stdout = new StreamGobbler(sess.getStdout());
                 BufferedReader br = new BufferedReader(new InputStreamReader(stdout));
@@ -175,7 +175,7 @@ public class RemoteBinlogOperate implements Runnable {
                         break;
                     } else {
                         //首行统计信息输出是两个空格
-                        if (!"  ".equals(line)) {
+                        if (!"".equals(line)) {
                             fileList.add(line);
                         }
                     }
@@ -248,16 +248,17 @@ public class RemoteBinlogOperate implements Runnable {
                             recordExist = true;
                         }
                     }
-                }
-                if (fileList.size() > 1) {
-                    subFileList = fileList.subList(1, fileList.size());
+                } else {
+                    if (fileList.size() > 1) {
+                        subFileList = fileList.subList(1, fileList.size());
+                    }
                 }
                 if (null != subFileList && subFileList.size() > 0) {
                     subLocalFileList = new ArrayList<>(subFileList.size());
                     String[] subRemoteFileArr = new String[subFileList.size()];
 
                     for (int i = 0; i < subFileList.size(); i++) {
-                        String fileName = subFileList.get(i).split(" ")[2];
+                        String fileName = subFileList.get(i);
                         subRemoteFileArr[i] = SERVER_BASEDIR + fileName;
                         subLocalFileList.add(CLIENT_BASEDIR + ipStr + File.separator + fileName);
                     }
