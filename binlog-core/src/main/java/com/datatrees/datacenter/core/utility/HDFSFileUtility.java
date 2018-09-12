@@ -51,7 +51,7 @@ public class HDFSFileUtility {
             }
             fileSystem.moveFromLocalFile(srcPath, desPath);
         } catch (IOException ie) {
-            ie.printStackTrace();
+            Log.info("File: "+src+" does not exist");
             return false;
         }
         return true;

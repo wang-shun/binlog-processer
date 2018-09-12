@@ -90,24 +90,18 @@ public class RemoteBinlogOperate implements Runnable {
                 LOG.info(connection.getHostname() + " 认证成功!");
                 SCPClient scpClient = connection.createSCPClient();
                 File localPath = new File(localDirectory);
-                File remotePath = new File(remoteFile);
-                if (remotePath.isFile()) {
-                    if (!localPath.exists() && !localPath.isDirectory()) {
-                        LOG.info("文件夹：" + localDirectory + " 不存在！");
-                        LOG.info("创建文件夹：" + localDirectory + " ...");
-                        boolean flag=localPath.mkdir();
-                        if(flag) {
-                            LOG.info("文件夹：" + localDirectory + " 创建成功");
-                        }
-                        else{
-                            LOG.error("文件夹：" + localDirectory + " 创建失败");
-                        }
+                if (!localPath.exists() && !localPath.isDirectory()) {
+                    LOG.info("文件夹：" + localDirectory + " 不存在！");
+                    LOG.info("创建文件夹：" + localDirectory + " ...");
+                    boolean flag = localPath.mkdir();
+                    if (flag) {
+                        LOG.info("文件夹：" + localDirectory + " 创建成功");
+                    } else {
+                        LOG.error("文件夹：" + localDirectory + " 创建失败");
                     }
-                    scpClient.get(remoteFile, localDirectory);
-                    Log.info("文件:" + remoteFile + " 下载完毕");
-                } else {
-                    LOG.info(remoteFile + " not a regular file, can't be transfer use SCP");
                 }
+                scpClient.get(remoteFile, localDirectory);
+                Log.info("文件:" + remoteFile + " 下载完毕");
             } else {
                 LOG.info(connection.getHostname() + " 认证失败!");
             }
@@ -129,10 +123,10 @@ public class RemoteBinlogOperate implements Runnable {
                 if (!targetPath.exists() && !targetPath.isDirectory()) {
                     LOG.info("目标文件夹：" + localDirectory + " 不存在！");
                     LOG.info("创建目标文件夹：" + localDirectory + " ...");
-                    boolean flag=targetPath.mkdir();
-                    if(flag) {
+                    boolean flag = targetPath.mkdir();
+                    if (flag) {
                         LOG.info("文件夹：" + localDirectory + " 创建成功");
-                    }else{
+                    } else {
                         LOG.error("文件夹：" + localDirectory + " 创建失败");
                     }
                 }
@@ -173,8 +167,8 @@ public class RemoteBinlogOperate implements Runnable {
             boolean isAuthed = isAuth(connection);
             if (isAuthed) {
                 Session sess = connection.openSession();
-                //执行 linux 命令
-                sess.execCommand("cd " + filePath + ";ls -t -l --time-style='+%Y-%m-%d %H:%M:%S' | awk '{print $8}'");
+                //执行 linux 命令,打印出目录下文件名，按修改时间升序排列
+                sess.execCommand("cd " + filePath + ";ls -lrt --time-style='+%Y-%m-%d %H:%M:%S' | awk '{print $8}'");
                 //获取命令行输出
                 InputStream stdout = new StreamGobbler(sess.getStdout());
                 BufferedReader br = new BufferedReader(new InputStreamReader(stdout));
@@ -245,90 +239,86 @@ public class RemoteBinlogOperate implements Runnable {
             if (null != fileList && fileList.size() > 1) {
                 // TODO: 2018/9/7 暂时取IP地址最后一部分作为dbInstance
                 String ipStr = hostIp.split("\\.")[3];
-                List<String> subLocalFileList;
                 List<String> subFileList = null;
-                long downStart = System.currentTimeMillis();
+                long batchStart = System.currentTimeMillis();
                 if (null != hostFileMap && hostFileMap.size() > 0) {
                     String lastFileName = hostFileMap.get(hostIp);
-                    LOG.info("the last download binlog file of :" + hostIp + " is :" + lastFileName);
                     if (lastFileName != null) {
+                        LOG.info("the last download binlog file of :" + hostIp + " is :" + lastFileName);
                         int lastIndex = fileList.indexOf(lastFileName);
                         System.out.println("lastIndex:" + lastIndex);
-                        if (lastIndex > 1) {
-                            subFileList = fileList.subList(1, fileList.indexOf(lastFileName));
+                        if (fileList.size() - 1 > lastIndex) {
+                            subFileList = fileList.subList(lastIndex + 1, fileList.size() - 1);
                             recordExist = true;
                         }
                         if (lastIndex == -1) {
                             if (fileList.size() > 1) {
-                                subFileList = fileList.subList(1, fileList.size());
+                                subFileList = fileList.subList(0, fileList.size() - 1);
                             }
+                        }
+                    } else {
+                        Log.info("no binlog download record find in the database");
+                        if (fileList.size() > 1) {
+                            subFileList = fileList.subList(0, fileList.size() - 1);
                         }
                     }
                 } else {
                     if (fileList.size() > 1) {
-                        subFileList = fileList.subList(1, fileList.size());
+                        subFileList = fileList.subList(0, fileList.size() - 1);
                     }
                 }
                 if (null != subFileList && subFileList.size() > 0) {
-                    LOG.info("需要下载的binlog文件有: " + subFileList.toString());
-                    subLocalFileList = new ArrayList<>(subFileList.size());
-                    String[] subRemoteFileArr = new String[subFileList.size()];
-                    for (int i = 0; i < subFileList.size(); i++) {
-                        String fileName = subFileList.get(i);
-                        subRemoteFileArr[i] = SERVER_BASEDIR + fileName;
-                        subLocalFileList.add(CLIENT_BASEDIR + ipStr + File.separator + fileName);
-                    }
+                    LOG.info("the binlog files need to download : " + subFileList.toString());
 
-                    getFiles(subRemoteFileArr, CLIENT_BASEDIR + ipStr, connection);
-
-                    long downEnd = System.currentTimeMillis();
                     Map<String, Object> valueMap = new HashMap<>(6);
-                    valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
-                    valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
                     valueMap.put(TableInfo.DB_INSTANCE, ipStr);
                     valueMap.put(TableInfo.HOST, IPUtility.ipAddress());
-                    valueMap.put(TableInfo.BATCH_ID, TimeUtil.timeStamp2DateStr(downStart, "yyyy-MM-dd HH:mm:ss"));
-
+                    valueMap.put(TableInfo.BATCH_ID, TimeUtil.timeStamp2DateStr(batchStart, "yyyy-MM-dd HH:mm:ss"));
                     Map<String, Object> lastValueMap = new HashMap<>(3);
                     lastValueMap.put(LocalBinlogInfo.downloadIp, IPUtility.ipAddress());
                     Map<String, Object> whereMap = new HashMap<>(1);
                     whereMap.put(LocalBinlogInfo.dbInstance, hostIp);
-                    //从最老的开始下载
-                    Collections.reverse(subLocalFileList);
-                    for (int i = 0; i < subLocalFileList.size(); i++) {
-                        String localFile = subLocalFileList.get(i);
-                        // TODO: 2018/9/7 暂时取IP地址最后一部分作为dbInstance
-                        String path;
-                        if (HDFS_PATH.endsWith("/")) {
-                            path = HDFS_PATH + ipStr;
-                        } else {
-                            path = HDFS_PATH + File.separator + ipStr;
-                        }
-                        Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFile, path, HDFSFileUtility.conf);
-                        if (uploadFlag) {
-                            lastValueMap.put(LocalBinlogInfo.fileName, localFile.substring(localFile.lastIndexOf("/") + 1, localFile.length()));
-                            LOG.info("文件：" + localFile + " 成功上传至HDFS！");
-                            String fileName = localFile.replace(CLIENT_BASEDIR + ipStr + File.separator, "");
-                            valueMap.put(TableInfo.FILE_NAME, localFile.replace(CLIENT_BASEDIR + ipStr + File.separator, ""));
-                            DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_record_copy", valueMap);
-                            long uploadTime = System.currentTimeMillis();
-                            lastValueMap.put(LocalBinlogInfo.downloadTime, TimeUtil.stampToDate(uploadTime));
-                            if (!recordExist && i == 0) {
-                                lastValueMap.put(LocalBinlogInfo.dbInstance, hostIp);
-                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap);
-                            } else {
-                                DBUtil.update(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap, whereMap);
-                            }
-                            // TODO: 2018/9/10 发送至消息队列
+                    String hdfsFilePath = HDFS_PATH + File.separator + ipStr;
+                    for (int i = 0; i < subFileList.size(); i++) {
+                        String fileName = subFileList.get(i);
+                        String remoteFilePath = SERVER_BASEDIR + fileName;
+                        long downStart = System.currentTimeMillis();
+                        getFile(remoteFilePath, CLIENT_BASEDIR + ipStr, connection);
+                        long downEnd = System.currentTimeMillis();
+                        valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
+                        valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
+                        String localFilePath = CLIENT_BASEDIR + ipStr + File.separator + fileName;
+                        File localFile = new File(localFilePath);
+                        if (localFile.isFile() && localFile.exists()) {
+                            Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);
+                            if (uploadFlag) {
+                                LOG.info("file ：" + fileName + " upload to HDFS successful！");
+
+                                valueMap.put(TableInfo.FILE_NAME, fileName);
+                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_record_copy", valueMap);
+
+                                lastValueMap.put(LocalBinlogInfo.fileName, fileName);
+                                long uploadTime = System.currentTimeMillis();
+                                lastValueMap.put(LocalBinlogInfo.downloadTime, TimeUtil.stampToDate(uploadTime));
+                                if (!recordExist && i == 0) {
+                                    lastValueMap.put(LocalBinlogInfo.dbInstance, hostIp);
+                                    DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap);
+                                } else {
+                                    DBUtil.update(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap, whereMap);
+                                }
+                                // TODO: 2018/9/10 发送至消息队列
                         /*String filePath = path + fileName;
                         TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, ""));*/
+                            } else {
+                                LOG.info("file ：" + fileName + "upload to HDFS failed！");
+                            }
                         } else {
-                            LOG.info("文件：" + localFile + "上传至HDFS失败！");
+                            LOG.info("File:" + localFile + " does not exist!");
                         }
                     }
                 }
             } else {
-                LOG.info("no new binlog file find in host: " + hostIp);
+                LOG.info("no binlog find in the host : " + hostIp);
             }
         } catch (Exception e) {
             e.printStackTrace();
