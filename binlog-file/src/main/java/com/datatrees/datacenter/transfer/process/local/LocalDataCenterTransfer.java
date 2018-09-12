@@ -30,9 +30,6 @@ public class LocalDataCenterTransfer implements TaskRunner, BinlogFileTransfer {
             remoteBinlogOperate.setHostIp(ip.trim());
             executorService.execute(remoteBinlogOperate);
         }
-        executorService.shutdown();
-        while (!executorService.isTerminated()) {
-        }
         System.out.println("Finished all threads");
     }
 }
