@@ -25,8 +25,12 @@ public class Binlog implements Serializable {
   }
 
   public String getInstanceId() {
-    return jdbcUrl.substring(0, jdbcUrl.indexOf(".")).
-      replaceAll("\\d+", "");
+    if (jdbcUrl.split("\\.").length == 1) {
+      return jdbcUrl;
+    } else {
+      return jdbcUrl.substring(0, jdbcUrl.indexOf(".")).
+        replaceAll("\\d+", "");
+    }
   }
 
   public String getIdentity() {

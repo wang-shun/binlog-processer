@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +78,8 @@ public final class BinlogFileReader implements Runnable {
   private Status currentStatus;
   private ExceptionHandler exceptionHandler;
   private Runnable callback;
+
+  private IgnoreStrategy ignoreStrategy;
   /**
    * 分库
    */
@@ -99,6 +102,7 @@ public final class BinlogFileReader implements Runnable {
     eventDeserializer = new EventDeserializer();
     tableMapCache = new ConcurrentHashMap<>();
     consumerCache = new EnumMap<>(EventType.class);
+    ignoreStrategy = new IgnoreStrategy();
   }
 
   public BinlogFileReader(Binlog binlog,
@@ -210,7 +214,26 @@ public final class BinlogFileReader implements Runnable {
       if (schema != null) {
         Object resultValue = schemaUtility.toAvroData(schema, operator, before, after);
         if (resultValue != null) {
-          consumer.consume(schema, this.binlog, operator, resultValue);
+          if (simpleEntry.getValue().equalsIgnoreCase("archive_table")) {
+            GenericData.Record record = (GenericData.Record) ((GenericData.Record) resultValue)
+              .get("After");
+            ignoreStrategy.store(simpleEntry.getKey(), (String) record.get("name"),
+              ((String) record.get("sign")).equalsIgnoreCase("true"));
+          }
+
+          switch (operator) {
+            case Create:
+            case Update:
+              consumer.consume(schema, this.binlog, operator, resultValue);
+              break;
+            case Delete:
+              if (!ignoreStrategy.current(simpleEntry.getKey(), simpleEntry.getValue())) {
+                consumer.consume(schema, this.binlog, operator, resultValue);
+              }
+              break;
+            default:
+              break;
+          }
         }
       }
     }
