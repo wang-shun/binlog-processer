@@ -24,6 +24,7 @@ public class TransferTimerTaskCopy implements TaskRunner {
     private long INITIAL_DELAY = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.initaildelay"));
     private long PERIOD = Integer.parseInt(properties.getProperty("AliBinLogFileTransfer.check.schedule.task.period"));
     private String REMOTE_SERVER = properties.getProperty("SERVER_TYPE", "idc");
+    public static volatile Set processingSet = Collections.synchronizedSet(new HashSet<String>());
 
     public TransferTimerTaskCopy() {
     }

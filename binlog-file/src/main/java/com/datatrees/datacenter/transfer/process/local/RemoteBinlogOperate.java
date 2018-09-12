@@ -7,6 +7,8 @@ import ch.ethz.ssh2.StreamGobbler;
 import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.LocalBinlogInfo;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
+import com.datatrees.datacenter.transfer.process.TransferTimerTask;
+import com.datatrees.datacenter.transfer.process.TransferTimerTaskCopy;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -283,37 +285,42 @@ public class RemoteBinlogOperate implements Runnable {
                         String fileName = subFileList.get(i);
                         String remoteFilePath = SERVER_BASEDIR + fileName;
                         long downStart = System.currentTimeMillis();
-                        getFile(remoteFilePath, CLIENT_BASEDIR + ipStr, connection);
-                        long downEnd = System.currentTimeMillis();
-                        valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
-                        valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
-                        String localFilePath = CLIENT_BASEDIR + ipStr + File.separator + fileName;
-                        File localFile = new File(localFilePath);
-                        if (localFile.isFile() && localFile.exists()) {
-                            Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);
-                            if (uploadFlag) {
-                                LOG.info("file ：" + fileName + " upload to HDFS successful！");
+                        Boolean isProcessing = TransferTimerTaskCopy.processingSet.contains(remoteFilePath);
+                        if (!isProcessing) {
+                            TransferTimerTaskCopy.processingSet.add(remoteFilePath);
+                            getFile(remoteFilePath, CLIENT_BASEDIR + ipStr, connection);
+                            long downEnd = System.currentTimeMillis();
+                            valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
+                            valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
+                            String localFilePath = CLIENT_BASEDIR + ipStr + File.separator + fileName;
+                            File localFile = new File(localFilePath);
+                            if (localFile.isFile() && localFile.exists()) {
+                                Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);
+                                if (uploadFlag) {
+                                    LOG.info("file ：" + fileName + " upload to HDFS successful！");
 
-                                valueMap.put(TableInfo.FILE_NAME, fileName);
-                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_record_copy", valueMap);
+                                    valueMap.put(TableInfo.FILE_NAME, fileName);
+                                    DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_record_copy", valueMap);
 
-                                lastValueMap.put(LocalBinlogInfo.fileName, fileName);
-                                long uploadTime = System.currentTimeMillis();
-                                lastValueMap.put(LocalBinlogInfo.downloadTime, TimeUtil.stampToDate(uploadTime));
-                                if (!recordExist && i == 0) {
-                                    lastValueMap.put(LocalBinlogInfo.dbInstance, hostIp);
-                                    DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap);
-                                } else {
-                                    DBUtil.update(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap, whereMap);
-                                }
-                                // TODO: 2018/9/10 发送至消息队列
+                                    lastValueMap.put(LocalBinlogInfo.fileName, fileName);
+                                    long uploadTime = System.currentTimeMillis();
+                                    lastValueMap.put(LocalBinlogInfo.downloadTime, TimeUtil.stampToDate(uploadTime));
+                                    if (!recordExist && i == 0) {
+                                        lastValueMap.put(LocalBinlogInfo.dbInstance, hostIp);
+                                        DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap);
+                                    } else {
+                                        DBUtil.update(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_down_last_file", lastValueMap, whereMap);
+                                    }
+                                    TransferTimerTaskCopy.processingSet.remove(remoteFilePath);
+                                    // TODO: 2018/9/10 发送至消息队列
                         /*String filePath = path + fileName;
                         TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, ""));*/
+                                } else {
+                                    LOG.info("file ：" + fileName + "upload to HDFS failed！");
+                                }
                             } else {
-                                LOG.info("file ：" + fileName + "upload to HDFS failed！");
+                                LOG.info("File:" + localFile + " does not exist!");
                             }
-                        } else {
-                            LOG.info("File:" + localFile + " does not exist!");
                         }
                     }
                 }
