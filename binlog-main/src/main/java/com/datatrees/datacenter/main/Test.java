@@ -103,6 +103,7 @@ public class Test {
         System.out.println(sets.size());*/
 
         //idc binlog下载
+
         LocalDataCenterTransfer localDataCenterTransfer = new LocalDataCenterTransfer();
         localDataCenterTransfer.transfer();
 
@@ -114,7 +115,7 @@ public class Test {
         Map<String,Long> record=batchGetFromHBase.parrallelBatchSearch(rowKeyList,"streaming_warehouse_rowId2recId_tbl","f","update_time");
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
-        /*BaseDataCompare dataCompare =new HiveCompare();
-        dataCompare.binLogCompare("1534553240-mysql-bin.000438","create");*/
+        /*BaseDataCompare dataCompare = new HiveCompare();
+        dataCompare.binLogCompare("1534574843-mysql-bin.000439", "update");*/
     }
 }

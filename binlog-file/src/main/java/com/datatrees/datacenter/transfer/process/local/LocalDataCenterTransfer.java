@@ -3,6 +3,7 @@ package com.datatrees.datacenter.transfer.process.local;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.transfer.process.BinlogFileTransfer;
+import com.datatrees.datacenter.transfer.process.TransferTimerTaskCopy;
 import com.datatrees.datacenter.transfer.process.threadmanager.ThreadPoolInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,9 +27,12 @@ public class LocalDataCenterTransfer implements TaskRunner, BinlogFileTransfer {
         ExecutorService executorService = ThreadPoolInstance.getExecutors();
         for (String ip : Ips) {
             LOG.info("start download binlog from :" + ip);
-            RemoteBinlogOperate remoteBinlogOperate = new RemoteBinlogOperate();
-            remoteBinlogOperate.setHostIp(ip.trim());
-            executorService.execute(remoteBinlogOperate);
+            System.out.println(TransferTimerTaskCopy.processingMap.toString());
+            if ((null == TransferTimerTaskCopy.processingMap.get(ip)) || (TransferTimerTaskCopy.processingMap.get(ip) == 0)) {
+                RemoteBinlogOperate remoteBinlogOperate = new RemoteBinlogOperate();
+                remoteBinlogOperate.setHostIp(ip.trim());
+                executorService.execute(remoteBinlogOperate);
+            }
         }
     }
 }

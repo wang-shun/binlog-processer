@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 public class HiveCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompare.class);
     private Properties properties = PropertiesUtility.defaultProperties();
-    private final String HIVE_HDFS_PATH = properties.getProperty("HIVE_HDFS_PATH");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
 
@@ -29,16 +28,18 @@ public class HiveCompare extends BaseDataCompare {
         if (null != partitionInfos && partitionInfos.size() > 0) {
             AvroDataReader avroDataReader = new AvroDataReader();
             for (Map<String, Object> partitionInfo : partitionInfos) {
+
                 String dataBase = String.valueOf(partitionInfo.get(CheckTable.DATA_BASE));
                 String tableName = String.valueOf(partitionInfo.get(CheckTable.TABLE_NAME));
                 String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
                 String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
-                String db_instance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
+                String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
                 Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
                 String recordId = FieldNameOp.getFieldName(allFieldSet, idList);
                 String recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
+
                 if (null != recordId && null != recordLastUpdateTime) {
-                    String filePath = db_instance +
+                    String filePath = dbInstance +
                             File.separator +
                             dataBase +
                             File.separator +
@@ -58,29 +59,75 @@ public class HiveCompare extends BaseDataCompare {
                     Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
                     Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
 
-                    createRecord = diffCompare(createRecord, updateRecord);
-                    createRecord = diffCompare(createRecord, deleteRecord);
-                    updateRecord = diffCompare(updateRecord, deleteRecord);
-                    List<String> createIdList = createRecord.keySet().stream().map(x -> (x + "_" + dataBase + "." + tableName)).collect(Collectors.toList());
-                    Map<String, Long> hbaseRecordMap = BatchGetFromHBase.getBatchDataFromHBase(createIdList, HBaseTableInfo.TABLE_NAME, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
-                    if (null != hbaseRecordMap) {
-                        Iterator<Map.Entry<String, Long>> iterator = hbaseRecordMap.entrySet().iterator();
+                    Map<String, Long> createRecordFind = compareWithHBase(assembleRowKey(dataBase, tableName, createRecord));
+                    Map<String, Long> updateRecordFind = compareWithHBase(assembleRowKey(dataBase, tableName, updateRecord));
+                    Map<String, Long> deleteRecordFind = compareWithHBase(assembleRowKey(dataBase, tableName, deleteRecord));
+
+
+                    Map<String, Long> createRecordNoFind;
+                    Map<String, Long> updateRecordNoFind;
+
+                    if (null != createRecordFind && createRecordFind.size() > 0) {
+                        Map<String, Long> createTmp = new HashMap<>();
+                        createRecordFind.entrySet().stream().forEach(x -> createTmp.put(x.getKey().split("_")[0], x.getValue()));
+                        createRecordNoFind = diffCompare(createRecord, createTmp);
+                    } else {
+                        createRecordNoFind = createRecord;
+                    }
+
+                    if (null != updateRecordFind && updateRecordFind.size() > 0) {
+                        Map<String, Long> updateTmp = new HashMap<>();
+                        updateRecordFind.entrySet().stream().forEach(x -> updateTmp.put(x.getKey().split("_")[0], x.getValue()));
+                        Map<String, Long> tmp = updateTmp;
+                        updateRecordNoFind = diffCompare(updateRecord, updateTmp);
+                        Map<String, Long> oldUpdateRecord = compareByValue(tmp, updateRecord);
+                        if(null!=oldUpdateRecord&&oldUpdateRecord.size()>0) {
+                            updateRecordNoFind.putAll(oldUpdateRecord);
+                        }
+                    } else {
+                        updateRecordNoFind = updateRecord;
+                    }
+
+                    if (null != createRecordNoFind) {
+                        Iterator<Map.Entry<String, Long>> iterator = createRecordNoFind.entrySet().iterator();
+                        System.out.println(dataBase + tableName);
                         while (iterator.hasNext()) {
                             Map.Entry<String, Long> recordEntry = iterator.next();
                             System.out.println(recordEntry.getKey());
                             System.out.println(recordEntry.getValue());
                         }
                     }
-               /* //create/insert事件
-                Map<String, Long> diffMap = diffCompare(createData, orcData);
-                //create/insert事件中真正的错误记录
-                Map<String, Long> lastDiffMap = compareByValue(diffMap, orcData);
-                //delete 时间中的错误记录
-                Map<String, Long> retainMap = retainCompare(deleteRecord, orcData);*/
-                    // TODO: 2018/7/17 将检查结果写入到数据库
+
+                    if (null != updateRecordNoFind) {
+                        Iterator<Map.Entry<String, Long>> iterator = updateRecordNoFind.entrySet().iterator();
+                        System.out.println(dataBase + tableName);
+
+                    }
+
+                    if(null!=deleteRecordFind){
+
+                    }
                 }
             }
         }
+    }
+
+    private List<String> assembleRowKey(String dataBase, String tableName, Map<String, Long> recordMap) {
+        if (null != recordMap && recordMap.size() > 0) {
+            List<String> createIdList = recordMap.keySet().stream().map(x -> (x + "_" + dataBase + "." + tableName)).collect(Collectors.toList());
+            return createIdList;
+        } else {
+            return null;
+        }
+
+    }
+
+    private Map<String, Long> compareWithHBase(List<String> createIdList) {
+        if (null != createIdList && createIdList.size() > 0) {
+            Map<String, Long> hbaseRecordMap = BatchGetFromHBase.getBatchDataFromHBase(createIdList, HBaseTableInfo.TABLE_NAME, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+            return hbaseRecordMap;
+        }
+        return null;
     }
 
     /**
