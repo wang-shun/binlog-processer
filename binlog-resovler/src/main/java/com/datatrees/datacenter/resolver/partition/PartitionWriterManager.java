@@ -99,8 +99,9 @@ public class PartitionWriterManager implements WriteResult {
         String tempPath = path;
         String targetPath =
           tempPath.replace(TMP_ROOT_PATH, WAREHOUSE_ROOT_PATH)
-            .replace(tempPath.split("/")[6] + "/", "");
-        fileStorage.commit(tempPath, targetPath);
+            .replace(tempPath.split("/")[6] + "/", "")
+            .replace(tempPath.split("/")[7] + "/", "");
+//        fileStorage.commit(tempPath, targetPath);
       } catch (Exception e) {
         throw new BinlogException(String.format("error to commit avro data of %s", path),
           Status.COMMITRECORDFAILED, e);
