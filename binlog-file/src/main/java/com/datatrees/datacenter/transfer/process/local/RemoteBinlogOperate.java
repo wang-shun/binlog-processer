@@ -26,13 +26,13 @@ public class RemoteBinlogOperate implements Runnable {
     private static final int PORT = Integer.valueOf(properties.getProperty("PORT", "22"));
     private static final String DATABASE = properties.getProperty("jdbc.database", "binlog");
     private static final String SERVER_BASEDIR = properties.getProperty("SERVER_ROOT", "/data1/application/binlog-process/log");
-    private static final String CLIENT_BASEDIR = properties.getProperty("CLIENT_ROOT", "/Users/personalc/test/");
+    private static final String CLIENT_BASEDIR = properties.getProperty("CLIENT_ROOT", "/Users/personalc/test");
     private static final String HDFS_PATH = properties.getProperty("HDFS_ROOT");
     private String hostIp;
     private boolean recordExist = false;
 
 
-    public static Map<String, String> getHostFileMap() {
+    private static Map<String, String> getHostFileMap() {
         Map<String, String> hostFileMap = new HashMap<>();
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("select ");
@@ -48,7 +48,7 @@ public class RemoteBinlogOperate implements Runnable {
             e.printStackTrace();
         }
         if (dataRecord != null) {
-            dataRecord.stream().forEach(x -> hostFileMap.put(String.valueOf(x.get(LocalBinlogInfo.dbInstance)), String.valueOf(x.get(LocalBinlogInfo.fileName))));
+            dataRecord.forEach(x -> hostFileMap.put(String.valueOf(x.get(LocalBinlogInfo.dbInstance)), String.valueOf(x.get(LocalBinlogInfo.fileName))));
         }
         return hostFileMap;
     }
@@ -103,14 +103,14 @@ public class RemoteBinlogOperate implements Runnable {
 
                     for (int i = 0; i < subFileList.size(); i++) {
                         String fileName = subFileList.get(i);
-                        String remoteFilePath = SERVER_BASEDIR + fileName;
+                        String remoteFilePath = SERVER_BASEDIR +File.separator+ fileName;
                         long downStart = System.currentTimeMillis();
                         LOG.info("Start download file: " + fileName);
-                        SshUtil.getFile(remoteFilePath, CLIENT_BASEDIR + hostIp, connection);
+                        SshUtil.getFile(remoteFilePath, CLIENT_BASEDIR+File.separator + hostIp, connection);
                         long downEnd = System.currentTimeMillis();
                         valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
                         valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
-                        String localFilePath = CLIENT_BASEDIR + hostIp + File.separator + fileName;
+                        String localFilePath = CLIENT_BASEDIR + File.separator+hostIp + File.separator + fileName;
                         File localFile = new File(localFilePath);
                         if (localFile.isFile() && localFile.exists()) {
                             Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);
