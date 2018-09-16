@@ -2,6 +2,7 @@ package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.HiveCompare;
+import com.datatrees.datacenter.compare.TiDBCompare;
 import com.datatrees.datacenter.transfer.process.local.LocalDataCenterTransfer;
 import com.datatrees.datacenter.utility.BatchGetFromHBase;
 import javafx.beans.binding.ObjectExpression;
@@ -20,8 +21,8 @@ public class Test {
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
 
-        /*BaseDataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1536127046-mysql-bin.001426", "update");*/
+        BaseDataCompare dataCompare = new TiDBCompare();
+        dataCompare.binLogCompare("1537081989-mysql-bin.001072", "update");
 
        /* AvroDataReader reader=new AvroDataReader();
         reader.readSrcData("hdfs://cloudera3/data/warehouse/update/gongfudai/loandb/t_user_blacklist/year=2018/month=7/day=5/1536058717-mysql-bin.000997.avro");*/
@@ -104,8 +105,8 @@ public class Test {
 
         //idc binlog下载
 
-        LocalDataCenterTransfer localDataCenterTransfer = new LocalDataCenterTransfer();
-        localDataCenterTransfer.transfer();
+        /*LocalDataCenterTransfer localDataCenterTransfer = new LocalDataCenterTransfer();
+        localDataCenterTransfer.transfer();*/
 
         //batch read from hbase
         /*BatchGetFromHBase batchGetFromHBase=new BatchGetFromHBase();

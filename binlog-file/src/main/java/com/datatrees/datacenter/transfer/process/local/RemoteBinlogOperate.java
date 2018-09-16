@@ -1,11 +1,6 @@
 package com.datatrees.datacenter.transfer.process.local;
 
 import ch.ethz.ssh2.Connection;
-import ch.ethz.ssh2.SCPClient;
-import ch.ethz.ssh2.Session;
-import ch.ethz.ssh2.StreamGobbler;
-import com.datatrees.datacenter.core.task.TaskDispensor;
-import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.LocalBinlogInfo;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
@@ -14,10 +9,16 @@ import com.datatrees.datacenter.transfer.utility.SshUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
+/**
+ * @author personalc
+ */
 public class RemoteBinlogOperate implements Runnable {
 
     private static Logger LOG = LoggerFactory.getLogger(RemoteBinlogOperate.class);
@@ -98,7 +99,7 @@ public class RemoteBinlogOperate implements Runnable {
                     lastValueMap.put(LocalBinlogInfo.downloadIp, IPUtility.ipAddress());
                     Map<String, Object> whereMap = new HashMap<>(1);
                     whereMap.put(LocalBinlogInfo.dbInstance, hostIp);
-                    String hdfsFilePath = HDFS_PATH + hostIp;
+                    String hdfsFilePath = HDFS_PATH + File.separator + hostIp;
 
                     for (int i = 0; i < subFileList.size(); i++) {
                         String fileName = subFileList.get(i);
@@ -148,7 +149,7 @@ public class RemoteBinlogOperate implements Runnable {
         }
     }
 
-    public void setHostIp(String hostIp) {
+    void setHostIp(String hostIp) {
         this.hostIp = hostIp;
     }
 }

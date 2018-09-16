@@ -17,6 +17,12 @@
             <groupId>com.datatrees.datacenter.binlog</groupId>
             <artifactId>binlog-file</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>gson</artifactId>
+                    <groupId>com.google.code.gson</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.datatrees.datacenter.binlog</groupId>

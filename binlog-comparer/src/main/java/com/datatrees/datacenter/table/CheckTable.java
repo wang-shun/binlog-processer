@@ -4,6 +4,8 @@ public class CheckTable {
     public static final String BINLOG_DATABASE="binlog";
     public static final String BINLOG_CHECK_TABLE = "t_binlog_check_tidb";
     public static final String BINLOG_CHECK_DATE_TABLE = "t_binlog_check_tidb_date";
+    public static final String BINLOG_CHECK_HIVE_TABLE = "t_binlog_check_hive";
+    public static final String BINLOG_CHECK_HIVE_DATE_TABLE = "t_binlog_check_hive_date";
     public static final String BINLOG_PROCESS_LOG_TABLE="t_binlog_process_log";
     public static final String ID = "id";
     public static final String FILE_NAME = "file_name";

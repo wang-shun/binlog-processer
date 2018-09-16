@@ -38,7 +38,7 @@ public class TransferTimerTask implements TaskRunner {
         Runnable runnable = () -> {
             try {
                 ServerTypeFactory factory = new ServerTypeFactory();
-                BinlogFileTransfer binlogFileTransfer = null;
+                BinlogFileTransfer binlogFileTransfer;
                 if ("aliyun".equals(REMOTE_SERVER.toLowerCase())) {
                     binlogFileTransfer = factory.getServerType("AliBinLogFileTransfer");
                 } else {

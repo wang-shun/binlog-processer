@@ -5,12 +5,8 @@ import ch.ethz.ssh2.SCPClient;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.transfer.bean.SshConfiguration;
-import com.datatrees.datacenter.transfer.process.local.RemoteBinlogOperate;
-import com.jcraft.jsch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.rmi.runtime.Log;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -72,7 +68,7 @@ public class SshUtil {
                 if (!localPath.exists() && !localPath.isDirectory()) {
                     LOG.info("文件夹：" + localDirectory + " 不存在！");
                     LOG.info("创建文件夹：" + localDirectory + " ...");
-                    boolean flag = localPath.mkdir();
+                    boolean flag = localPath.mkdirs();
                     if (flag) {
                         LOG.info("文件夹：" + localDirectory + " 创建成功");
                     } else {
