@@ -38,8 +38,7 @@ public class BatchGetFromHBase {
                 if (null != results && results.length > 0) {
                     resultMap = new HashMap<>();
                     for (Result result : results) {
-                        System.out.println(result.getExists());
-                        if (null!=result) {
+                        if (result != null) {
                             String rowKey = Bytes.toString(result.getRow());
                             long time = Bytes.toLong(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
                             resultMap.put(rowKey, time);
@@ -83,7 +82,7 @@ public class BatchGetFromHBase {
      */
     public Map<String, Long> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
         Map<String, Long> dataMap = new HashMap<>();
-        int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 2;
+        int parallel = (Runtime.getRuntime().availableProcessors() + 1)*3;
         List<List<String>> batchIdList;
         if (null != idList && idList.size() > 0) {
             if (idList.size() < parallel) {

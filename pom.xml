@@ -26,6 +26,7 @@
         <fastjson.version>1.2.7</fastjson.version>
         <property.version>4.5.1</property.version>
         <hadoop.version>2.5.0-cdh5.2.0</hadoop.version>
+        <hbase.version>1.2.0-cdh5.12.1</hbase.version>
         <hcatalog.version>1.2.0</hcatalog.version>
         <com.google.guava>13.0.1</com.google.guava>
         <org.apache.avro>1.8.2</org.apache.avro>
@@ -52,13 +53,10 @@
         <rabbitmq>4.2.0</rabbitmq>
         <dropwizard.metrics>4.0.2</dropwizard.metrics>
         <metrics.ganglia>3.2.5</metrics.ganglia>
-        <hive.jdbc>3.0.0</hive.jdbc>
-        <jSch.version>0.1.54</jSch.version>
-        <!--<io.prometheus>0.4.1-SNAPSHOT</io.prometheus>-->
         <io.prometheus>0.4.0</io.prometheus>
         <logback.version>1.1.7</logback.version>
         <slf4j.version>1.7.21</slf4j.version>
-        <hbase.version>2.1.0</hbase.version>
+        <hive.version>2.3.0</hive.version>
     </properties>
 
     <dependencyManagement>
@@ -204,11 +202,21 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
             <dependency>
                 <groupId>com.rabbitmq</groupId>
                 <artifactId>amqp-client</artifactId>
                 <version>${rabbitmq}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-all</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>4.1.17.Final</version>
             </dependency>
 
             <dependency>
@@ -222,9 +230,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
         </dependencies>
-
 
     </dependencyManagement>
     <dependencies>
@@ -242,6 +248,12 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

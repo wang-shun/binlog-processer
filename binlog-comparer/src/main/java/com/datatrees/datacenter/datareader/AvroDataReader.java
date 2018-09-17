@@ -11,22 +11,15 @@ import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.mchange.v1.identicator.IdList;
-import javafx.beans.binding.ObjectExpression;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.ql.io.HdfsUtils;
 import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -100,7 +93,7 @@ public class AvroDataReader extends BaseDataReader {
                     if (jsonObject != null) {
                         String id = String.valueOf(jsonObject.get(recordId));
                         long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
-                        if (id != null && Long.valueOf(lastUpdateTime) != null) {
+                        if (id != null) {
                             switch (operator) {
                                 case "Create":
                                     createMap.put(id, lastUpdateTime);
@@ -118,8 +111,8 @@ public class AvroDataReader extends BaseDataReader {
                     }
                 }
             }
-            IOUtils.cleanup(null, is);
-            IOUtils.cleanup(null, reader);
+            /*IOUtils.cleanup(null, is);
+            IOUtils.cleanup(null, reader);*/
             createMap = BaseDataCompare.diffCompare(createMap, updateMap);
             if (createMap != null) {
                 createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
@@ -205,7 +198,7 @@ public class AvroDataReader extends BaseDataReader {
                 for (Map<String, Object> record : missingData) {
                     String[] idArr = record.get(CheckTable.ID_LIST).toString().replace("[", "").replace("]", "").split(",");
                     List<String> idList = Arrays.asList(idArr);
-                    List<String> idListNew = idList.stream().map(x -> x.trim()).collect(Collectors.toList());
+                    List<String> idListNew = idList.stream().map(String::trim).collect(Collectors.toList());
                     filesPath = (String) record.get(CheckTable.FILES_PATH);
                     String operateType = (String) record.get(CheckTable.OP_TYPE);
                     opIdMap.put(operateType, idListNew);

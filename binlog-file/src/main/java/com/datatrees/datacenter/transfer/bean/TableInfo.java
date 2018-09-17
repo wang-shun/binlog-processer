@@ -4,8 +4,10 @@ package com.datatrees.datacenter.transfer.bean;
  * @author personalc
  */
 public class TableInfo {
+    public static final String BINLOG_DATABASE="binlog";
     public static final String BINLOG_TRANS_TABLE = "t_binlog_record";
     public static final String BINLOG_PROC_TABLE = "t_binlog_process";
+    public static final String BINLOG_LOCAL_CHECK_TABLE="";
     public static final String RECORD_ID = "id";
     public static final String BATCH_ID = "batch_id";
     public static final String FILE_NAME = "file_name";
