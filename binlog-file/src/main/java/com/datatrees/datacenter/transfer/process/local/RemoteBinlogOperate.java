@@ -103,8 +103,12 @@ public class RemoteBinlogOperate implements Runnable {
                     whereMap.put(LocalBinlogInfo.dbInstance, hostIp);
                     String hdfsFilePath = HDFS_PATH + File.separator + hostIp;
 
+                    Map<String, Object> processRecordMap = new HashMap<>(3);
+                    processRecordMap.put(TableInfo.DB_INSTANCE, hostIp);
+
                     for (int i = 0; i < subFileList.size(); i++) {
                         String fileName = subFileList.get(i);
+                        processRecordMap.put(TableInfo.FILE_NAME, fileName);
                         String remoteFilePath = SERVER_BASEDIR + File.separator + fileName;
                         long downStart = System.currentTimeMillis();
                         LOG.info("Start download file: " + fileName);
@@ -120,6 +124,9 @@ public class RemoteBinlogOperate implements Runnable {
                                 LOG.info("File ：" + fileName + " upload to HDFS successful！");
                                 valueMap.put(TableInfo.FILE_NAME, fileName);
                                 DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), DATABASE, LocalBinlogInfo.binlogDownloadRecordTable, valueMap);
+
+                                processRecordMap.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
+                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), DATABASE, TableInfo.BINLOG_PROC_TABLE, processRecordMap);
 
                                 lastValueMap.put(LocalBinlogInfo.fileName, fileName);
                                 long uploadTime = System.currentTimeMillis();
