@@ -1,15 +1,20 @@
 package com.datatrees.datacenter.core.task.domain;
 
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import java.io.Serializable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Binlog implements Serializable {
 
+  Pattern p = Pattern
+    .compile("^((25[0-5]|2[0-4]\\d|[1]{1}\\d{1}\\d{1}|[1-9]{1}\\d{1}|\\d{1})($|(?!\\.$)\\.)){4}$");
+  Matcher m = p.matcher("254.249.199.9");
   private String jdbcUrl;
   /**
    * binlog 唯一编号
    */
   private String identity;
-
   /**
    * 解析的binlog的完整路径
    */
@@ -18,6 +23,7 @@ public class Binlog implements Serializable {
   public Binlog() {
   }
 
+
   public Binlog(String path, String identity, String jdbcUrl) {
     this.path = path;
     this.jdbcUrl = jdbcUrl;
@@ -25,11 +31,12 @@ public class Binlog implements Serializable {
   }
 
   public String getInstanceId() {
-    if (jdbcUrl.split("\\.").length == 1) {
-      return jdbcUrl;
-    } else {
+//    Matcher m = p.matcher(jdbcUrl);
+    if (PropertiesUtility.defaultProperties().getProperty("SERVER_TYPE").equalsIgnoreCase("aliyun")) {
       return jdbcUrl.substring(0, jdbcUrl.indexOf(".")).
         replaceAll("\\d+", "");
+    } else {
+      return jdbcUrl;
     }
   }
 
