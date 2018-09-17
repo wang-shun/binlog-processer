@@ -12,7 +12,7 @@ for broker in $BROKERS
 do
     for file in $(ls -rt binlog*.jar);
     do
-      #  scp -p $file root@$broker:$BINLOG_PROCESS_HOME/lib;
+       scp -p $file root@$broker:$BINLOG_PROCESS_HOME/lib;
     done
 done
 

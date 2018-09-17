@@ -131,7 +131,7 @@ public class RemoteBinlogOperate implements Runnable {
                                     DBUtil.update(DBServer.DBServerType.MYSQL.toString(), DATABASE, LocalBinlogInfo.lastDownloadFileTable, lastValueMap, whereMap);
                                 }
                                 String filePath = hdfsFilePath + File.separator + fileName;
-                                TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, ""));
+                                TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, hostIp));
                             } else {
                                 LOG.info("File ：" + fileName + "upload to HDFS failed！");
                             }
