@@ -32,10 +32,13 @@ public class PartitionWriterManager implements WriteResult {
   private static Logger logger = LoggerFactory.getLogger(PartitionWriterManager.class);
   private static LoadingCache<CacheKey, PartitionWriter> caches;
 
+  private static String MODE;
+
   static {
     java.util.Properties value = PropertiesUtility.defaultProperties();
     TMP_ROOT_PATH = value.getProperty("temp.url");
     WAREHOUSE_ROOT_PATH = value.getProperty("hdfs.warehouse.url");
+    MODE = value.getProperty("SERVER_TYPE");
     caches = CacheBuilder.newBuilder().
       maximumSize(10000).
       expireAfterAccess(12, TimeUnit.HOURS).
@@ -97,9 +100,12 @@ public class PartitionWriterManager implements WriteResult {
       try {
         partitionWriter.close();
         String tempPath = path;
-        String targetPath =
+        String targetPath = MODE.equalsIgnoreCase("aliyun") ?
           tempPath.replace(TMP_ROOT_PATH, WAREHOUSE_ROOT_PATH)
-            .replace(tempPath.split("/")[6] + "/", "");
+            .replace(tempPath.split("/")[6] + "/", "") :
+          tempPath.replace(TMP_ROOT_PATH, WAREHOUSE_ROOT_PATH)
+            .replace(tempPath.split("/")[6] + "/", "")
+            .replace(tempPath.split("/")[7] + "/", "");
         fileStorage.commit(tempPath, targetPath);
       } catch (Exception e) {
         throw new BinlogException(String.format("error to commit avro data of %s", path),

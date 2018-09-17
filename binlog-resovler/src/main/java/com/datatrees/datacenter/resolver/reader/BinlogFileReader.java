@@ -6,6 +6,7 @@ import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.EventConsumer;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.resolver.DBbiz;
 import com.datatrees.datacenter.resolver.handler.ExceptionHandler;
 import com.datatrees.datacenter.resolver.schema.SchemaData;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +79,8 @@ public final class BinlogFileReader implements Runnable {
   private Status currentStatus;
   private ExceptionHandler exceptionHandler;
   private Runnable callback;
+
+  private IgnoreStrategy ignoreStrategy;
   /**
    * 分库
    */
@@ -99,6 +103,7 @@ public final class BinlogFileReader implements Runnable {
     eventDeserializer = new EventDeserializer();
     tableMapCache = new ConcurrentHashMap<>();
     consumerCache = new EnumMap<>(EventType.class);
+    ignoreStrategy = new IgnoreStrategy();
   }
 
   public BinlogFileReader(Binlog binlog,
@@ -210,7 +215,26 @@ public final class BinlogFileReader implements Runnable {
       if (schema != null) {
         Object resultValue = schemaUtility.toAvroData(schema, operator, before, after);
         if (resultValue != null) {
-          consumer.consume(schema, this.binlog, operator, resultValue);
+          if (simpleEntry.getValue().equalsIgnoreCase("archive_table")) {
+            GenericData.Record record = (GenericData.Record) ((GenericData.Record) resultValue)
+              .get("After");
+            ignoreStrategy.store(simpleEntry.getKey(), (String) record.get("name"),
+              ((String) record.get("sign")).equalsIgnoreCase("true"));
+          }
+
+          switch (operator) {
+            case Create:
+            case Update:
+              consumer.consume(schema, this.binlog, operator, resultValue);
+              break;
+            case Delete:
+              if (!ignoreStrategy.current(simpleEntry.getKey(), simpleEntry.getValue())) {
+                consumer.consume(schema, this.binlog, operator, resultValue);
+              }
+              break;
+            default:
+              break;
+          }
         }
       }
     }
@@ -307,7 +331,9 @@ public final class BinlogFileReader implements Runnable {
       }
       onFinished();
       if (currentStatus == Status.SUCCESS) {
-        TaskDispensor.defaultDispensor().dispense("local_topic", binlog.getIdentity1());
+        TaskDispensor.defaultDispensor()
+          .dispense(PropertiesUtility.defaultProperties().getProperty("queue.compare.topic"),
+            binlog.getIdentity1());
       }
 
       timer.setDuration();
