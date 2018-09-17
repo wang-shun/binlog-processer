@@ -185,7 +185,7 @@ public final class BinlogFileReader implements Runnable {
     long tableNumber = tableMapEventData.getTableId();
     String databaseName = schemaNameMapper.apply(tableMapEventData.getDatabase());
     String tableName = tableMapEventData.getTable();
-    if (databaseName.equalsIgnoreCase("mysql")) {
+    if (databaseName.equalsIgnoreCase("mysql") || databaseName.equalsIgnoreCase("infra")) {
       return;
     }
     if (this.ignoreTables.stream().anyMatch(s -> s.equalsIgnoreCase(tableName))) {
