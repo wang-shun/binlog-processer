@@ -1,7 +1,7 @@
 package com.datatrees.datacenter;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
-import com.datatrees.datacenter.compare.TiDBCompare;
+import com.datatrees.datacenter.compare.TiDBCompareFile;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.resolver.TaskProcessor;
 import com.datatrees.datacenter.resolver.TaskProcessorListner;
@@ -13,7 +13,7 @@ public class CompareTask implements TaskRunner {
                 new TaskProcessorListner() {
                     @Override
                     public void onMessageReceived(String desc) {
-                        BaseDataCompare compare = new TiDBCompare();
+                        BaseDataCompare compare = new TiDBCompareFile();
                         compare.binLogCompare(desc, "update");
                     }
                 }).process();

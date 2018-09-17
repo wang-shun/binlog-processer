@@ -2,16 +2,8 @@ package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.HiveCompare;
-import com.datatrees.datacenter.compare.TiDBCompare;
-import com.datatrees.datacenter.transfer.process.local.LocalDataCenterTransfer;
-import com.datatrees.datacenter.utility.BatchGetFromHBase;
-import javafx.beans.binding.ObjectExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class Test {
     private static Logger LOG = LoggerFactory.getLogger(Test.class);
@@ -21,8 +13,8 @@ public class Test {
         /*AvroDataReader reader = new AvroDataReader();
         reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
 
-        BaseDataCompare dataCompare = new TiDBCompare();
-        dataCompare.binLogCompare("1537081989-mysql-bin.001072", "update");
+        /*BaseDataCompare dataCompare = new TiDBCompareFile();
+        dataCompare.binLogCompare("1537081989-mysql-bin.001072", "update");*/
 
        /* AvroDataReader reader=new AvroDataReader();
         reader.readSrcData("hdfs://cloudera3/data/warehouse/update/gongfudai/loandb/t_user_blacklist/year=2018/month=7/day=5/1536058717-mysql-bin.000997.avro");*/
@@ -116,7 +108,7 @@ public class Test {
         Map<String,Long> record=batchGetFromHBase.parrallelBatchSearch(rowKeyList,"streaming_warehouse_rowId2recId_tbl","f","update_time");
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
-        /*BaseDataCompare dataCompare = new HiveCompare();
-        dataCompare.binLogCompare("1534574843-mysql-bin.000439", "update");*/
+        BaseDataCompare dataCompare = new HiveCompare();
+        dataCompare.binLogCompare("1537135892-mysql-bin.001570", "update");
     }
 }

@@ -9,9 +9,7 @@ import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.zookeeper.Op;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +19,8 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TiDBCompare extends BaseDataCompare {
-    private static Logger LOG = LoggerFactory.getLogger(TiDBCompare.class);
+public class TiDBCompareFile extends BaseDataCompare {
+    private static Logger LOG = LoggerFactory.getLogger(TiDBCompareFile.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
     private final String sampleFlag = properties.getProperty("SAMPLE_FLAG","no");
     private static String binLogDataBase = properties.getProperty("jdbc.database","binlog");

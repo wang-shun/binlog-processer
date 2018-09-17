@@ -40,8 +40,11 @@ public class BatchGetFromHBase {
                     for (Result result : results) {
                         if (result != null) {
                             String rowKey = Bytes.toString(result.getRow());
-                            long time = Bytes.toLong(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
-                            resultMap.put(rowKey, time);
+                            String time = Bytes.toString(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
+                            if (time != null) {
+                                long timeStamp = Long.parseLong(time);
+                                resultMap.put(rowKey, timeStamp);
+                            }
                         }
                     }
                 }
@@ -80,9 +83,9 @@ public class BatchGetFromHBase {
      * @param column       列名
      * @return map
      */
-    public Map<String, Long> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
+    public static Map<String, Long> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
         Map<String, Long> dataMap = new HashMap<>();
-        int parallel = (Runtime.getRuntime().availableProcessors() + 1)*3;
+        int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 3;
         List<List<String>> batchIdList;
         if (null != idList && idList.size() > 0) {
             if (idList.size() < parallel) {
@@ -144,5 +147,12 @@ public class BatchGetFromHBase {
             }
         }
         return dataMap;
+    }
+
+    public static List<String> reHashRowKey(List<String> idList) {
+        if (null != idList && idList.size() > 0) {
+            //idList.stream().forEach(x -> GenericRowIdUtils.addIdWithHash(x));
+        }
+        return idList;
     }
 }

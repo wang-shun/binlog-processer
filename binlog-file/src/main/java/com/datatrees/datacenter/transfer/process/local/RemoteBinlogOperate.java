@@ -1,6 +1,8 @@
 package com.datatrees.datacenter.transfer.process.local;
 
 import ch.ethz.ssh2.Connection;
+import com.datatrees.datacenter.core.task.TaskDispensor;
+import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.LocalBinlogInfo;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
@@ -103,14 +105,14 @@ public class RemoteBinlogOperate implements Runnable {
 
                     for (int i = 0; i < subFileList.size(); i++) {
                         String fileName = subFileList.get(i);
-                        String remoteFilePath = SERVER_BASEDIR +File.separator+ fileName;
+                        String remoteFilePath = SERVER_BASEDIR + File.separator + fileName;
                         long downStart = System.currentTimeMillis();
                         LOG.info("Start download file: " + fileName);
-                        SshUtil.getFile(remoteFilePath, CLIENT_BASEDIR+File.separator + hostIp, connection);
+                        SshUtil.getFile(remoteFilePath, CLIENT_BASEDIR + File.separator + hostIp, connection);
                         long downEnd = System.currentTimeMillis();
                         valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
                         valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
-                        String localFilePath = CLIENT_BASEDIR + File.separator+hostIp + File.separator + fileName;
+                        String localFilePath = CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileName;
                         File localFile = new File(localFilePath);
                         if (localFile.isFile() && localFile.exists()) {
                             Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);
@@ -128,9 +130,8 @@ public class RemoteBinlogOperate implements Runnable {
                                 } else {
                                     DBUtil.update(DBServer.DBServerType.MYSQL.toString(), DATABASE, LocalBinlogInfo.lastDownloadFileTable, lastValueMap, whereMap);
                                 }
-                                // TODO: 2018/9/10 发送至消息队列
-                                /*String filePath = hdfsFilePath + File.separator + fileName;
-                                TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, ""));*/
+                                String filePath = hdfsFilePath + File.separator + fileName;
+                                TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, ""));
                             } else {
                                 LOG.info("File ：" + fileName + "upload to HDFS failed！");
                             }

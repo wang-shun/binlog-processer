@@ -63,9 +63,9 @@ public class HiveCompare extends BaseDataCompare {
                     Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
                     Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
 
-                    Map<String, Long> createRecordFind = compareWithHBase(assembleRowKey(dataBase, tableName, createRecord));
-                    Map<String, Long> updateRecordFind = compareWithHBase(assembleRowKey(dataBase, tableName, updateRecord));
-                    Map<String, Long> deleteRecordFind = compareWithHBase(assembleRowKey(dataBase, tableName, deleteRecord));
+                    Map<String, Long> createRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(createRecord));
+                    Map<String, Long> updateRecordFind = compareWithHBase(assembleRowKey(updateRecord));
+                    Map<String, Long> deleteRecordFind = compareWithHBase(assembleRowKey(deleteRecord));
 
 
                     Map<String, Long> createRecordNoFind;
@@ -102,20 +102,20 @@ public class HiveCompare extends BaseDataCompare {
                     result.setFilesPath(filePath);
                     result.setDbInstance(dbInstance);
                     result.setOpType(OperateType.Create.toString());
-                    resultInsert(result, createRecordNoFind, CheckTable.BINLOG_DATABASE);
+                    resultInsert(result, createRecordNoFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
                     result.setOpType(OperateType.Update.toString());
-                    resultInsert(result, updateRecordNoFind, CheckTable.BINLOG_DATABASE);
+                    resultInsert(result, updateRecordNoFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
                     result.setOpType(OperateType.Delete.toString());
-                    resultInsert(result, deleteRecordFind, CheckTable.BINLOG_DATABASE);
+                    resultInsert(result, deleteRecordFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
                 }
             }
-            Map<String,Object> whereMap=new HashMap<>(2);
-            whereMap.put(CheckTable.FILE_NAME,file);
-            whereMap.put(CheckTable.PARTITION_TYPE,type);
-            Map<String,Object> valueMap=new HashMap<>();
-            valueMap.put(CheckTable.PROCESS_LOG_STATUS,1);
+            Map<String, Object> whereMap = new HashMap<>(2);
+            whereMap.put(CheckTable.FILE_NAME, file);
+            whereMap.put(CheckTable.PARTITION_TYPE, type);
+            Map<String, Object> valueMap = new HashMap<>();
+            valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
             try {
-                DBUtil.update(DBServer.DBServerType.MYSQL.toString(),CheckTable.BINLOG_DATABASE,CheckTable.BINLOG_PROCESS_LOG_TABLE,valueMap,whereMap);
+                DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -129,12 +129,28 @@ public class HiveCompare extends BaseDataCompare {
         } else {
             return null;
         }
+    }
 
+    private List<String> assembleRowKey(Map<String, Long> recordMap) {
+        if (null != recordMap && recordMap.size() > 0) {
+            List<String> rowKeyList = recordMap.keySet().stream().collect(Collectors.toList());
+            rowKeyList = BatchGetFromHBase.reHashRowKey(rowKeyList);
+            return rowKeyList;
+        } else {
+            return null;
+        }
     }
 
     private Map<String, Long> compareWithHBase(List<String> createIdList) {
         if (null != createIdList && createIdList.size() > 0) {
-            return BatchGetFromHBase.getBatchDataFromHBase(createIdList, HBaseTableInfo.TABLE_NAME, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+            return BatchGetFromHBase.parrallelBatchSearch(createIdList, HBaseTableInfo.TABLE_NAME, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+        }
+        return null;
+    }
+
+    private Map<String, Long> compareWithHBase(String dataBase, String tableName, List<String> createIdList) {
+        if (null != createIdList && createIdList.size() > 0) {
+            return BatchGetFromHBase.parrallelBatchSearch(createIdList, dataBase + "." + tableName + "_id", HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
         }
         return null;
     }
