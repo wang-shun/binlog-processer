@@ -6,6 +6,7 @@ import com.datatrees.datacenter.core.exception.BinlogException;
 import com.datatrees.datacenter.core.storage.EventConsumer;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.resolver.DBbiz;
 import com.datatrees.datacenter.resolver.handler.ExceptionHandler;
 import com.datatrees.datacenter.resolver.schema.SchemaData;
@@ -330,7 +331,9 @@ public final class BinlogFileReader implements Runnable {
       }
       onFinished();
       if (currentStatus == Status.SUCCESS) {
-        TaskDispensor.defaultDispensor().dispense("local_topic", binlog.getIdentity1());
+        TaskDispensor.defaultDispensor()
+          .dispense(PropertiesUtility.defaultProperties().getProperty("queue.compare.topic"),
+            binlog.getIdentity1());
       }
 
       timer.setDuration();

@@ -31,6 +31,11 @@
             <artifactId>hbase-client</artifactId>
             <version>1.2.0-cdh5.12.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-common</artifactId>
+            <version>1.2.0-cdh5.12.1</version>
+        </dependency>
         <!--<dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
