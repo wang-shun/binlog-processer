@@ -30,13 +30,18 @@ public class Binlog implements Serializable {
     this.identity = identity;
   }
 
+  public static void main(String[] args) {
+    System.out.println( "10.10.1.1".replaceAll("\\.", "#"));
+  }
+
   public String getInstanceId() {
 //    Matcher m = p.matcher(jdbcUrl);
-    if (PropertiesUtility.defaultProperties().getProperty("SERVER_TYPE").equalsIgnoreCase("aliyun")) {
+    if (PropertiesUtility.defaultProperties().getProperty("SERVER_TYPE")
+      .equalsIgnoreCase("aliyun")) {
       return jdbcUrl.substring(0, jdbcUrl.indexOf(".")).
         replaceAll("\\d+", "");
     } else {
-      return jdbcUrl;
+      return jdbcUrl.replaceAll("\\.", "_");
     }
   }
 
