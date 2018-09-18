@@ -28,9 +28,9 @@ public class BatchGetFromHBase {
         Map<String, Long> resultMap = null;
         if (null != idList && idList.size() > 0) {
             Table table = HBaseHelper.getTable(tableName);
-            boolean tableExists=false;
+            boolean tableExists = false;
             try {
-                tableExists=HBaseHelper.getHBaseConnection().getAdmin().tableExists(table.getName());
+                tableExists = HBaseHelper.getHBaseConnection().getAdmin().tableExists(table.getName());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -48,11 +48,8 @@ public class BatchGetFromHBase {
                         for (Result result : results) {
                             if (result != null) {
                                 String rowKey = Bytes.toString(result.getRow());
-                                String time = Bytes.toString(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
-                                if (time != null) {
-                                    long timeStamp = Long.parseLong(time);
-                                    resultMap.put(rowKey, timeStamp);
-                                }
+                                long time = Bytes.toLong(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
+                                resultMap.put(rowKey, time);
                             }
                         }
                     }
@@ -159,9 +156,13 @@ public class BatchGetFromHBase {
     }
 
     public static List<String> reHashRowKey(List<String> idList) {
+        List<String> hashedIdList = null;
         if (null != idList && idList.size() > 0) {
-            idList.stream().forEach(x -> GenericRowIdUtils.addIdWithHash(x));
+            hashedIdList = new ArrayList<>();
+            for (int i = 0; i < idList.size(); i++) {
+                hashedIdList.add(GenericRowIdUtils.addIdWithHash(idList.get(i)));
+            }
         }
-        return idList;
+        return hashedIdList;
     }
 }

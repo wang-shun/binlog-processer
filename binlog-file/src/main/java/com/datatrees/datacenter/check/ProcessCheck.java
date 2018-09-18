@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class ProcessCheck {
     private static final Logger LOG = LoggerFactory.getLogger(ProcessCheck.class);
     private Properties properties = PropertiesUtility.defaultProperties();
-    private String dataBase=properties.getProperty("jdbc.database");
+    private String dataBase = properties.getProperty("jdbc.database");
     private String DEST = properties.getProperty("HDFS_PATH");
     private int interval = Integer.parseInt(properties.getProperty("process.check.interval"));
     private String TIME_SCALE = properties.getProperty("process.check.time.scale");
@@ -73,7 +73,7 @@ public class ProcessCheck {
                             .append(" ")
                             .append(TIME_SCALE);
 
-                    resultList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(),dataBase,sql.toString());
+                    resultList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql.toString());
                     if (resultList.size() > 0) {
                         Iterator<Map<String, Object>> iterator = resultList.iterator();
                         while (iterator.hasNext()) {
@@ -84,7 +84,12 @@ public class ProcessCheck {
                             // send to kafka
                             String filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                             String identity = instanceId + TableInfo.INSTANCE_FILE_SEP + fileName;
-                            String mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
+                            String mysqlURL = null;
+                            if (null != bakInstanceId || !"".equals(bakInstanceId)) {
+                                mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
+                            } else {
+                                mysqlURL = instanceId;
+                            }
                             TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
                             LOG.info("send " + identity + " to massage queue");
 
@@ -97,7 +102,7 @@ public class ProcessCheck {
                             valueMap.put(TableInfo.RETRY_TIMES, retryTimes);
                             Date process_start = TimeUtil.stampToDate(System.currentTimeMillis());
                             valueMap.put(TableInfo.PROCESS_START, process_start);
-                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(),dataBase,TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
+                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), dataBase, TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
                             LOG.info("update t_binlog_process table, set " + identity + " retry: " + retryTimes + " and process_start: " + process_start);
                         }
                     }

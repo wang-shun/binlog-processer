@@ -2,6 +2,7 @@ package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.HiveCompare;
+import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,5 +111,8 @@ public class Test {
 
         BaseDataCompare dataCompare = new HiveCompare();
         dataCompare.binLogCompare("1537234892-mysql-bin.000493", "update");
+
+        /*String id = GenericRowIdUtils.addIdWithHash("1883780");
+        System.out.println(id);*/
     }
 }
