@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.utility;
 
 import avro.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
@@ -27,29 +28,37 @@ public class BatchGetFromHBase {
         Map<String, Long> resultMap = null;
         if (null != idList && idList.size() > 0) {
             Table table = HBaseHelper.getTable(tableName);
-            List<Get> gets = new ArrayList<>();
-            for (String anIdList : idList) {
-                Get get = new Get(Bytes.toBytes(anIdList));
-                get.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column));
-                gets.add(get);
-            }
+            boolean tableExists=false;
             try {
-                Result[] results = table.get(gets);
-                if (null != results && results.length > 0) {
-                    resultMap = new HashMap<>();
-                    for (Result result : results) {
-                        if (result != null) {
-                            String rowKey = Bytes.toString(result.getRow());
-                            String time = Bytes.toString(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
-                            if (time != null) {
-                                long timeStamp = Long.parseLong(time);
-                                resultMap.put(rowKey, timeStamp);
+                tableExists=HBaseHelper.getHBaseConnection().getAdmin().tableExists(table.getName());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (tableExists) {
+                List<Get> gets = new ArrayList<>();
+                for (String anIdList : idList) {
+                    Get get = new Get(Bytes.toBytes(anIdList));
+                    get.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column));
+                    gets.add(get);
+                }
+                try {
+                    Result[] results = table.get(gets);
+                    if (null != results && results.length > 0) {
+                        resultMap = new HashMap<>();
+                        for (Result result : results) {
+                            if (result != null) {
+                                String rowKey = Bytes.toString(result.getRow());
+                                String time = Bytes.toString(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
+                                if (time != null) {
+                                    long timeStamp = Long.parseLong(time);
+                                    resultMap.put(rowKey, timeStamp);
+                                }
                             }
                         }
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
         return resultMap;
@@ -151,7 +160,7 @@ public class BatchGetFromHBase {
 
     public static List<String> reHashRowKey(List<String> idList) {
         if (null != idList && idList.size() > 0) {
-            //idList.stream().forEach(x -> GenericRowIdUtils.addIdWithHash(x));
+            idList.stream().forEach(x -> GenericRowIdUtils.addIdWithHash(x));
         }
         return idList;
     }

@@ -64,8 +64,8 @@ public class HiveCompare extends BaseDataCompare {
                     Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
 
                     Map<String, Long> createRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(createRecord));
-                    Map<String, Long> updateRecordFind = compareWithHBase(assembleRowKey(updateRecord));
-                    Map<String, Long> deleteRecordFind = compareWithHBase(assembleRowKey(deleteRecord));
+                    Map<String, Long> updateRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(updateRecord));
+                    Map<String, Long> deleteRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(deleteRecord));
 
 
                     Map<String, Long> createRecordNoFind;
@@ -73,7 +73,7 @@ public class HiveCompare extends BaseDataCompare {
 
                     if (null != createRecordFind && createRecordFind.size() > 0) {
                         Map<String, Long> createTmp = new HashMap<>();
-                        createRecordFind.entrySet().forEach(x -> createTmp.put(x.getKey().split("_")[0], x.getValue()));
+                        createRecordFind.forEach((key, value) -> createTmp.put(key.split("_")[1], value));
                         createRecordNoFind = diffCompare(createRecord, createTmp);
                     } else {
                         createRecordNoFind = createRecord;
@@ -81,7 +81,7 @@ public class HiveCompare extends BaseDataCompare {
 
                     if (null != updateRecordFind && updateRecordFind.size() > 0) {
                         Map<String, Long> updateTmp = new HashMap<>();
-                        updateRecordFind.entrySet().forEach(x -> updateTmp.put(x.getKey().split("_")[0], x.getValue()));
+                        updateRecordFind.forEach((key, value) -> updateTmp.put(key.split("_")[1], value));
                         Map<String, Long> tmp = updateTmp;
                         updateRecordNoFind = diffCompare(updateRecord, updateTmp);
                         Map<String, Long> oldUpdateRecord = compareByValue(tmp, updateRecord);
@@ -124,8 +124,7 @@ public class HiveCompare extends BaseDataCompare {
 
     private List<String> assembleRowKey(String dataBase, String tableName, Map<String, Long> recordMap) {
         if (null != recordMap && recordMap.size() > 0) {
-            List<String> createIdList = recordMap.keySet().stream().map(x -> (x + "_" + dataBase + "." + tableName)).collect(Collectors.toList());
-            return createIdList;
+            return recordMap.keySet().stream().map(x -> (x + "_" + dataBase + "." + tableName)).collect(Collectors.toList());
         } else {
             return null;
         }
@@ -133,7 +132,7 @@ public class HiveCompare extends BaseDataCompare {
 
     private List<String> assembleRowKey(Map<String, Long> recordMap) {
         if (null != recordMap && recordMap.size() > 0) {
-            List<String> rowKeyList = recordMap.keySet().stream().collect(Collectors.toList());
+            List<String> rowKeyList = new ArrayList<>(recordMap.keySet());
             rowKeyList = BatchGetFromHBase.reHashRowKey(rowKeyList);
             return rowKeyList;
         } else {

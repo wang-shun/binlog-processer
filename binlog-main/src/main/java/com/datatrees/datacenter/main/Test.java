@@ -109,6 +109,6 @@ public class Test {
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
         BaseDataCompare dataCompare = new HiveCompare();
-        dataCompare.binLogCompare("1537135892-mysql-bin.001570", "update");
+        dataCompare.binLogCompare("1537234892-mysql-bin.000493", "update");
     }
 }

@@ -49,8 +49,8 @@ public class LocalDataCenterTransfer extends BinlogFileTransfer {
         }
         for (String ip : LocalCenterInfo.Ips) {
             LOG.info("start download binlog from :" + ip);
-            System.out.println(TransferTimerTaskCopy.processingMap.toString());
-            if ((null == TransferTimerTaskCopy.processingMap.get(ip)) || (TransferTimerTaskCopy.processingMap.get(ip) == 0)) {
+            System.out.println(TransferTimerTask.processingMap.toString());
+            if ((null == TransferTimerTask.processingMap.get(ip)) || (TransferTimerTask.processingMap.get(ip) == 0)) {
                 RemoteBinlogOperate remoteBinlogOperate = new RemoteBinlogOperate();
                 remoteBinlogOperate.setHostIp(ip.trim());
                 executorService.execute(remoteBinlogOperate);
