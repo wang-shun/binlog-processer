@@ -52,9 +52,12 @@ public abstract class BinlogFileTransfer implements TaskRunner {
                     String backInstanceId = String.valueOf(recordMap.get(TableInfo.BAK_INSTANCE_ID));
                     String path;
                     String mysqlURL;
+                    Map<String, Object> map = new HashMap<>(5);
+
                     if (null != backInstanceId || !"".equals(backInstanceId)) {
                         path = HDFS_PATH + File.separator + dbInstance + File.separator + backInstanceId + File.separator + fileName;
                         mysqlURL = DBInstanceUtil.getConnectString(dbInstance);
+                        map.put(TableInfo.BAK_INSTANCE_ID, backInstanceId);
                     } else {
                         path = HDFS_PATH + File.separator + dbInstance + File.separator + fileName;
                         mysqlURL = dbInstance;
@@ -62,10 +65,8 @@ public abstract class BinlogFileTransfer implements TaskRunner {
                     String identity = dbInstance + TableInfo.INSTANCE_FILE_SEP + fileName;
                     TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
 
-                    Map<String, Object> map = new HashMap<>(5);
                     map.put(TableInfo.FILE_NAME, fileName);
                     map.put(TableInfo.DB_INSTANCE, dbInstance);
-                    map.put(TableInfo.BAK_INSTANCE_ID, backInstanceId);
                     map.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
                     try {
                         DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), dataBase, TableInfo.BINLOG_PROC_TABLE, map);
