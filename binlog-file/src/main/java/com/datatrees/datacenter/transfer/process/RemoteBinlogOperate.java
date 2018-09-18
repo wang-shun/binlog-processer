@@ -65,7 +65,7 @@ public class RemoteBinlogOperate implements Runnable {
                     String lastFileName = hostFileMap.get(hostIp);
                     if (lastFileName != null) {
                         LOG.info("The last download binlog file of :" + hostIp + " is :" + lastFileName);
-                        int lastIndex = fileList.indexOf(lastFileName);
+                        int lastIndex = fileList.indexOf(lastFileName.split("_")[1]);
                         if (fileList.size() - 1 > lastIndex) {
                             subFileList = fileList.subList(lastIndex + 1, fileList.size() - 1);
                             recordExist = true;
@@ -103,23 +103,24 @@ public class RemoteBinlogOperate implements Runnable {
 
                     for (int i = 0; i < subFileList.size(); i++) {
                         String fileName = subFileList.get(i);
-                        String filePath = hdfsFilePath + File.separator + fileName;
-                        processRecordMap.put(TableInfo.FILE_NAME, fileName);
+                        String fileNameWithTime = System.currentTimeMillis() + "_" + subFileList.get(i);
+                        String filePath = hdfsFilePath + File.separator + fileNameWithTime;
+                        processRecordMap.put(TableInfo.FILE_NAME, fileNameWithTime);
                         String remoteFilePath = LocalCenterInfo.SERVER_BASEDIR + File.separator + fileName;
                         long requestStart = System.currentTimeMillis();
-                        LOG.info("Start download file: " + fileName);
+                        LOG.info("Start download file: " + fileNameWithTime);
                         SshUtil.getFile(remoteFilePath, LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp, connection);
                         valueMap.put(TableInfo.REQUEST_START, TimeUtil.stampToDate(requestStart));
 
-                        String localFilePath = LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileName;
+                        String localFilePath = LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileNameWithTime;
                         File localFile = new File(localFilePath);
                         if (localFile.isFile() && localFile.exists()) {
                             Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);
                             if (uploadFlag) {
-                                LOG.info("File ：" + fileName + " upload to HDFS successful！");
+                                LOG.info("File ：" + fileNameWithTime + " upload to HDFS successful！");
                                 long requestEnd = System.currentTimeMillis();
                                 valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(requestEnd));
-                                valueMap.put(TableInfo.FILE_NAME, fileName);
+                                valueMap.put(TableInfo.FILE_NAME, fileNameWithTime);
                                 valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
                                 long fileSize = HDFSFileUtility.getFileSize(filePath);
                                 valueMap.put(TableInfo.FILE_SIZE, fileSize);
@@ -130,7 +131,7 @@ public class RemoteBinlogOperate implements Runnable {
                                 processRecordMap.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
                                 DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), LocalCenterInfo.DATABASE, TableInfo.BINLOG_PROC_TABLE, processRecordMap);
 
-                                lastValueMap.put(LocalBinlogInfo.fileName, fileName);
+                                lastValueMap.put(LocalBinlogInfo.fileName, fileNameWithTime);
                                 long uploadTime = System.currentTimeMillis();
                                 lastValueMap.put(LocalBinlogInfo.downloadTime, TimeUtil.stampToDate(uploadTime));
                                 if (!recordExist && i == 0) {
@@ -140,9 +141,9 @@ public class RemoteBinlogOperate implements Runnable {
                                     DBUtil.update(DBServer.DBServerType.MYSQL.toString(), LocalCenterInfo.DATABASE, LocalBinlogInfo.lastDownloadFileTable, lastValueMap, whereMap);
                                 }
 
-                                TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + TableInfo.INSTANCE_FILE_SEP + fileName, hostIp));
+                                TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + TableInfo.INSTANCE_FILE_SEP + fileNameWithTime, hostIp));
                             } else {
-                                LOG.info("File ：" + fileName + "upload to HDFS failed！");
+                                LOG.info("File ：" + fileNameWithTime + "upload to HDFS failed！");
                             }
                         } else {
                             LOG.info("File:" + localFile + " does not exist!");
