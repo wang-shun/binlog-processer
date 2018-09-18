@@ -54,7 +54,7 @@ public class RemoteBinlogOperate implements Runnable {
     @Override
     public void run() {
         try {
-            TransferTimerTaskCopy.processingMap.put(hostIp, 1);
+            TransferTimerTask.processingMap.put(hostIp, 1);
             Connection connection = new Connection(hostIp, LocalCenterInfo.PORT);
             List<String> fileList = SshUtil.getFileList(LocalCenterInfo.SERVER_BASEDIR, connection);
             if (null != fileList && fileList.size() > 1) {
@@ -155,7 +155,7 @@ public class RemoteBinlogOperate implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            TransferTimerTaskCopy.processingMap.put(hostIp, 0);
+            TransferTimerTask.processingMap.put(hostIp, 0);
         }
     }
 

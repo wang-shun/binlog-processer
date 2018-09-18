@@ -125,7 +125,7 @@ public class HBaseHelper implements Serializable {
             try {
                 return HBaseHelper.getHBaseConnection().getTable(TableName.valueOf(tableName));
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.info("Table does not exists");
             }
         }
         return null;

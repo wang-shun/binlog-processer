@@ -79,11 +79,11 @@
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
-        <!--<dependency>
+        <dependency>
             <groupId>com.tree.finance.bigdata</groupId>
             <artifactId>streaming-api</artifactId>
             <version>1.0</version>
-        </dependency>-->
+        </dependency>
     </dependencies>
 
     <distributionManagement>
