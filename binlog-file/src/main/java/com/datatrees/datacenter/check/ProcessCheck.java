@@ -84,7 +84,7 @@ public class ProcessCheck {
                             // send to kafka
                             String filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                             String identity = instanceId + TableInfo.INSTANCE_FILE_SEP + fileName;
-                            String mysqlURL = null;
+                            String mysqlURL;
                             if (null != bakInstanceId || !"".equals(bakInstanceId)) {
                                 mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
                             } else {
