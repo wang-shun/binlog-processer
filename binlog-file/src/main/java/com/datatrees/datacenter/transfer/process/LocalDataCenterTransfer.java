@@ -62,8 +62,9 @@ public class LocalDataCenterTransfer extends BinlogFileTransfer {
         Connection connection;
         String hostIP = String.valueOf(record.get(TableInfo.DB_INSTANCE));
         String fileName = String.valueOf(record.get(TableInfo.FILE_NAME));
+        String fileWithoutTime=fileName.split("_")[1];
         connection = new Connection(hostIP, LocalCenterInfo.PORT);
-        SshUtil.getFile(LocalCenterInfo.SERVER_BASEDIR + File.separator + fileName, LocalCenterInfo.CLIENT_BASEDIR, connection);
+        SshUtil.getFile(LocalCenterInfo.SERVER_BASEDIR + File.separator + fileWithoutTime, LocalCenterInfo.CLIENT_BASEDIR, connection);
         String localFilePath = LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIP + File.separator + fileName;
         File localFile = new File(localFilePath);
         String hdfsFilePath = LocalCenterInfo.HDFS_PATH + File.separator + hostIP;
