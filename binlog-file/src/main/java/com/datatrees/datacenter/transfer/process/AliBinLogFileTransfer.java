@@ -2,26 +2,25 @@ package com.datatrees.datacenter.transfer.process;
 
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesRequest;
 import com.aliyuncs.rds.model.v20140815.DescribeBinlogFilesResponse.BinLogFile;
-import com.datatrees.datacenter.core.task.TaskDispensor;
-import com.datatrees.datacenter.core.task.TaskRunner;
-import com.datatrees.datacenter.core.task.domain.Binlog;
-import com.datatrees.datacenter.core.utility.*;
-import com.datatrees.datacenter.transfer.bean.DownloadStatus;
+import com.datatrees.datacenter.core.utility.DBServer;
+import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.core.utility.IPUtility;
+import com.datatrees.datacenter.core.utility.TimeUtil;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.bean.TransInfo;
-import com.datatrees.datacenter.transfer.process.threadmanager.TransferProcess;
+import com.datatrees.datacenter.transfer.process.thread.TransferProcess;
 import com.datatrees.datacenter.transfer.utility.BinLogFileUtil;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -30,34 +29,32 @@ import java.util.stream.Collectors;
  *
  * @author personalc
  */
-public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
+public class AliBinLogFileTransfer extends BinlogFileTransfer  {
     private static Logger LOG = LoggerFactory.getLogger(AliBinLogFileTransfer.class);
-    private Properties properties = PropertiesUtility.defaultProperties();
     private final String REGEX_PATTERN = properties.getProperty("REGEX_PATTERN");
     private final String BINLOG_ACTION_NAME = "DescribeBinlogFiles";
-    private final String HDFS_PATH = properties.getProperty("HDFS_PATH");
     private final long DOWN_TIME_INTER = Long.parseLong(properties.getProperty("DOWN_TIME_INTERVAL"));
-    private int retryTimes = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry","1"));
+    private final String EXCLUDE_TIME_START = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.start");
+    private final String EXCLUDE_TIME_END = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.end");
     private final long TIMESTAMP_DIFF = 8 * 60 * 60 * 1000L;
     private final long TIMEHOURS_DIFF = -8L;
     private long currentTime = System.currentTimeMillis() - TIMESTAMP_DIFF;
     private String startTime = TimeUtil.timeStamp2DateStr(currentTime - DOWN_TIME_INTER * 60 * 1000, TableInfo.UTC_FORMAT);
     private List<String> instanceIds = DBInstanceUtil.getAllPrimaryInstanceId();
     private String instanceStr = DBInstanceUtil.getInstancesString(instanceIds);
-    private final String EXCLUDE_TIME_START = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.start");
-    private final String EXCLUDE_TIME_END = properties.getProperty("AliBinLogFileTransfer.schedule.task.exclude.end");
     private String endTime;
-    private String dataBase = properties.getProperty("jdbc.database","binlog");
+
 
     @Override
     public void process() {
 
     }
 
+
     @Override
     public void transfer() {
         int currentHour = LocalDateTime.now().getHour();
-        System.out.println("当前时间小时：" + currentHour);
+        System.out.println("the hours of current ：" + currentHour);
         if (null!=EXCLUDE_TIME_START && null!=EXCLUDE_TIME_END) {
             int excludeStart = Integer.parseInt(EXCLUDE_TIME_START);
             int excludeEnd = Integer.parseInt(EXCLUDE_TIME_END);
@@ -85,7 +82,7 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         String resolveError = "select * from " + TableInfo.BINLOG_PROC_TABLE + " where status<>1 and status<>0 and status<>7 and retry_times=" + retryTimes;
         processErrorFile(resolveError);
         //重新下载未完成的数据
-        umCompleteProcess();
+        umCompleteProcess(instanceStr);
         //开始正常下载,将上一次的结束时间设置未这一次的开始时间
         binlogFilesRequest.setStartTime(startTime);
         LOG.info("the start time of download: " + startTime);
@@ -98,50 +95,10 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
     }
 
     /**
-     * 检查下载表中是否有下载完但没有发往处理表中的数据
-     */
-    private void checkDataConsistency() {
-        String sql = "select r.id,r.db_instance,r.file_name,r.bak_instance_id from " + TableInfo.BINLOG_TRANS_TABLE + " as r left join " + TableInfo.BINLOG_PROC_TABLE + " as p on r.db_instance=p.db_instance and r.file_name=p.file_name where p.id is null and r.status=1";
-        List<Map<String, Object>> sendFailedRecord;
-        try {
-            sendFailedRecord = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
-            if (sendFailedRecord.size() > 0) {
-                Iterator<Map<String, Object>> iterator = sendFailedRecord.iterator();
-                Map<String, Object> recordMap;
-                while (iterator.hasNext()) {
-
-                    recordMap = iterator.next();
-                    String dbInstance = String.valueOf(recordMap.get(TableInfo.DB_INSTANCE));
-                    String fileName = String.valueOf(recordMap.get(TableInfo.FILE_NAME));
-                    String backInstanceId = DBInstanceUtil.getBackInstanceId(dbInstance);
-                    String path = HDFS_PATH + File.separator + dbInstance + File.separator + backInstanceId + File.separator + fileName;
-                    String identity = dbInstance + "_"
-                            + fileName;
-                    String mysqlURL = DBInstanceUtil.getConnectString(dbInstance);
-                    TaskDispensor.defaultDispensor().dispense(new Binlog(path, identity, mysqlURL));
-
-                    Map<String, Object> map = new HashMap<>(5);
-                    map.put(TableInfo.FILE_NAME, fileName);
-                    map.put(TableInfo.DB_INSTANCE, dbInstance);
-                    map.put(TableInfo.BAK_INSTANCE_ID, backInstanceId);
-                    map.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
-                    try {
-                        DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), dataBase, TableInfo.BINLOG_PROC_TABLE, map);
-                    } catch (SQLException e) {
-                        LOG.error("insert " + fileName + "to t_binlog_process failed");
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            LOG.error(e.getMessage(), e);
-        }
-    }
-
-    /**
      * 检查是否有未下载完的数据并设置下次下载的开始时间
      */
-    private void umCompleteProcess() {
-        List<Map<String, Object>> unCompleteList = getUnCompleteTrans();
+    private void umCompleteProcess(String instanceStr) {
+        List<Map<String, Object>> unCompleteList = getUnCompleteTrans(instanceStr);
         if (unCompleteList.size() > 0) {
             reDownload(unCompleteList);
             Map<String, Object> lastTime = unCompleteList.get(unCompleteList.size() - 1);
@@ -262,52 +219,6 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         }
     }
 
-    /**
-     * 返回为传输未完成的binlog文件信息
-     */
-    private List<Map<String, Object>> getUnCompleteTrans() {
-        List<Map<String, Object>> resultList = null;
-        try {
-            StringBuilder sql = new StringBuilder();
-            sql.append("select")
-                    .append(" ")
-                    .append("distinct")
-                    .append(" ")
-                    .append(TableInfo.DOWN_START_TIME)
-                    .append(",")
-                    .append(TableInfo.DOWN_END_TIME)
-                    .append(" ")
-                    .append("from")
-                    .append(" ")
-                    .append(TableInfo.BINLOG_TRANS_TABLE)
-                    .append(" ")
-                    .append("where")
-                    .append(" ")
-                    .append(TableInfo.DOWN_STATUS)
-                    .append("=")
-                    .append(DownloadStatus.UNCOMPLETED.getValue())
-                    .append(" ")
-                    .append("and")
-                    .append(" ")
-                    .append(TableInfo.DB_INSTANCE)
-                    .append(" ")
-                    .append("in")
-                    .append(" ")
-                    .append("(")
-                    .append(instanceStr)
-                    .append(")")
-                    .append(" ")
-                    .append("order by")
-                    .append(" ")
-                    .append(TableInfo.DOWN_START_TIME);
-
-            resultList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql.toString());
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-        }
-        return resultList;
-    }
-
 
     /**
      * 处理未下载完成的的binlog文件
@@ -330,38 +241,5 @@ public class AliBinLogFileTransfer implements TaskRunner, BinlogFileTransfer {
         }
     }
 
-    /**
-     * 对解析或者下载错误的文件重新下载
-     */
-    private void processErrorFile(String sql) {
-        try {
-            List<Map<String, Object>> errorData = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
-            if (!errorData.isEmpty()) {
-                for (Map<String, Object> objectMap : errorData) {
-                    String fileName = (String) objectMap.get(TableInfo.FILE_NAME);
-                    String dbInstance = (String) objectMap.get(TableInfo.DB_INSTANCE);
-                    String bakInstanceId = (String) objectMap.get(TableInfo.BAK_INSTANCE_ID);
-                    String path = HDFS_PATH + File.separator + dbInstance + File.separator + bakInstanceId + File.separator + fileName;
-                    boolean status = HDFSFileUtility.checkAndDel(path);
-                    boolean fileExists = HDFSFileUtility.getFileSystem(path).exists(new Path(path));
-                    if (status||fileExists) {
-                        LOG.info("delete file: " + fileName + " from HDFS success");
-                        Map<String, Object> whereMap = new HashMap<>();
-                        whereMap.put(TableInfo.FILE_NAME, fileName);
-                        whereMap.put(TableInfo.DB_INSTANCE, dbInstance);
-                        DBUtil.delete(DBServer.DBServerType.MYSQL.toString(), dataBase, TableInfo.BINLOG_PROC_TABLE, whereMap);
-                        Map<String, Object> valueMap = new HashMap<>();
-                        valueMap.put(TableInfo.DOWN_STATUS, 0);
-                        valueMap.put(TableInfo.DOWN_SIZE, null);
-                        valueMap.put(TableInfo.REQUEST_END, null);
-                        DBUtil.update(DBServer.DBServerType.MYSQL.toString(), dataBase, TableInfo.BINLOG_TRANS_TABLE, valueMap, whereMap);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            LOG.error(e.getSQLState(), e);
-        } catch (IOException e) {
-            LOG.error(e.getMessage(),e);
-        }
-    }
+
 }

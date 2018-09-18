@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.transfer.process.threadmanager;
+package com.datatrees.datacenter.transfer.process.thread;
 
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import org.slf4j.Logger;

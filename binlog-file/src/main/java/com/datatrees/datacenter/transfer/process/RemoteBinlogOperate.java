@@ -1,12 +1,13 @@
-package com.datatrees.datacenter.transfer.process.local;
+package com.datatrees.datacenter.transfer.process;
 
 import ch.ethz.ssh2.Connection;
 import com.datatrees.datacenter.core.task.TaskDispensor;
 import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.*;
+import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.LocalBinlogInfo;
+import com.datatrees.datacenter.transfer.bean.LocalCenterInfo;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
-import com.datatrees.datacenter.transfer.process.TransferTimerTaskCopy;
 import com.datatrees.datacenter.transfer.utility.SshUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+
 
 /**
  * @author personalc
@@ -24,12 +25,6 @@ import java.util.Properties;
 public class RemoteBinlogOperate implements Runnable {
 
     private static Logger LOG = LoggerFactory.getLogger(RemoteBinlogOperate.class);
-    public static Properties properties = PropertiesUtility.defaultProperties();
-    private static final int PORT = Integer.valueOf(properties.getProperty("PORT", "22"));
-    private static final String DATABASE = properties.getProperty("jdbc.database", "binlog");
-    private static final String SERVER_BASEDIR = properties.getProperty("SERVER_ROOT", "/data1/application/binlog-process/log");
-    private static final String CLIENT_BASEDIR = properties.getProperty("CLIENT_ROOT", "/Users/personalc/test");
-    private static final String HDFS_PATH = properties.getProperty("HDFS_ROOT");
     private String hostIp;
     private boolean recordExist = false;
 
@@ -45,7 +40,7 @@ public class RemoteBinlogOperate implements Runnable {
         stringBuilder.append(LocalBinlogInfo.lastDownloadFileTable);
         List<Map<String, Object>> dataRecord = null;
         try {
-            dataRecord = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), DATABASE, stringBuilder.toString());
+            dataRecord = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), LocalCenterInfo.DATABASE, stringBuilder.toString());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -60,8 +55,8 @@ public class RemoteBinlogOperate implements Runnable {
     public void run() {
         try {
             TransferTimerTaskCopy.processingMap.put(hostIp, 1);
-            Connection connection = new Connection(hostIp, PORT);
-            List<String> fileList = SshUtil.getFileList(SERVER_BASEDIR, connection);
+            Connection connection = new Connection(hostIp, LocalCenterInfo.PORT);
+            List<String> fileList = SshUtil.getFileList(LocalCenterInfo.SERVER_BASEDIR, connection);
             if (null != fileList && fileList.size() > 1) {
                 List<String> subFileList = null;
                 long batchStart = System.currentTimeMillis();
@@ -101,44 +96,51 @@ public class RemoteBinlogOperate implements Runnable {
                     lastValueMap.put(LocalBinlogInfo.downloadIp, IPUtility.ipAddress());
                     Map<String, Object> whereMap = new HashMap<>(1);
                     whereMap.put(LocalBinlogInfo.dbInstance, hostIp);
-                    String hdfsFilePath = HDFS_PATH + File.separator + hostIp;
+                    String hdfsFilePath = LocalCenterInfo.HDFS_PATH + File.separator + hostIp;
 
                     Map<String, Object> processRecordMap = new HashMap<>(3);
                     processRecordMap.put(TableInfo.DB_INSTANCE, hostIp);
 
                     for (int i = 0; i < subFileList.size(); i++) {
                         String fileName = subFileList.get(i);
+                        String filePath = hdfsFilePath + File.separator + fileName;
                         processRecordMap.put(TableInfo.FILE_NAME, fileName);
-                        String remoteFilePath = SERVER_BASEDIR + File.separator + fileName;
-                        long downStart = System.currentTimeMillis();
+                        String remoteFilePath = LocalCenterInfo.SERVER_BASEDIR + File.separator + fileName;
+                        long requestStart = System.currentTimeMillis();
                         LOG.info("Start download file: " + fileName);
-                        SshUtil.getFile(remoteFilePath, CLIENT_BASEDIR + File.separator + hostIp, connection);
-                        long downEnd = System.currentTimeMillis();
-                        valueMap.put(TableInfo.DOWN_START_TIME, TimeUtil.stampToDate(downStart));
-                        valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(downEnd));
-                        String localFilePath = CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileName;
+                        SshUtil.getFile(remoteFilePath, LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp, connection);
+                        valueMap.put(TableInfo.REQUEST_START, TimeUtil.stampToDate(requestStart));
+
+                        String localFilePath = LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileName;
                         File localFile = new File(localFilePath);
                         if (localFile.isFile() && localFile.exists()) {
                             Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);
                             if (uploadFlag) {
                                 LOG.info("File ：" + fileName + " upload to HDFS successful！");
+                                long requestEnd = System.currentTimeMillis();
+                                valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(requestEnd));
                                 valueMap.put(TableInfo.FILE_NAME, fileName);
-                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), DATABASE, LocalBinlogInfo.binlogDownloadRecordTable, valueMap);
+                                valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
+                                long fileSize = HDFSFileUtility.getFileSize(filePath);
+                                valueMap.put(TableInfo.FILE_SIZE, fileSize);
+                                valueMap.put(TableInfo.DOWN_SIZE, fileSize);
+
+                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), LocalCenterInfo.DATABASE, LocalBinlogInfo.binlogDownloadRecordTable, valueMap);
 
                                 processRecordMap.put(TableInfo.PROCESS_START, TimeUtil.stampToDate(System.currentTimeMillis()));
-                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), DATABASE, TableInfo.BINLOG_PROC_TABLE, processRecordMap);
+                                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), LocalCenterInfo.DATABASE, TableInfo.BINLOG_PROC_TABLE, processRecordMap);
 
                                 lastValueMap.put(LocalBinlogInfo.fileName, fileName);
                                 long uploadTime = System.currentTimeMillis();
                                 lastValueMap.put(LocalBinlogInfo.downloadTime, TimeUtil.stampToDate(uploadTime));
                                 if (!recordExist && i == 0) {
                                     lastValueMap.put(LocalBinlogInfo.dbInstance, hostIp);
-                                    DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), DATABASE, LocalBinlogInfo.lastDownloadFileTable, lastValueMap);
+                                    DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), LocalCenterInfo.DATABASE, LocalBinlogInfo.lastDownloadFileTable, lastValueMap);
                                 } else {
-                                    DBUtil.update(DBServer.DBServerType.MYSQL.toString(), DATABASE, LocalBinlogInfo.lastDownloadFileTable, lastValueMap, whereMap);
+                                    DBUtil.update(DBServer.DBServerType.MYSQL.toString(), LocalCenterInfo.DATABASE, LocalBinlogInfo.lastDownloadFileTable, lastValueMap, whereMap);
                                 }
-                                String filePath = hdfsFilePath + File.separator + fileName;
-                                TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + "_" + fileName, hostIp));
+
+                                TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, hostIp + TableInfo.INSTANCE_FILE_SEP + fileName, hostIp));
                             } else {
                                 LOG.info("File ：" + fileName + "upload to HDFS failed！");
                             }

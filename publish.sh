@@ -10,7 +10,7 @@ cd binlog-main/target/binlog-main-1.0-SNAPSHOT/lib;
 
 for broker in $BROKERS
 do
-    for file in $(ls -rt binlog*.jar);
+    for file in $(ls -rt *.jar);
     do
        scp -p $file root@$broker:$BINLOG_PROCESS_HOME/lib;
     done

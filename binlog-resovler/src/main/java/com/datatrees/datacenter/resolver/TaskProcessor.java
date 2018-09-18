@@ -125,6 +125,7 @@ public class TaskProcessor implements TaskRunner, Runnable {
     return blockingQueue.poll();
   }
 
+  @Override
   public void process() {
     Thread runThread = new Thread(this);
     runThread.start();

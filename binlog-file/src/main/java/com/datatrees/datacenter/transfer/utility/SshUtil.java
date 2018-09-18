@@ -98,7 +98,7 @@ public class SshUtil {
                 if (!targetPath.exists() && !targetPath.isDirectory()) {
                     LOG.info("目标文件夹：" + localDirectory + " 不存在！");
                     LOG.info("创建目标文件夹：" + localDirectory + " ...");
-                    boolean flag = targetPath.mkdir();
+                    boolean flag = targetPath.mkdirs();
                     if (flag) {
                         LOG.info("文件夹：" + localDirectory + " 创建成功");
                     } else {

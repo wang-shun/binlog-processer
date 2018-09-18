@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.transfer.process.threadmanager;
+package com.datatrees.datacenter.transfer.process.thread;
 
 import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;

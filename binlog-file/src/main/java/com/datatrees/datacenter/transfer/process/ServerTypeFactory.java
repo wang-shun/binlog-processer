@@ -1,8 +1,6 @@
 package com.datatrees.datacenter.transfer.process;
 
 
-import com.datatrees.datacenter.transfer.process.local.LocalDataCenterTransfer;
-
 /**
  * @author personalc
  */

@@ -30,4 +30,5 @@ public class TableInfo {
     public static final String PROCESS_STATUS = "status";
     public static final String FILE_SIZE = "file_size";
     public static final String DOWN_SIZE = "down_size";
+    public static final String INSTANCE_FILE_SEP="_";
 }
