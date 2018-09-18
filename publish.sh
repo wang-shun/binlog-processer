@@ -25,6 +25,15 @@ do
            done
     fi
 
+if [[ $broker == application3 ]];then
+
+       # echo $broker
+        for file in $(ls -rt binlog-*.jar);
+           do
+               scp -p $file root@$broker:$BINLOG_PROCESS_HOME2/lib;
+           done
+    fi
+
     if [[ $broker == application5 ]];then
             for file in $(ls -rt binlog-*.jar);
                do
