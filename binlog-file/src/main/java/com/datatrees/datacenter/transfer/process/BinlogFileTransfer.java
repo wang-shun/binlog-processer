@@ -7,6 +7,7 @@ import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
+import com.datatrees.datacenter.transfer.utility.IpMatchUtility;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public abstract class BinlogFileTransfer implements TaskRunner {
                     String mysqlURL;
                     Map<String, Object> map = new HashMap<>(5);
 
-                    if (null != backInstanceId && backInstanceId.length() != 0) {
+                    if (!IpMatchUtility.isboolIp(dbInstance)) {
                         path = HDFS_PATH + File.separator + dbInstance + File.separator + backInstanceId + File.separator + fileName;
                         mysqlURL = DBInstanceUtil.getConnectString(dbInstance);
                         map.put(TableInfo.BAK_INSTANCE_ID, backInstanceId);
@@ -92,7 +93,7 @@ public abstract class BinlogFileTransfer implements TaskRunner {
                     String dbInstance = (String) objectMap.get(TableInfo.DB_INSTANCE);
                     String bakInstanceId = (String) objectMap.get(TableInfo.BAK_INSTANCE_ID);
                     String path;
-                    if (null != bakInstanceId && bakInstanceId.length() != 0) {
+                    if (!IpMatchUtility.isboolIp(dbInstance)) {
                         path = HDFS_PATH + File.separator + dbInstance + File.separator + bakInstanceId + File.separator + fileName;
                     } else {
                         path = HDFS_PATH + File.separator + dbInstance + File.separator + fileName;

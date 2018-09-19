@@ -65,7 +65,7 @@ public class RemoteBinlogOperate implements Runnable {
                     String lastFileName = hostFileMap.get(hostIp);
                     if (lastFileName != null) {
                         LOG.info("The last download binlog file of :" + hostIp + " is :" + lastFileName);
-                        int lastIndex = fileList.indexOf(lastFileName.split("_")[1]);
+                        int lastIndex = fileList.indexOf(lastFileName.substring(lastFileName.indexOf("-")+1,lastFileName.length()));
                         if (fileList.size() - 1 > lastIndex) {
                             subFileList = fileList.subList(lastIndex + 1, fileList.size() - 1);
                             recordExist = true;

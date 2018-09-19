@@ -5,6 +5,7 @@ import com.datatrees.datacenter.core.task.domain.Binlog;
 import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
+import com.datatrees.datacenter.transfer.utility.IpMatchUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,18 +80,25 @@ public class ProcessCheck {
                         while (iterator.hasNext()) {
                             oneRecord = iterator.next();
                             String instanceId = String.valueOf(oneRecord.get(TableInfo.DB_INSTANCE));
+                            LOG.info("instanceId:" + instanceId);
                             String fileName = String.valueOf(oneRecord.get(TableInfo.FILE_NAME));
-                            String bakInstanceId = String.valueOf(oneRecord.get(TableInfo.BAK_INSTANCE_ID));
+
                             // send to kafka
                             String filePath;
                             String identity = instanceId + TableInfo.INSTANCE_FILE_SEP + fileName;
                             String mysqlURL;
-                            if (null != bakInstanceId && bakInstanceId.length()!=0) {
+                            if (!IpMatchUtility.isboolIp(instanceId)) {
                                 mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
+                                String bakInstanceId = String.valueOf(oneRecord.get(TableInfo.BAK_INSTANCE_ID));
+                                LOG.info("bakInstanceId:" + bakInstanceId);
                                 filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
+                                LOG.info("hello");
+                                LOG.info("mysqlURL:" + mysqlURL);
                             } else {
                                 filePath = DEST + File.separator + instanceId + File.separator + fileName;
                                 mysqlURL = instanceId;
+                                LOG.info("kugou");
+                                LOG.info("mysqlURL:" + mysqlURL);
                             }
                             TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
                             LOG.info("send " + identity + " to massage queue");
