@@ -110,8 +110,10 @@ public class RemoteBinlogOperate implements Runnable {
                         long requestStart = System.currentTimeMillis();
                         LOG.info("Start download file: " + fileNameWithTime);
                         SshUtil.getFile(remoteFilePath, LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp, connection);
+                        File oldFile=new File(LocalCenterInfo.CLIENT_BASEDIR+File.separator+hostIp+File.separator+fileName);
+                        File fileNew=new File(LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp+File.separator+fileNameWithTime);
+                        oldFile.renameTo(fileNew);
                         valueMap.put(TableInfo.REQUEST_START, TimeUtil.stampToDate(requestStart));
-
                         String localFilePath = LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileNameWithTime;
                         File localFile = new File(localFilePath);
                         if (localFile.isFile() && localFile.exists()) {
