@@ -85,7 +85,7 @@ public class ProcessCheck {
                             String filePath;
                             String identity = instanceId + TableInfo.INSTANCE_FILE_SEP + fileName;
                             String mysqlURL;
-                            if (null != bakInstanceId || !"".equals(bakInstanceId)) {
+                            if (null != bakInstanceId && bakInstanceId.length()!=0) {
                                 mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
                                 filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                             } else {
