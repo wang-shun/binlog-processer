@@ -82,12 +82,14 @@ public class ProcessCheck {
                             String fileName = String.valueOf(oneRecord.get(TableInfo.FILE_NAME));
                             String bakInstanceId = String.valueOf(oneRecord.get(TableInfo.BAK_INSTANCE_ID));
                             // send to kafka
-                            String filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
+                            String filePath;
                             String identity = instanceId + TableInfo.INSTANCE_FILE_SEP + fileName;
                             String mysqlURL;
                             if (null != bakInstanceId || !"".equals(bakInstanceId)) {
                                 mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
+                                filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                             } else {
+                                filePath = DEST + File.separator + instanceId + File.separator + fileName;
                                 mysqlURL = instanceId;
                             }
                             TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));

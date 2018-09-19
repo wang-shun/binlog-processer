@@ -112,7 +112,7 @@ public class HiveCompare extends BaseDataCompare {
             Map<String, Object> whereMap = new HashMap<>(2);
             whereMap.put(CheckTable.FILE_NAME, file);
             whereMap.put(CheckTable.PARTITION_TYPE, type);
-            Map<String, Object> valueMap = new HashMap<>();
+            Map<String, Object> valueMap = new HashMap<>(1);
             valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
             try {
                 DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
