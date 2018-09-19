@@ -121,7 +121,7 @@ public class RemoteBinlogOperate implements Runnable {
                             if (uploadFlag) {
                                 LOG.info("File ：" + fileNameWithTime + " upload to HDFS successful！");
                                 long requestEnd = System.currentTimeMillis();
-                                valueMap.put(TableInfo.DOWN_END_TIME, TimeUtil.stampToDate(requestEnd));
+                                valueMap.put(TableInfo.REQUEST_END, TimeUtil.stampToDate(requestEnd));
                                 valueMap.put(TableInfo.FILE_NAME, fileNameWithTime);
                                 valueMap.put(TableInfo.DOWN_STATUS, DownloadStatus.COMPLETE.getValue());
                                 long fileSize = HDFSFileUtility.getFileSize(filePath);
