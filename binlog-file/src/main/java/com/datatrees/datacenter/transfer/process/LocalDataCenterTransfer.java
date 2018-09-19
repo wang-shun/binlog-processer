@@ -62,16 +62,16 @@ public class LocalDataCenterTransfer extends BinlogFileTransfer {
         Connection connection;
         String hostIP = String.valueOf(record.get(TableInfo.DB_INSTANCE));
         String fileName = String.valueOf(record.get(TableInfo.FILE_NAME));
-        String fileWithoutTime = fileName.split("_")[1];
+        String fileWithoutTime = fileName.substring(fileName.indexOf("-") + 1, fileName.length());
         connection = new Connection(hostIP, LocalCenterInfo.PORT);
         SshUtil.getFile(LocalCenterInfo.SERVER_BASEDIR + File.separator + fileWithoutTime, LocalCenterInfo.CLIENT_BASEDIR, connection);
         //文件重命名
         File fileOld = new File(LocalCenterInfo.CLIENT_BASEDIR + File.separator + fileWithoutTime);
-        LOG.info("原始文件名："+fileOld.getName());
+        LOG.info("原始文件名：" + fileOld.getName());
         String localFilePath = LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIP + File.separator + fileName;
         File localFile = new File(localFilePath);
         fileOld.renameTo(localFile);
-        LOG.info("新文件名："+ localFile.getName());
+        LOG.info("新文件名：" + localFile.getName());
         String hdfsFilePath = LocalCenterInfo.HDFS_PATH + File.separator + hostIP;
         if (localFile.isFile() && localFile.exists()) {
             Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);

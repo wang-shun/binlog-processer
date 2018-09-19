@@ -103,7 +103,7 @@ public class RemoteBinlogOperate implements Runnable {
 
                     for (int i = 0; i < subFileList.size(); i++) {
                         String fileName = subFileList.get(i);
-                        String fileNameWithTime = System.currentTimeMillis() + "_" + subFileList.get(i);
+                        String fileNameWithTime = System.currentTimeMillis() + "-" + subFileList.get(i);
                         String filePath = hdfsFilePath + File.separator + fileNameWithTime;
                         processRecordMap.put(TableInfo.FILE_NAME, fileNameWithTime);
                         String remoteFilePath = LocalCenterInfo.SERVER_BASEDIR + File.separator + fileName;
