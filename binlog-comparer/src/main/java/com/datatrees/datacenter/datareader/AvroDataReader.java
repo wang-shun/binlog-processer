@@ -111,8 +111,12 @@ public class AvroDataReader extends BaseDataReader {
                     }
                 }
             }
-            /*IOUtils.cleanup(null, is);
-            IOUtils.cleanup(null, reader);*/
+            try {
+                is.close();
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             createMap = BaseDataCompare.diffCompare(createMap, updateMap);
             if (createMap != null) {
                 createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
@@ -163,6 +167,8 @@ public class AvroDataReader extends BaseDataReader {
                             break;
                     }
                 }
+                is.close();
+                reader.close();
                 oprRecordMap = new HashMap<>(3);
                 oprRecordMap.put(OperateType.Create.toString(), createList);
                 oprRecordMap.put(OperateType.Update.toString(), updateList);

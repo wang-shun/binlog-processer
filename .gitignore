@@ -7,3 +7,4 @@ project/*
 logs/
 binlogprocess.log
 
+test.json

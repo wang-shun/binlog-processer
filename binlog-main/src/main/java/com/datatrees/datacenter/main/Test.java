@@ -3,6 +3,7 @@ package com.datatrees.datacenter.main;
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.HiveCompare;
 import com.datatrees.datacenter.core.utility.IpMatchUtility;
+import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.utility.HBaseHelper;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.slf4j.Logger;
@@ -13,8 +14,8 @@ public class Test {
 
     public static void main(String[] args) {
         // TODO: 2018/8/27 新版本发布前需要检查配置文件是否需要更新
-        /*AvroDataReader reader = new AvroDataReader();
-        reader.readSrcData("/data/warehouse/create/third-server/tongdun/t_td_risk_user_summary/");*/
+        AvroDataReader reader = new AvroDataReader();
+        reader.readSrcData("/data/warehouse/update/gongfudai/loandb/t_user_contacts/year=2018/month=9/day=9/1536426653-mysql-bin.001018.avro");
 
         /*BaseDataCompare dataCompare = new TiDBCompareFile();
         dataCompare.binLogCompare("1537081989-mysql-bin.001072", "update");*/
@@ -120,7 +121,7 @@ public class Test {
            String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
            System.out.println(id);
        }*/
-        boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
-        System.out.println(flag);
+       /* boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
+        System.out.println(flag);*/
     }
 }
