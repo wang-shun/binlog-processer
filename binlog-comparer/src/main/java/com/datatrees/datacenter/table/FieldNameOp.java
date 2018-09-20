@@ -20,7 +20,18 @@ public class FieldNameOp {
         if (null != allFieldName && allFieldName.size() > 0) {
             allFieldName.stream().collect(Collectors.toSet());
             if (fieldSets.retainAll(allFieldName)) {
-                if(fieldSets.size()>0) {
+                if (fieldSets.size() > 0) {
+                    return String.valueOf(fieldSets.toArray()[0]);
+                }
+            }
+        }
+        return null;
+    }
+    public static String getFieldName(Set<String> allFieldName, List<String> configField) {
+        Set<String> fieldSets = configField.stream().collect(Collectors.toSet());
+        if (null != allFieldName && allFieldName.size() > 0) {
+            if (fieldSets.retainAll(allFieldName)) {
+                if (fieldSets.size() > 0) {
                     return String.valueOf(fieldSets.toArray()[0]);
                 }
             }
@@ -33,6 +44,13 @@ public class FieldNameOp {
         return new ArrayList<>(asList(allName.split(",")));
     }
 
+    /**
+     * 从数据库中获取表字段
+     *
+     * @param dataBase  数据库
+     * @param tableName 表
+     * @return 字段集合
+     */
     public static Collection<Object> getAllFieldName(String dataBase, String tableName) {
         try {
             String tableQuerySql = "SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA='" + dataBase + "'" + " and TABLE_NAME ='" + tableName + "'";

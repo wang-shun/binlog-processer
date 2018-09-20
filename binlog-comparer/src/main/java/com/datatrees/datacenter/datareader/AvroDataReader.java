@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.sql.SQLOutput;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,10 +33,16 @@ public class AvroDataReader extends BaseDataReader {
     private static final Properties properties = PropertiesUtility.defaultProperties();
     private static final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
     private static final List<String> idColumnList = FieldNameOp.getConfigField("id");
+    private static final List<String> lastUpdateColumnList = FieldNameOp.getConfigField("update");
     private String dataBase;
     private String tableName;
     private String recordId;
     private String recordLastUpdateTime;
+    /**
+     * 是否需要获取记录各字段名称
+     */
+    private boolean fieldGetOff = true;
+    private boolean fieldExists = false;
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
@@ -51,7 +58,7 @@ public class AvroDataReader extends BaseDataReader {
                 }
             }
         } catch (IOException e) {
-            LOG.info("file " + filePath + " doesn't exist");
+            LOG.info("File :" + filePath + " doesn't exist");
         }
         return null;
     }
@@ -63,34 +70,44 @@ public class AvroDataReader extends BaseDataReader {
      * @return Avro中分类后的事件信息
      */
     private Map<String, Map<String, Long>> readFromAvro(InputStream is) {
-        Map<String, Map<String, Long>> recordMap = new HashMap<>(2);
-        if (null != recordId && null != recordLastUpdateTime) {
-            Map<String, Long> createMap = new HashMap<>();
-            Map<String, Long> updateMap = new HashMap<>();
-            Map<String, Long> deleteMap = new HashMap<>();
+        Map<String, Map<String, Long>> recordMap = new HashMap<>(3);
+        Map<String, Long> createMap = new HashMap<>();
+        Map<String, Long> updateMap = new HashMap<>();
+        Map<String, Long> deleteMap = new HashMap<>();
 
-            DataFileStream<Object> reader = null;
-            try {
-                reader = new DataFileStream<>(is, new GenericDatumReader<>());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            Iterator<Object> iterator = null;
-            if (reader != null) {
-                iterator = reader.iterator();
-            }
-            if (iterator != null) {
-                while (iterator.hasNext()) {
-                    Object o = iterator.next();
-                    GenericRecord r = (GenericRecord) o;
-                    String operator = r.get(2).toString();
-                    JSONObject jsonObject;
-                    if (null != r.get(1)) {
-                        jsonObject = JSONObject.parseObject(r.get(1).toString());
-                    } else {
-                        jsonObject = JSONObject.parseObject(r.get(0).toString());
+        DataFileStream<Object> reader = null;
+        try {
+            reader = new DataFileStream<>(is, new GenericDatumReader<>());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Iterator<Object> iterator = null;
+        if (reader != null) {
+            iterator = reader.iterator();
+        }
+        if (iterator != null) {
+            while (iterator.hasNext()) {
+                Object o = iterator.next();
+                GenericRecord r = (GenericRecord) o;
+                String operator = r.get(2).toString();
+                JSONObject jsonObject;
+                if (null != r.get(1)) {
+                    jsonObject = JSONObject.parseObject(r.get(1).toString());
+                } else {
+                    jsonObject = JSONObject.parseObject(r.get(0).toString());
+                }
+                // TODO: 2018/9/20 修改
+                if (jsonObject != null) {
+                    if (fieldGetOff) {
+                        Set<String> fieldSet = jsonObject.keySet();
+                        fieldGetOff = false;
+                        recordId = FieldNameOp.getFieldName(fieldSet, idColumnList);
+                        recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, lastUpdateColumnList);
+                        if (null != recordId && null != recordLastUpdateTime) {
+                            fieldExists = true;
+                        }
                     }
-                    if (jsonObject != null) {
+                    if (fieldExists) {
                         String id = String.valueOf(jsonObject.get(recordId));
                         long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
                         if (id != null) {
@@ -111,22 +128,21 @@ public class AvroDataReader extends BaseDataReader {
                     }
                 }
             }
-            try {
-                is.close();
-                reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            createMap = BaseDataCompare.diffCompare(createMap, updateMap);
-            if (createMap != null) {
-                createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
-            }
-            updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
-            recordMap.put(OperateType.Delete.toString(), deleteMap);
-            recordMap.put(OperateType.Create.toString(), createMap);
-            recordMap.put(OperateType.Update.toString(), updateMap);
-            return recordMap;
         }
+        try {
+            is.close();
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        createMap = BaseDataCompare.diffCompare(createMap, updateMap);
+        if (createMap != null) {
+            createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
+        }
+        updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
+        recordMap.put(OperateType.Delete.toString(), deleteMap);
+        recordMap.put(OperateType.Create.toString(), createMap);
+        recordMap.put(OperateType.Update.toString(), updateMap);
         return recordMap;
 
     }

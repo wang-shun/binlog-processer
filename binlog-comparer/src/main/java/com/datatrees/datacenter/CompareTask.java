@@ -7,8 +7,12 @@ import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.resolver.TaskProcessor;
 import com.datatrees.datacenter.resolver.TaskProcessorListner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CompareTask implements TaskRunner {
+    private static Logger LOG = LoggerFactory.getLogger(CompareTask.class);
+
 
     public void startCheck() {
         TaskProcessor.defaultProcessor()
@@ -18,8 +22,11 @@ public class CompareTask implements TaskRunner {
                             @Override
                             public void onMessageReceived(String desc) {
                                 BaseDataCompare compare = new TiDBCompareFile();
+                                LOG.info("start TiDB check...");
                                 compare.binLogCompare(desc, "update");
+                                LOG.info("TiDB check finished");
                                 compare = new HiveCompare();
+                                LOG.info("start Hive check...");
                                 compare.binLogCompare(desc, "update");
                             }
                         }).process();
