@@ -16,6 +16,8 @@ import com.datatrees.datacenter.transfer.utility.SshUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -67,11 +69,9 @@ public class LocalDataCenterTransfer extends BinlogFileTransfer {
         SshUtil.getFile(LocalCenterInfo.SERVER_BASEDIR + File.separator + fileWithoutTime, LocalCenterInfo.CLIENT_BASEDIR, connection);
         //文件重命名
         File fileOld = new File(LocalCenterInfo.CLIENT_BASEDIR + File.separator + fileWithoutTime);
-        LOG.info("原始文件名：" + fileOld.getName());
         String localFilePath = LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIP + File.separator + fileName;
         File localFile = new File(localFilePath);
         fileOld.renameTo(localFile);
-        LOG.info("新文件名：" + localFile.getName());
         String hdfsFilePath = LocalCenterInfo.HDFS_PATH + File.separator + hostIP;
         if (localFile.isFile() && localFile.exists()) {
             Boolean uploadFlag = HDFSFileUtility.put2HDFS(localFilePath, hdfsFilePath, HDFSFileUtility.conf);

@@ -46,7 +46,7 @@ public class BatchGetFromHBase {
                     if (null != results && results.length > 0) {
                         resultMap = new HashMap<>();
                         for (Result result : results) {
-                            if (result != null) {
+                            if (result != null && !result.isEmpty()) {
                                 String rowKey = Bytes.toString(result.getRow());
                                 long time = Bytes.toLong(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
                                 resultMap.put(rowKey, time);

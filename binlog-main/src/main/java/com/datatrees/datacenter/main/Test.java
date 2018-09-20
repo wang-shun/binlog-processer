@@ -2,6 +2,7 @@ package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.HiveCompare;
+import com.datatrees.datacenter.utility.HBaseHelper;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,10 +110,15 @@ public class Test {
         Map<String,Long> record=batchGetFromHBase.parrallelBatchSearch(rowKeyList,"streaming_warehouse_rowId2recId_tbl","f","update_time");
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
-        BaseDataCompare dataCompare = new HiveCompare();
-        dataCompare.binLogCompare("1537234892-mysql-bin.000493", "update");
+       /*BaseDataCompare dataCompare = new HiveCompare();
+       dataCompare.binLogCompare("1537417068-mysql-bin.000595", "update");*/
 
-        /*String id = GenericRowIdUtils.addIdWithHash("1883780");
-        System.out.println(id);*/
+       String str="116895293,116895294,116895291,116895292,116895290,116895299,116895297,116895298,116891700,116891702,116891701,116891708,116891707,116891709";
+       String[] idArr=str.split(",");
+       for (int i=0;i<idArr.length;i++) {
+           String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
+           System.out.println(id);
+       }
+
     }
 }
