@@ -43,9 +43,7 @@ public class HiveCompare extends BaseDataCompare {
                 String recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
 
                 if (null != recordId && null != recordLastUpdateTime) {
-                    String filePath = dbInstance +
-                            File.separator +
-                            dataBase +
+                    String filePath = dataBase +
                             File.separator +
                             tableName +
                             File.separator +
