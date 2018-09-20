@@ -58,55 +58,56 @@ public class HiveCompare extends BaseDataCompare {
                     avroDataReader.setRecordId(recordId);
                     avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
                     Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
+                    if (null != avroData && avroData.size() > 0) {
+                        Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
+                        Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
+                        Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
 
-                    Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
-                    Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
-                    Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
-
-                    Map<String, Long> createRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(createRecord));
-                    Map<String, Long> updateRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(updateRecord));
-                    Map<String, Long> deleteRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(deleteRecord));
+                        Map<String, Long> createRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(createRecord));
+                        Map<String, Long> updateRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(updateRecord));
+                        Map<String, Long> deleteRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(deleteRecord));
 
 
-                    Map<String, Long> createRecordNoFind;
-                    Map<String, Long> updateRecordNoFind;
+                        Map<String, Long> createRecordNoFind;
+                        Map<String, Long> updateRecordNoFind;
 
-                    if (null != createRecordFind && createRecordFind.size() > 0) {
-                        Map<String, Long> createTmp = new HashMap<>();
-                        createRecordFind.forEach((key, value) -> createTmp.put(key.split("_")[1], value));
-                        createRecordNoFind = diffCompare(createRecord, createTmp);
-                    } else {
-                        createRecordNoFind = createRecord;
-                    }
-
-                    if (null != updateRecordFind && updateRecordFind.size() > 0) {
-                        Map<String, Long> updateTmp = new HashMap<>();
-                        updateRecordFind.forEach((key, value) -> updateTmp.put(key.split("_")[1], value));
-                        Map<String, Long> tmp = updateTmp;
-                        updateRecordNoFind = diffCompare(updateRecord, updateTmp);
-                        Map<String, Long> oldUpdateRecord = compareByValue(tmp, updateRecord);
-                        if (null != oldUpdateRecord && oldUpdateRecord.size() > 0) {
-                            updateRecordNoFind.putAll(oldUpdateRecord);
+                        if (null != createRecordFind && createRecordFind.size() > 0) {
+                            Map<String, Long> createTmp = new HashMap<>();
+                            createRecordFind.forEach((key, value) -> createTmp.put(key.split("_")[1], value));
+                            createRecordNoFind = diffCompare(createRecord, createTmp);
+                        } else {
+                            createRecordNoFind = createRecord;
                         }
-                    } else {
-                        updateRecordNoFind = updateRecord;
-                    }
 
-                    CheckResult result = new CheckResult();
-                    result.setTableName(tableName);
-                    result.setPartitionType(type);
-                    result.setFilePartition(partition);
-                    result.setDataBase(dataBase);
-                    result.setFileName(fileName);
-                    result.setSaveTable(CheckTable.BINLOG_CHECK_HIVE_TABLE);
-                    result.setFilesPath(filePath);
-                    result.setDbInstance(dbInstance);
-                    result.setOpType(OperateType.Create.toString());
-                    resultInsert(result, createRecordNoFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
-                    result.setOpType(OperateType.Update.toString());
-                    resultInsert(result, updateRecordNoFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
-                    result.setOpType(OperateType.Delete.toString());
-                    resultInsert(result, deleteRecordFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
+                        if (null != updateRecordFind && updateRecordFind.size() > 0) {
+                            Map<String, Long> updateTmp = new HashMap<>();
+                            updateRecordFind.forEach((key, value) -> updateTmp.put(key.split("_")[1], value));
+                            Map<String, Long> tmp = updateTmp;
+                            updateRecordNoFind = diffCompare(updateRecord, updateTmp);
+                            Map<String, Long> oldUpdateRecord = compareByValue(tmp, updateRecord);
+                            if (null != oldUpdateRecord && oldUpdateRecord.size() > 0) {
+                                updateRecordNoFind.putAll(oldUpdateRecord);
+                            }
+                        } else {
+                            updateRecordNoFind = updateRecord;
+                        }
+
+                        CheckResult result = new CheckResult();
+                        result.setTableName(tableName);
+                        result.setPartitionType(type);
+                        result.setFilePartition(partition);
+                        result.setDataBase(dataBase);
+                        result.setFileName(fileName);
+                        result.setSaveTable(CheckTable.BINLOG_CHECK_HIVE_TABLE);
+                        result.setFilesPath(filePath);
+                        result.setDbInstance(dbInstance);
+                        result.setOpType(OperateType.Create.toString());
+                        resultInsert(result, createRecordNoFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
+                        result.setOpType(OperateType.Update.toString());
+                        resultInsert(result, updateRecordNoFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
+                        result.setOpType(OperateType.Delete.toString());
+                        resultInsert(result, deleteRecordFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
+                    }
                 }
             }
             Map<String, Object> whereMap = new HashMap<>(2);

@@ -105,7 +105,7 @@ public class TiDBCompareFile extends BaseDataCompare {
                                     + CheckTable.FILE_LAST_NAME;
 
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
-                            if (null != avroData) {
+                            if (null != avroData&&avroData.size()>0) {
                                 Map<String, Long> create = avroData.get(OperateType.Create.toString());
                                 Map<String, Long> update = avroData.get(OperateType.Update.toString());
                                 Map<String, Long> delete = avroData.get(OperateType.Delete.toString());
