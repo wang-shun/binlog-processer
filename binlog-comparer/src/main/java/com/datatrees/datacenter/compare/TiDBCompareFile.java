@@ -1,9 +1,6 @@
 package com.datatrees.datacenter.compare;
 
-import com.datatrees.datacenter.core.utility.DBServer;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.core.utility.TimeUtil;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
@@ -22,8 +19,8 @@ import java.util.stream.Collectors;
 public class TiDBCompareFile extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompareFile.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
-    private final String sampleFlag = properties.getProperty("SAMPLE_FLAG","no");
-    private static String binLogDataBase = properties.getProperty("jdbc.database","binlog");
+    private final String sampleFlag = properties.getProperty("SAMPLE_FLAG", "no");
+    private static String binLogDataBase = properties.getProperty("jdbc.database", "binlog");
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
     String recordId;
@@ -87,25 +84,39 @@ public class TiDBCompareFile extends BaseDataCompare {
                         avroDataReader.setRecordId(recordId);
                         avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
                         for (String partition : partitionList) {
-                            String partitionPath = super.AVRO_HDFS_PATH +
-                                    File.separator +
-                                    partitionType +
-                                    File.separator +
-                                    dbInstance +
-                                    File.separator +
-                                    dataBase +
-                                    File.separator +
-                                    tableName +
-                                    File.separator +
-                                    partition;
+                            String partitionPath;
+                            String filePath;
+                            if (!IpMatchUtility.isboolIp(dbInstance)) {
+                                partitionPath = super.AVRO_HDFS_PATH +
+                                        File.separator +
+                                        partitionType +
+                                        File.separator +
+                                        dbInstance +
+                                        File.separator +
+                                        dataBase +
+                                        File.separator +
+                                        tableName +
+                                        File.separator +
+                                        partition;
 
-                            String filePath = partitionPath +
+
+                            } else {
+                                partitionPath = super.AVRO_HDFS_PATH +
+                                        File.separator +
+                                        partitionType +
+                                        File.separator +
+                                        dataBase +
+                                        File.separator +
+                                        tableName +
+                                        File.separator +
+                                        partition;
+                            }
+                            filePath = partitionPath +
                                     File.separator +
                                     fileName.replace(".tar", "")
                                     + CheckTable.FILE_LAST_NAME;
-
                             Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
-                            if (null != avroData&&avroData.size()>0) {
+                            if (null != avroData && avroData.size() > 0) {
                                 Map<String, Long> create = avroData.get(OperateType.Create.toString());
                                 Map<String, Long> update = avroData.get(OperateType.Update.toString());
                                 Map<String, Long> delete = avroData.get(OperateType.Delete.toString());

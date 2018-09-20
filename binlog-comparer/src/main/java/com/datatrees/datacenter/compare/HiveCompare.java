@@ -1,9 +1,6 @@
 package com.datatrees.datacenter.compare;
 
-import com.datatrees.datacenter.core.utility.DBServer;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.core.utility.TimeUtil;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
@@ -21,7 +18,6 @@ import java.util.stream.Collectors;
 
 public class HiveCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompare.class);
-    private Properties properties = PropertiesUtility.defaultProperties();
     private List<String> idList = FieldNameOp.getConfigField("id");
     private List<String> createTimeList = FieldNameOp.getConfigField("update");
 
@@ -43,14 +39,26 @@ public class HiveCompare extends BaseDataCompare {
                 String recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);
 
                 if (null != recordId && null != recordLastUpdateTime) {
-                    String filePath = dataBase +
-                            File.separator +
-                            tableName +
-                            File.separator +
-                            partition +
-                            File.separator +
-                            fileName.replace(".tar", "") +
-                            ".avro";
+                    String filePath;
+                    if (IpMatchUtility.isboolIp(dbInstance)) {
+                        filePath = dataBase +
+                                File.separator +
+                                tableName +
+                                File.separator +
+                                partition +
+                                File.separator +
+                                fileName.replace(".tar", "") +
+                                ".avro";
+                    } else {
+                        filePath = dbInstance + File.separator + dataBase +
+                                File.separator +
+                                tableName +
+                                File.separator +
+                                partition +
+                                File.separator +
+                                fileName.replace(".tar", "") +
+                                ".avro";
+                    }
 
                     String avroPath = super.AVRO_HDFS_PATH + File.separator + type + File.separator + filePath;
                     avroDataReader.setRecordId(recordId);

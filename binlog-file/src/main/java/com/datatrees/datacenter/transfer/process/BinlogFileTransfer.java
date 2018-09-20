@@ -7,7 +7,7 @@ import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
-import com.datatrees.datacenter.transfer.utility.IpMatchUtility;
+import com.datatrees.datacenter.core.utility.IpMatchUtility;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

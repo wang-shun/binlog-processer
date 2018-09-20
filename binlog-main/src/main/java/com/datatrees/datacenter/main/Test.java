@@ -2,6 +2,7 @@ package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.HiveCompare;
+import com.datatrees.datacenter.core.utility.IpMatchUtility;
 import com.datatrees.datacenter.utility.HBaseHelper;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.slf4j.Logger;
@@ -113,12 +114,13 @@ public class Test {
        /*BaseDataCompare dataCompare = new HiveCompare();
        dataCompare.binLogCompare("1537417068-mysql-bin.000595", "update");*/
 
-       String str="116895293,116895294,116895291,116895292,116895290,116895299,116895297,116895298,116891700,116891702,116891701,116891708,116891707,116891709";
+       /*String str="116895293,116895294,116895291,116895292,116895290,116895299,116895297,116895298,116891700,116891702,116891701,116891708,116891707,116891709";
        String[] idArr=str.split(",");
        for (int i=0;i<idArr.length;i++) {
            String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
            System.out.println(id);
-       }
-
+       }*/
+        boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
+        System.out.println(flag);
     }
 }
