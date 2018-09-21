@@ -1,10 +1,12 @@
-{"type": "record",
+{
+  "type": "record",
   "name": "t_user_contacts",
   "namespace": "gongfudai.loandb",
   "fields": [
     {
       "name": "Before",
-      "type": ["null",
+      "type": [
+        "null",
         {
           "type": "record",
           "name": "Value",
@@ -98,3 +100,204 @@
     }
   ]
 }
+
+/*{
+  "type" : "record",
+  "name" : "act_task_prize_log",
+  "namespace" : "acrm_usercenter",
+  "fields" : [ {
+    "name" : "after",
+    "type" : {
+      "type" : "record",
+      "name" : "Value",
+      "namespace" : "acrm_usercenter.act_task_prize_log",
+      "fields" : [ {
+        "name" : "id",
+        "type" : "long"
+      }, {
+        "name" : "userid",
+        "type" : "long"
+      }, {
+        "name" : "taskid",
+        "type" : "long"
+      }, {
+        "name" : "execlogid",
+        "type" : "long"
+      }, {
+        "name" : "status",
+        "type" : "long"
+      }, {
+        "name" : "failcause",
+        "type" : "long"
+      }, {
+        "name" : "eventrecordid",
+        "type" : [ "null", "long" ],
+        "default" : null
+      }, {
+        "name" : "prizeid",
+        "type" : "long"
+      }, {
+        "name" : "prizetype",
+        "type" : "long"
+      }, {
+        "name" : "prizevalue",
+        "type" : "string"
+      }, {
+        "name" : "starttime",
+        "type" : {
+          "type" : "string",
+          "logicalType" : "io.debezium.time.ZonedTimestamp"
+        }
+      }, {
+        "name" : "endtime",
+        "type" : {
+          "type" : "string",
+          "logicalType" : "io.debezium.time.ZonedTimestamp"
+        }
+      }, {
+        "name" : "usestatus",
+        "type" : "long"
+      }, {
+        "name" : "useremark",
+        "type" : "string"
+      }, {
+        "name" : "orderid",
+        "type" : "long"
+      }, {
+        "name" : "applytime",
+        "type" : {
+          "type" : "string",
+          "logicalType" : "io.debezium.time.ZonedTimestamp"
+        }
+      }, {
+        "name" : "applyamount",
+        "type" : {
+          "type" : "double",
+          "logicalType" : "decimal"
+        }
+      }, {
+        "name" : "loanorderid",
+        "type" : "long"
+      }, {
+        "name" : "loanpaytime",
+        "type" : {
+          "type" : "string",
+          "logicalType" : "io.debezium.time.ZonedTimestamp"
+        }
+      }, {
+        "name" : "predictamount",
+        "type" : {
+          "type" : "double",
+          "logicalType" : "decimal"
+        }
+      }, {
+        "name" : "actualamount",
+        "type" : {
+          "type" : "double",
+          "logicalType" : "decimal"
+        }
+      }, {
+        "name" : "transdays",
+        "type" : "long"
+      }, {
+        "name" : "createdat",
+        "type" : {
+          "type" : "string",
+          "logicalType" : "io.debezium.time.ZonedTimestamp"
+        }
+      }, {
+        "name" : "updateat",
+        "type" : {
+          "type" : "string",
+          "logicalType" : "io.debezium.time.ZonedTimestamp"
+        }
+      }, {
+        "name" : "actualloanamount",
+        "type" : {
+          "type" : "double",
+          "logicalType" : "decimal"
+        }
+      } ]
+    }
+  }, {
+    "name" : "op",
+    "type" : "string"
+  }, {
+    "name" : "key",
+    "type" : {
+      "type" : "record",
+      "name" : "Key",
+      "namespace" : "acrm_usercenter.act_task_prize_log",
+      "fields" : [ {
+        "name" : "id",
+        "type" : "long"
+      }, {
+        "name" : "__dbz__physicaltableidentifier",
+        "type" : "string"
+      } ]
+    }
+  } ]
+}*/
+
+/*{
+  "after": {
+    "id": 224514657602940928,
+    "userid": 1006323283,
+    "taskid": 196356240728272896,
+    "execlogid": 224514631682138112,
+    "status": 1,
+    "failcause": 0,
+    "eventrecordid": null,
+    "prizeid": 196350555449884672,
+    "prizetype": 1,
+    "prizevalue": "68",
+    "starttime": "2018-09-12T00:00:00+08:00",
+    "endtime": "2018-09-26T23:59:59+08:00",
+    "usestatus": 0,
+    "useremark": "",
+    "orderid": 0,
+    "applytime": "1970-01-01T08:00:00+08:00",
+    "applyamount": 0.0,
+    "loanorderid": 0,
+    "loanpaytime": "1970-01-01T08:00:00+08:00",
+    "predictamount": 0.0,
+    "actualamount": 0.0,
+    "transdays": 0,
+    "createdat": "2018-09-12T13:01:06+08:00",
+    "updateat": "2018-09-12T13:01:06+08:00",
+    "actualloanamount": 0.0
+  },
+  "op": "c",
+  "key": {
+    "id": 224514657602940928,
+    "__dbz__physicaltableidentifier": "src_acrm_usercenter.acrm-usercenter.act_task_prize_log"
+  }
+}*/
+
+/*
+{
+  "Before": null,
+  "After": {
+    "Value": {
+      "Id": 8114285,
+      "UserId": 1010706277,
+      "Contacts": "contacts/1010706277/",
+      "Total": 421,
+      "Current": 421,
+      "Status": 1,
+      "Device": {
+        "int": 0
+      },
+      "DeviceKey": {
+        "string": "47D76FC7-99C9-4D60-8F1E-99B9E65CF93D"
+      },
+      "CreateDate": {
+        "long": 1536426530000
+      },
+      "LastUpdateDate": {
+        "long": 1536426530000
+      }
+    }
+  },
+  "op": "Create"
+}*/

@@ -18,12 +18,9 @@ import java.util.stream.Collectors;
 
 public class HiveCompare extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompare.class);
-    private List<String> idList = FieldNameOp.getConfigField("id");
-    private List<String> createTimeList = FieldNameOp.getConfigField("update");
 
     @Override
     public void binLogCompare(String file, String type) {
-        //查看当前binlog解析出来的文件分区文件数目和文件条数是否达到了数量要求
         List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(file, type);
         if (null != partitionInfos && partitionInfos.size() > 0) {
             AvroDataReader avroDataReader = new AvroDataReader();
@@ -34,69 +31,17 @@ public class HiveCompare extends BaseDataCompare {
                 String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
                 String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
-               /* Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
-                String recordId = FieldNameOp.getFieldName(allFieldSet, idList);
-                String recordLastUpdateTime = FieldNameOp.getFieldName(allFieldSet, createTimeList);*/
 
-                //if (null != recordId && null != recordLastUpdateTime) {
-                String filePath;
-                if (IpMatchUtility.isboolIp(dbInstance)) {
-                    filePath = dataBase +
-                            File.separator +
-                            tableName +
-                            File.separator +
-                            partition +
-                            File.separator +
-                            fileName.replace(".tar", "") +
-                            ".avro";
-                } else {
-                    filePath = dbInstance +
-                            File.separator +
-                            dataBase +
-                            File.separator +
-                            tableName +
-                            File.separator +
-                            partition +
-                            File.separator +
-                            fileName.replace(".tar", "") +
-                            ".avro";
-                }
+                String filePath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance);
 
+                LOG.info("read avro from: " + filePath);
                 String avroPath = super.AVRO_HDFS_PATH + File.separator + type + File.separator + filePath;
                 Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
                 if (null != avroData && avroData.size() > 0) {
+
                     Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
                     Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
                     Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
-
-                    Map<String, Long> createRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(createRecord));
-                    Map<String, Long> updateRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(updateRecord));
-                    Map<String, Long> deleteRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(deleteRecord));
-
-
-                    Map<String, Long> createRecordNoFind;
-                    Map<String, Long> updateRecordNoFind;
-
-                    if (null != createRecordFind && createRecordFind.size() > 0) {
-                        Map<String, Long> createTmp = new HashMap<>();
-                        createRecordFind.forEach((key, value) -> createTmp.put(key.split("_")[1], value));
-                        createRecordNoFind = diffCompare(createRecord, createTmp);
-                    } else {
-                        createRecordNoFind = createRecord;
-                    }
-
-                    if (null != updateRecordFind && updateRecordFind.size() > 0) {
-                        Map<String, Long> updateTmp = new HashMap<>();
-                        updateRecordFind.forEach((key, value) -> updateTmp.put(key.split("_")[1], value));
-                        Map<String, Long> updateTmpCopy = updateTmp;
-                        updateRecordNoFind = diffCompare(updateRecord, updateTmp);
-                        Map<String, Long> oldUpdateRecord = compareByValue(updateTmpCopy, updateRecord);
-                        if (null != oldUpdateRecord && oldUpdateRecord.size() > 0) {
-                            updateRecordNoFind.putAll(oldUpdateRecord);
-                        }
-                    } else {
-                        updateRecordNoFind = updateRecord;
-                    }
 
                     CheckResult result = new CheckResult();
                     result.setTableName(tableName);
@@ -107,28 +52,92 @@ public class HiveCompare extends BaseDataCompare {
                     result.setSaveTable(CheckTable.BINLOG_CHECK_HIVE_TABLE);
                     result.setFilesPath(filePath);
                     result.setDbInstance(dbInstance);
-                    result.setOpType(OperateType.Create.toString());
-                    resultInsert(result, createRecordNoFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
-                    result.setOpType(OperateType.Update.toString());
-                    resultInsert(result, updateRecordNoFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
-                    result.setOpType(OperateType.Delete.toString());
-                    resultInsert(result, deleteRecordFind, CheckTable.BINLOG_CHECK_HIVE_TABLE);
+
+                    createRecordProcess(dataBase, tableName, createRecord, result);
+                    updateRecordProcess(dataBase, tableName, updateRecord, result);
+                    deleteRecordProcess(dataBase, tableName, deleteRecord, result);
                 }
 
             }
-            Map<String, Object> whereMap = new HashMap<>(2);
-            whereMap.put(CheckTable.FILE_NAME, file);
-            whereMap.put(CheckTable.PARTITION_TYPE, type);
-            Map<String, Object> valueMap = new HashMap<>(1);
-            valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
-            try {
-                DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            updateCheckedFile(file, type);
         }
     }
 
+    private void updateCheckedFile(String file, String type) {
+        Map<String, Object> whereMap = new HashMap<>(2);
+        whereMap.put(CheckTable.FILE_NAME, file);
+        whereMap.put(CheckTable.PARTITION_TYPE, type);
+        Map<String, Object> valueMap = new HashMap<>(1);
+        valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
+        try {
+            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, CheckTable.BINLOG_PROCESS_LOG_TABLE, valueMap, whereMap);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteRecordProcess(String dataBase, String tableName, Map<String, Long> deleteRecord, CheckResult result) {
+        Map<String, Long> deleteRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(deleteRecord));
+        Map<String, Long> rawDeleteRocord = new HashMap<>(deleteRecordFind.size());
+        deleteRecordFind.forEach((key, value) -> rawDeleteRocord.put(key.split("_")[1], value));
+        result.setOpType(OperateType.Delete.toString());
+        LOG.info("the operateType is :[Delete]");
+        resultInsert(result, rawDeleteRocord);
+    }
+
+    private void updateRecordProcess(String dataBase, String tableName, Map<String, Long> updateRecord, CheckResult result) {
+        Map<String, Long> updateRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(updateRecord));
+        Map<String, Long> updateRecordNoFind;
+        if (null != updateRecordFind && updateRecordFind.size() > 0) {
+            Map<String, Long> updateTmp = new HashMap<>(updateRecordFind.size());
+            updateRecordFind.forEach((key, value) -> updateTmp.put(key.split("_")[1], value));
+            updateRecordNoFind = diffCompare(updateRecord, updateTmp);
+            Map<String, Long> oldUpdateRecord = compareByValue(updateTmp, updateRecord);
+            if (null != oldUpdateRecord && oldUpdateRecord.size() > 0) {
+                updateRecordNoFind.putAll(oldUpdateRecord);
+            }
+        } else {
+            updateRecordNoFind = updateRecord;
+        }
+        result.setOpType(OperateType.Update.toString());
+        LOG.info("the operateType is :[Update]");
+        resultInsert(result, updateRecordNoFind);
+    }
+
+    private void createRecordProcess(String dataBase, String tableName, Map<String, Long> createRecord, CheckResult result) {
+        Map<String, Long> createRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(createRecord));
+        Map<String, Long> createRecordNoFind;
+        if (null != createRecordFind && createRecordFind.size() > 0) {
+            Map<String, Long> createTmp = new HashMap<>(createRecordFind.size());
+            createRecordFind.forEach((key, value) -> createTmp.put(key.split("_")[1], value));
+            createRecordNoFind = diffCompare(createRecord, createTmp);
+        } else {
+            createRecordNoFind = createRecord;
+        }
+        result.setOpType(OperateType.Create.toString());
+        LOG.info("the operateType is :[Create]");
+        resultInsert(result, createRecordNoFind);
+    }
+
+    private String assembleFilePath(String dataBase, String tableName, String fileName, String partition, String dbInstance) {
+        String filePath;
+        String filePathWithoutDbInstance = dataBase +
+                File.separator +
+                tableName +
+                File.separator +
+                partition +
+                File.separator +
+                fileName.replace(".tar", "") +
+                ".avro";
+        if (IpMatchUtility.isboolIp(dbInstance)) {
+            filePath = filePathWithoutDbInstance;
+        } else {
+            filePath = dbInstance + File.separator + filePathWithoutDbInstance;
+        }
+        return filePath;
+    }
+
+    @Deprecated
     private List<String> assembleRowKey(String dataBase, String tableName, Map<String, Long> recordMap) {
         if (null != recordMap && recordMap.size() > 0) {
             return recordMap.keySet().stream().map(x -> (x + "_" + dataBase + "." + tableName)).collect(Collectors.toList());
@@ -147,6 +156,7 @@ public class HiveCompare extends BaseDataCompare {
         }
     }
 
+    @Deprecated
     private Map<String, Long> compareWithHBase(List<String> createIdList) {
         if (null != createIdList && createIdList.size() > 0) {
             return BatchGetFromHBase.parrallelBatchSearch(createIdList, HBaseTableInfo.TABLE_NAME, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
@@ -156,6 +166,7 @@ public class HiveCompare extends BaseDataCompare {
 
     private Map<String, Long> compareWithHBase(String dataBase, String tableName, List<String> createIdList) {
         if (null != createIdList && createIdList.size() > 0) {
+            LOG.info("search data from HBase...");
             return BatchGetFromHBase.parrallelBatchSearch(createIdList, dataBase + "." + tableName + "_id", HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
         }
         return null;
@@ -188,7 +199,7 @@ public class HiveCompare extends BaseDataCompare {
      * @param destMap 被比较的Map
      * @return srcMap与destMap 共存项目
      */
-    public Map<String, Long> retainCompareHive(Map<String, Long> srcMap, Map<String, Long> destMap) {
+    private Map<String, Long> retainCompareHive(Map<String, Long> srcMap, Map<String, Long> destMap) {
         Set<String> set1 = srcMap.keySet();
         Set<String> set2 = destMap.keySet();
         Map<String, Long> diffMaps = new HashMap<>();
@@ -200,10 +211,11 @@ public class HiveCompare extends BaseDataCompare {
         return diffMaps;
     }
 
-    private static void resultInsert(CheckResult result, Map<String, Long> afterComp, String tableName) {
+    private static void resultInsert(CheckResult result, Map<String, Long> afterComp) {
 
         if (afterComp != null && afterComp.size() > 0) {
-            Map<String, Object> dataMap = new HashMap<>();
+            LOG.info("record size is :" + afterComp.size());
+            Map<String, Object> dataMap = new HashMap<>(11);
             dataMap.put(CheckTable.FILE_NAME, result.getFileName());
             dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
             dataMap.put(CheckTable.DATA_BASE, result.getDataBase());
@@ -217,7 +229,7 @@ public class HiveCompare extends BaseDataCompare {
             long currentTime = System.currentTimeMillis();
             dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(currentTime));
             try {
-                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, tableName, dataMap);
+                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, result.getSaveTable(), dataMap);
             } catch (SQLException e) {
                 e.printStackTrace();
             }

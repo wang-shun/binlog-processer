@@ -14,7 +14,6 @@ public class TiDBRepairByID {
             checkResult.setTableName(args[4]);
             TiDBDataRepair tiDBDataRepair = new TiDBDataRepair();
             tiDBDataRepair.repairByIdList(checkResult, checkTable);
-
         } else if (args.length == 4) {
             CheckResult checkResult = new CheckResult();
             checkResult.setDataBase(args[0]);

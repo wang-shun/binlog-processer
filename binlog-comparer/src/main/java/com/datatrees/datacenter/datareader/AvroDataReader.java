@@ -96,13 +96,14 @@ public class AvroDataReader extends BaseDataReader {
                 } else {
                     jsonObject = JSONObject.parseObject(r.get(0).toString());
                 }
-                // TODO: 2018/9/20 修改
                 if (jsonObject != null) {
                     if (fieldGetOff) {
                         Set<String> fieldSet = jsonObject.keySet();
                         fieldGetOff = false;
                         recordId = FieldNameOp.getFieldName(fieldSet, idColumnList);
+                        LOG.info("the id field name is :" + recordId);
                         recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, lastUpdateColumnList);
+                        LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
                         if (null != recordId && null != recordLastUpdateTime) {
                             fieldExists = true;
                         }
@@ -144,7 +145,6 @@ public class AvroDataReader extends BaseDataReader {
         recordMap.put(OperateType.Create.toString(), createMap);
         recordMap.put(OperateType.Update.toString(), updateMap);
         return recordMap;
-
     }
 
     public static Map<String, List<Set<Map.Entry<String, Object>>>> readAllDataFromAvro(String filePath) {
@@ -248,7 +248,6 @@ public class AvroDataReader extends BaseDataReader {
                 Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
                 String recordId = FieldNameOp.getFieldName(allFieldSet, idColumnList);
                 for (int i = 0; i < fileList.size(); i++) {
-                    System.out.println("read file:" + fileList.get(i));
                     Path path = new Path(fileList.get(i));
                     is = fs.open(path);
                     DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());

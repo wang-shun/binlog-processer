@@ -21,13 +21,14 @@ public class CompareTask implements TaskRunner {
                         new TaskProcessorListner() {
                             @Override
                             public void onMessageReceived(String desc) {
-                                BaseDataCompare compare = new TiDBCompareFile();
+                                BaseDataCompare TiDBCompare = new TiDBCompareFile();
                                 LOG.info("start TiDB check...");
-                                compare.binLogCompare(desc, "update");
+                                TiDBCompare.binLogCompare(desc, "update");
                                 LOG.info("TiDB check finished");
-                                compare = new HiveCompare();
+
+                                BaseDataCompare hiveCompare = new HiveCompare();
                                 LOG.info("start Hive check...");
-                                compare.binLogCompare(desc, "update");
+                                hiveCompare.binLogCompare(desc, "update");
                             }
                         }).process();
     }

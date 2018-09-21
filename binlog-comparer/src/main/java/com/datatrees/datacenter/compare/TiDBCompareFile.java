@@ -84,34 +84,8 @@ public class TiDBCompareFile extends BaseDataCompare {
                         avroDataReader.setRecordId(recordId);
                         avroDataReader.setRecordLastUpdateTime(recordLastUpdateTime);
                         for (String partition : partitionList) {
-                            String partitionPath;
-                            String filePath;
-                            if (!IpMatchUtility.isboolIp(dbInstance)) {
-                                partitionPath = super.AVRO_HDFS_PATH +
-                                        File.separator +
-                                        partitionType +
-                                        File.separator +
-                                        dbInstance +
-                                        File.separator +
-                                        dataBase +
-                                        File.separator +
-                                        tableName +
-                                        File.separator +
-                                        partition;
-
-
-                            } else {
-                                partitionPath = super.AVRO_HDFS_PATH +
-                                        File.separator +
-                                        partitionType +
-                                        File.separator +
-                                        dataBase +
-                                        File.separator +
-                                        tableName +
-                                        File.separator +
-                                        partition;
-                            }
-                            filePath = partitionPath +
+                            String partitionPath = assembleFilePath(dataBase, tableName, dbInstance, partition);
+                            String filePath = partitionPath +
                                     File.separator +
                                     fileName.replace(".tar", "")
                                     + CheckTable.FILE_LAST_NAME;
@@ -141,6 +115,35 @@ public class TiDBCompareFile extends BaseDataCompare {
         }
     }
 
+    private String assembleFilePath(String dataBase, String tableName, String dbInstance, String partition) {
+        String partitionPath;
+        if (!IpMatchUtility.isboolIp(dbInstance)) {
+            partitionPath = super.AVRO_HDFS_PATH +
+                    File.separator +
+                    partitionType +
+                    File.separator +
+                    dbInstance +
+                    File.separator +
+                    dataBase +
+                    File.separator +
+                    tableName +
+                    File.separator +
+                    partition;
+
+        } else {
+            partitionPath = super.AVRO_HDFS_PATH +
+                    File.separator +
+                    partitionType +
+                    File.separator +
+                    dataBase +
+                    File.separator +
+                    tableName +
+                    File.separator +
+                    partition;
+        }
+        return partitionPath;
+    }
+
     /**
      * 根据DDL类型分类检测
      *
@@ -150,7 +153,7 @@ public class TiDBCompareFile extends BaseDataCompare {
      * @param allDelete   所有删除操作
      * @param checkResult 检测结果
      */
-    public void checkEvent(List<Map<String, Object>> mapList, Map<String, Long> allCreate, Map<String, Long> allUpdate, Map<String, Long> allDelete, CheckResult checkResult) {
+    void checkEvent(List<Map<String, Object>> mapList, Map<String, Long> allCreate, Map<String, Long> allUpdate, Map<String, Long> allDelete, CheckResult checkResult) {
         String saveTable = checkResult.getSaveTable();
         if (mapList != null && mapList.size() > 0) {
             if (allCreate != null && allCreate.size() > 0) {

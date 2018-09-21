@@ -1,11 +1,14 @@
 package com.datatrees.datacenter.utility;
 
 import avro.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.datatrees.datacenter.compare.TiDBCompareFile;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +18,8 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class BatchGetFromHBase {
+    private static Logger LOG = LoggerFactory.getLogger(BatchGetFromHBase.class);
+
     /**
      * 根据rowkey批量查询数据
      *
@@ -58,6 +63,7 @@ public class BatchGetFromHBase {
                 }
             }
         }
+        LOG.info("the record number find from HBase is :"+(resultMap==null?0:resultMap.size()));
         return resultMap;
     }
 
