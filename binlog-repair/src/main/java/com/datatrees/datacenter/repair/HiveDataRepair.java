@@ -20,7 +20,7 @@ import java.util.*;
 
 public class HiveDataRepair implements BaseDataRepair {
 
-    private static final String metastoreUris="thrift://cdh2:9083";
+    private static final String metastoreUris = "thrift://cdh2:9083";
 
 
     @Override
@@ -40,10 +40,10 @@ public class HiveDataRepair implements BaseDataRepair {
             String dataBase = checkResult.getDataBase();
             String table = checkResult.getTableName();
             for (Map.Entry dataEntry : dataMap.entrySet()) {
-                if (OperateType.Delete.equals(dataEntry.getKey())) {
+                if (OperateType.Create.equals(dataEntry.getKey())) {
 
                 } else {
-                   /* InsertMutation mutation=new InsertMutation(dataBase,table,"",new ArrayList<>(),metastoreUris,new HBaseConfiguration());
+                   /* InsertMutation mutation = new InsertMutation(dataBase, table, "", new ArrayList<>(), metastoreUris, new HBaseConfiguration());
                     mutation.beginFixTransaction();
                     mutation.insert();
                     try {

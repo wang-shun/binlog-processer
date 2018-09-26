@@ -1,8 +1,8 @@
 package com.datatrees.datacenter;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
-import com.datatrees.datacenter.compare.HiveCompare;
-import com.datatrees.datacenter.compare.TiDBCompareFile;
+import com.datatrees.datacenter.compare.HiveCompareByFile;
+import com.datatrees.datacenter.compare.TiDBCompareByFile;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.resolver.TaskProcessor;
@@ -21,12 +21,12 @@ public class CompareTask implements TaskRunner {
                         new TaskProcessorListner() {
                             @Override
                             public void onMessageReceived(String desc) {
-                                BaseDataCompare TiDBCompare = new TiDBCompareFile();
+                                BaseDataCompare TiDBCompare = new TiDBCompareByFile();
                                 LOG.info("start TiDB check...");
                                 TiDBCompare.binLogCompare(desc, "update");
                                 LOG.info("TiDB check finished");
 
-                                BaseDataCompare hiveCompare = new HiveCompare();
+                                BaseDataCompare hiveCompare = new HiveCompareByFile();
                                 LOG.info("start Hive check...");
                                 hiveCompare.binLogCompare(desc, "update");
                             }

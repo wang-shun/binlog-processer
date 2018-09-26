@@ -11,6 +11,8 @@ import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
+import javafx.beans.binding.ObjectExpression;
+import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -20,6 +22,7 @@ import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -85,6 +88,13 @@ public class AvroDataReader extends BaseDataReader {
         if (reader != null) {
             iterator = reader.iterator();
         }
+        //r.getSchema().getFields().get(0).schema();
+        System.out.println(reader.getSchema().getFields().get(1).schema().getFields().get(2));
+       /* List<Schema.Field> list=r.getSchema().getFields().get(0).schema().getFields();
+        for (int i = 0; i <list.size() ; i++) {
+            System.out.println(list.get(i).name());
+            System.out.println(list.get(i).schema());
+        }*/
         if (iterator != null) {
             while (iterator.hasNext()) {
                 Object o = iterator.next();
@@ -132,7 +142,9 @@ public class AvroDataReader extends BaseDataReader {
         }
         try {
             is.close();
-            reader.close();
+            if (reader != null) {
+                reader.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -233,7 +245,7 @@ public class AvroDataReader extends BaseDataReader {
         return dataRecord;
     }
 
-    public static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String dataBase, String tableName, Map<String, List<String>> opIdMap) {
+    private static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String dataBase, String tableName, Map<String, List<String>> opIdMap) {
         InputStream is;
         List<String> fileList = HDFSFileUtility.getFilesPath(filePath);
         Collections.sort(fileList);
@@ -280,6 +292,24 @@ public class AvroDataReader extends BaseDataReader {
             }
         }
         return oprRecordMap;
+    }
+
+    private static void avroSchemaConvert(InputStream inputStream) {
+        DataFileStream<Object> reader = null;
+        try {
+            reader = new DataFileStream<>(inputStream, new GenericDatumReader<>());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Iterator<Object> iterator = reader.iterator();
+        Object object;
+        while (iterator.hasNext()) {
+            object = iterator.next();
+            GenericRecord genericRecord = (GenericRecord) object;
+            genericRecord.getSchema().getType();
+        }
+
+
     }
 
     public String getDataBase() {

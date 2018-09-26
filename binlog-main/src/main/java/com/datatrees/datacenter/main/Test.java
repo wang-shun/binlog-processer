@@ -1,10 +1,6 @@
 package com.datatrees.datacenter.main;
 
-import com.datatrees.datacenter.compare.BaseDataCompare;
-import com.datatrees.datacenter.compare.HiveCompare;
-import com.datatrees.datacenter.core.utility.IpMatchUtility;
 import com.datatrees.datacenter.datareader.AvroDataReader;
-import com.datatrees.datacenter.utility.HBaseHelper;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +10,8 @@ public class Test {
 
     public static void main(String[] args) {
         // TODO: 2018/8/27 新版本发布前需要检查配置文件是否需要更新
-        /*AvroDataReader reader = new AvroDataReader();
-        reader.readSrcData("hdfs://cloudera2/data/warehouse/update/gongfudai/loandb/t_user_contacts/year=2018/month=9/day=9/1536426653-mysql-bin.001018.avro");*/
+        AvroDataReader reader = new AvroDataReader();
+        reader.readSrcData("hdfs://cloudera2/data/warehouse/update/gongfudai/loandb/t_user_contacts/year=2018/month=9/day=9/1536426653-mysql-bin.001018.avro");
 
         /*BaseDataCompare dataCompare = new TiDBCompareFile();
         dataCompare.binLogCompare("1537081989-mysql-bin.001072", "update");*/
@@ -112,15 +108,15 @@ public class Test {
         Map<String,Long> record=batchGetFromHBase.parrallelBatchSearch(rowKeyList,"streaming_warehouse_rowId2recId_tbl","f","update_time");
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
-       BaseDataCompare dataCompare = new HiveCompare();
-       dataCompare.binLogCompare("1537417068-mysql-bin.000595", "update");
+       /*BaseDataCompare dataCompare = new HiveCompare();
+       dataCompare.binLogCompare("1537417068-mysql-bin.000595", "update");*/
 
-       /*String str="116895293,116895294,116895291,116895292,116895290,116895299,116895297,116895298,116891700,116891702,116891701,116891708,116891707,116891709";
+       String str="1192938499";
        String[] idArr=str.split(",");
        for (int i=0;i<idArr.length;i++) {
            String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
            System.out.println(id);
-       }*/
+       }
        /* boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
         System.out.println(flag);*/
     }

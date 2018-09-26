@@ -16,7 +16,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 
-public class TiDBCompareByDate extends TiDBCompareFile {
+public class TiDBCompareByDate extends TiDBCompareByFile {
     private static Logger LOG = LoggerFactory.getLogger(TiDBCompareByDate.class);
     private Properties properties = PropertiesUtility.defaultProperties();
     private String binLogDataBase = properties.getProperty("jdbc.database","binlog");

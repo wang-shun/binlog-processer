@@ -16,8 +16,8 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TiDBCompareFile extends BaseDataCompare {
-    private static Logger LOG = LoggerFactory.getLogger(TiDBCompareFile.class);
+public class TiDBCompareByFile extends BaseDataCompare {
+    private static Logger LOG = LoggerFactory.getLogger(TiDBCompareByFile.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
     private final String sampleFlag = properties.getProperty("SAMPLE_FLAG", "no");
     private static String binLogDataBase = properties.getProperty("jdbc.database", "binlog");

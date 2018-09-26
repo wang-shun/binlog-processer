@@ -63,7 +63,7 @@ public class BatchGetFromHBase {
                 }
             }
         }
-        LOG.info("the record number find from HBase is :"+(resultMap==null?0:resultMap.size()));
+        LOG.info("the record number find from HBase is :" + (resultMap == null ? 0 : resultMap.size()));
         return resultMap;
     }
 
@@ -166,7 +166,11 @@ public class BatchGetFromHBase {
         if (null != idList && idList.size() > 0) {
             hashedIdList = new ArrayList<>();
             for (int i = 0; i < idList.size(); i++) {
-                hashedIdList.add(GenericRowIdUtils.addIdWithHash(idList.get(i)));
+                String id = idList.get(i);
+                //LOG.info("the current id is :" + id);
+                String idHashed = GenericRowIdUtils.addIdWithHash(id);
+                //LOG.info("the hashed id is :" + idHashed);
+                hashedIdList.add(GenericRowIdUtils.addIdWithHash(idHashed));
             }
         }
         return hashedIdList;
