@@ -2,40 +2,39 @@ package com.datatrees.datacenter.datareader;
 
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.compare.BaseDataCompare;
-import com.datatrees.datacenter.core.utility.*;
+import com.datatrees.datacenter.core.utility.DBServer;
+import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.core.utility.HDFSFileUtility;
+import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
-import javafx.beans.binding.ObjectExpression;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
-import org.apache.avro.SchemaBuilder.FieldTypeBuilder;
 import org.apache.avro.file.DataFileStream;
-import org.apache.avro.generic.*;
-import org.apache.avro.io.*;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.sql.SQLException;
-import java.sql.SQLOutput;
 import java.util.*;
 import java.util.stream.Collectors;
 
 
 public class AvroDataReader extends BaseDataReader {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
-    private static final Properties properties = PropertiesUtility.defaultProperties();
-    private static final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
-    private static final List<String> idColumnList = FieldNameOp.getConfigField("id");
+    private static final Properties PROPERTIES = PropertiesUtility.defaultProperties();
+    private static final String AVRO_PATH = PROPERTIES.getProperty("AVRO_HDFS_PATH");
+    private static final List<String> ID_COLUMN_LIST = FieldNameOp.getConfigField("id");
     private static final List<String> lastUpdateColumnList = FieldNameOp.getConfigField("update");
     private static final String AFTER_TAG = "After";
     private static final String OP_TAG = "op";
@@ -45,21 +44,20 @@ public class AvroDataReader extends BaseDataReader {
     private String tableName;
     private String recordId;
     private String recordLastUpdateTime;
-    private SchemaBuilder.FieldAssembler<Schema> fieldAssembler;
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
         InputStream is;
         Map<String, Map<String, Long>> recordMap;
-        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+        FileSystem fs = HDFSFileUtility.getFileSystem(AVRO_PATH);
         try {
             if (null != fs) {
                 is = fs.open(new Path(filePath));
                 if (null != is) {
-                    //avroSchemaConvert(is);
-                    recordMap = readFromAvro(is);
-                    //return null;
-                    return recordMap;
+                    avroSchemaConvert(is);
+                    return null;
+                    /*recordMap = readFromAvro(is);
+                    return recordMap;*/
                 }
             }
         } catch (IOException e) {
@@ -87,7 +85,7 @@ public class AvroDataReader extends BaseDataReader {
             List<Schema.Field> fieldList = reader.getSchema().getField("After").schema().getTypes().get(1).getFields();
             Set<String> fieldSet = new HashSet<>(fieldList.size());
             fieldList.forEach(x -> fieldSet.add(x.name()));
-            recordId = FieldNameOp.getFieldName(fieldSet, idColumnList);
+            recordId = FieldNameOp.getFieldName(fieldSet, ID_COLUMN_LIST);
             LOG.info("the id field name is :" + recordId);
             recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, lastUpdateColumnList);
             LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
@@ -154,7 +152,7 @@ public class AvroDataReader extends BaseDataReader {
     public static Map<String, List<Set<Map.Entry<String, Object>>>> readAllDataFromAvro(String filePath) {
         InputStream is;
         Map<String, List<Set<Map.Entry<String, Object>>>> oprRecordMap = null;
-        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+        FileSystem fs = HDFSFileUtility.getFileSystem(AVRO_PATH);
         if (null != fs) {
             try {
                 is = fs.open(new Path(filePath));
@@ -247,13 +245,13 @@ public class AvroDataReader extends BaseDataReader {
             List<Set<Map.Entry<String, Object>>> recordList = new ArrayList<>();
             oprRecordMap.put(key, recordList);
         }
-        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+        FileSystem fs = HDFSFileUtility.getFileSystem(AVRO_PATH);
         if (null != fs) {
             try {
                 Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
-                String recordId = FieldNameOp.getFieldName(allFieldSet, idColumnList);
-                for (int i = 0; i < fileList.size(); i++) {
-                    Path path = new Path(fileList.get(i));
+                String recordId = FieldNameOp.getFieldName(allFieldSet, ID_COLUMN_LIST);
+                for (String aFileList : fileList) {
+                    Path path = new Path(aFileList);
                     is = fs.open(path);
                     DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());
                     Iterator<Object> iterator = reader.iterator();
@@ -299,11 +297,11 @@ public class AvroDataReader extends BaseDataReader {
             List<Schema.Field> fields = afterSchema.getFields();
             Set<String> fieldName = new HashSet<>(fields.size());
             fields.forEach(x -> fieldName.add(x.schema().getName()));
-            String idField = FieldNameOp.getFieldName(fieldName, idColumnList);
+            String idField = FieldNameOp.getFieldName(fieldName, ID_COLUMN_LIST);
             if (idField != null) {
-                for (int i = 0; i < fields.size(); i++) {
-                    System.out.println(fields.get(i));
-                    System.out.println(fields.get(i).schema().getType());
+                for (Schema.Field field : fields) {
+                    System.out.println(field);
+                    System.out.println(field.schema().getType());
                 }
                 Schema opSchema = reader.getSchema().getField(OP_TAG).schema();
                 SchemaBuilder.FieldAssembler<Schema> fieldAssembler = SchemaBuilder
@@ -325,12 +323,11 @@ public class AvroDataReader extends BaseDataReader {
                 Iterator iterator = reader.iterator();
                 GenericRecordBuilder genericRecordBuilder = new GenericRecordBuilder(finalcSchema);
                 List<GenericRecord> genericRecordList = new ArrayList<>();
-                String id = null;
                 while (iterator.hasNext()) {
                     GenericRecord genericRecord = (GenericRecord) iterator.next();
                     genericRecordBuilder.set(HIVE_AFTER_TAG, genericRecord.get(1));
                     genericRecordBuilder.set(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
-                    genericRecordBuilder.set(KEY_TAG, id);
+                    genericRecordBuilder.set(KEY_TAG, idField);
                     GenericData.Record record = genericRecordBuilder.build();
                     genericRecordList.add(record);
                     System.out.println(record.toString());
