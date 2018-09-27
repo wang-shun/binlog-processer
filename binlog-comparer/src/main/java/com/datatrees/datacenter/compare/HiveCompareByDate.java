@@ -17,6 +17,8 @@ import java.util.Map;
 
 public class HiveCompareByDate extends HiveCompareByFile {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompareByFile.class);
+    private static final String FILE_SEP=",";
+    private static final String FILES_FIELD_NAME="files";
 
     @Override
     public void binLogCompare(String database, String table, String partition, String partitionType) {
@@ -26,7 +28,7 @@ public class HiveCompareByDate extends HiveCompareByFile {
             for (Map<String, Object> partitionInfo : partitionInfos) {
                 String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
                 String tableName = String.valueOf(partitionInfo.get(CheckTable.TABLE_NAME));
-                String[] files = String.valueOf(partitionInfo.get("files")).split(",");
+                String[] files = String.valueOf(partitionInfo.get(FILES_FIELD_NAME)).split(FILE_SEP);
                 if (files.length > 0) {
                     for (String fileName : files) {
                         String filePath = assembleFilePath(database, tableName, fileName, partition, dbInstance);

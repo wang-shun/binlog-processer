@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
 
 public class HiveCompareByFile extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompareByFile.class);
+    private static final String ROWKEY_SEP = "_";
+    private static final String DATABASE_TABLE_UNION = ".";
+    private static final String ROWKEY_POSTFIX = "_id";
+    private static final String BANKBILL_ALIAS = "bill";
 
     @Override
     public void binLogCompare(String file, String type) {
@@ -30,12 +34,12 @@ public class HiveCompareByFile extends BaseDataCompare {
 
                 String dataBase = String.valueOf(partitionInfo.get(CheckTable.DATA_BASE));
                 String tableName = String.valueOf(partitionInfo.get(CheckTable.TABLE_NAME));
+
                 String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
                 String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
 
                 String filePath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance);
-
                 LOG.info("read avro from: " + filePath);
                 String avroPath = super.AVRO_HDFS_PATH + File.separator + type + File.separator + filePath;
                 Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
@@ -58,7 +62,6 @@ public class HiveCompareByFile extends BaseDataCompare {
                     updateRecordProcess(dataBase, tableName, updateRecord, result);
                     deleteRecordProcess(dataBase, tableName, deleteRecord, result);
                 }
-
             }
             updateCheckedFile(file, type);
         }
@@ -81,10 +84,14 @@ public class HiveCompareByFile extends BaseDataCompare {
         Map<String, Long> deleteRecordFind = compareWithHBase(dataBase, tableName, assembleRowKey(deleteRecord));
         if (null != deleteRecordFind && deleteRecordFind.size() > 0) {
             Map<String, Long> rawDeleteRocord = new HashMap<>(deleteRecordFind.size());
-            deleteRecordFind.forEach((key, value) -> rawDeleteRocord.put(key.split("_")[1], value));
+            deleteRecordFind.forEach((key, value) -> rawDeleteRocord.put(key.split(ROWKEY_SEP)[1], value));
             result.setOpType(OperateType.Delete.toString());
             LOG.info("the operateType is :[Delete]");
-            resultInsert(result, rawDeleteRocord);
+            if (rawDeleteRocord != null && rawDeleteRocord.size() > 0) {
+                resultInsert(result, rawDeleteRocord);
+            }else{
+                LOG.info("no record find in the hbase");
+            }
         }
     }
 
@@ -93,7 +100,7 @@ public class HiveCompareByFile extends BaseDataCompare {
         Map<String, Long> updateRecordNoFind;
         if (null != updateRecordFind && updateRecordFind.size() > 0) {
             Map<String, Long> updateTmp = new HashMap<>(updateRecordFind.size());
-            updateRecordFind.forEach((key, value) -> updateTmp.put(key.split("_")[1], value));
+            updateRecordFind.forEach((key, value) -> updateTmp.put(key.split(ROWKEY_SEP)[1], value));
             updateRecordNoFind = diffCompare(updateRecord, updateTmp);
             Map<String, Long> oldUpdateRecord = compareByValue(updateTmp, updateRecord);
             if (null != oldUpdateRecord && oldUpdateRecord.size() > 0) {
@@ -104,7 +111,11 @@ public class HiveCompareByFile extends BaseDataCompare {
         }
         result.setOpType(OperateType.Update.toString());
         LOG.info("the operateType is :[Update]");
-        resultInsert(result, updateRecordNoFind);
+        if (updateRecordNoFind != null && updateRecordNoFind.size() > 0) {
+            resultInsert(result, updateRecordNoFind);
+        } else {
+            LOG.info("all the records have find in the Hbase");
+        }
     }
 
     void createRecordProcess(String dataBase, String tableName, Map<String, Long> createRecord, CheckResult result) {
@@ -112,14 +123,18 @@ public class HiveCompareByFile extends BaseDataCompare {
         Map<String, Long> createRecordNoFind;
         if (null != createRecordFind && createRecordFind.size() > 0) {
             Map<String, Long> createTmp = new HashMap<>(createRecordFind.size());
-            createRecordFind.forEach((key, value) -> createTmp.put(key.split("_")[1], value));
+            createRecordFind.forEach((key, value) -> createTmp.put(key.split(ROWKEY_SEP)[1], value));
             createRecordNoFind = diffCompare(createRecord, createTmp);
         } else {
             createRecordNoFind = createRecord;
         }
         result.setOpType(OperateType.Create.toString());
         LOG.info("the operateType is :[Create]");
-        resultInsert(result, createRecordNoFind);
+        if (createRecordNoFind != null && createRecordNoFind.size() > 0) {
+            resultInsert(result, createRecordNoFind);
+        } else {
+            LOG.info("all the records have find in the hbase");
+        }
     }
 
     String assembleFilePath(String dataBase, String tableName, String fileName, String partition, String dbInstance) {
@@ -130,8 +145,8 @@ public class HiveCompareByFile extends BaseDataCompare {
                 File.separator +
                 partition +
                 File.separator +
-                fileName.replace(".tar", "") +
-                ".avro";
+                fileName +
+                CheckTable.FILE_LAST_NAME;
         if (IpMatchUtility.isboolIp(dbInstance)) {
             filePath = filePathWithoutDbInstance;
         } else {
@@ -143,7 +158,7 @@ public class HiveCompareByFile extends BaseDataCompare {
     @Deprecated
     private List<String> assembleRowKey(String dataBase, String tableName, Map<String, Long> recordMap) {
         if (null != recordMap && recordMap.size() > 0) {
-            return recordMap.keySet().stream().map(x -> (x + "_" + dataBase + "." + tableName)).collect(Collectors.toList());
+            return recordMap.keySet().stream().map(x -> (x + ROWKEY_SEP + dataBase + DATABASE_TABLE_UNION + tableName)).collect(Collectors.toList());
         } else {
             return null;
         }
@@ -170,7 +185,11 @@ public class HiveCompareByFile extends BaseDataCompare {
     private Map<String, Long> compareWithHBase(String dataBase, String tableName, List<String> createIdList) {
         if (null != createIdList && createIdList.size() > 0) {
             LOG.info("search data from HBase...");
-            return BatchGetFromHBase.parrallelBatchSearch(createIdList, dataBase + "." + tableName + "_id", HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+            if ("bankbill".equals(dataBase)) {
+                return BatchGetFromHBase.parrallelBatchSearch(createIdList, dataBase + DATABASE_TABLE_UNION + tableName + ROWKEY_POSTFIX, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+            } else {
+                return BatchGetFromHBase.parrallelBatchSearch(createIdList, BANKBILL_ALIAS + DATABASE_TABLE_UNION + tableName + ROWKEY_POSTFIX, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+            }
         }
         return null;
     }
@@ -237,7 +256,7 @@ public class HiveCompareByFile extends BaseDataCompare {
                 e.printStackTrace();
             }
         } else {
-            LOG.info("no error record find from : " + result.getDataBase() + "." + result.getTableName());
+            LOG.info("no error record find from : " + result.getDataBase() + DATABASE_TABLE_UNION + result.getTableName());
         }
     }
 

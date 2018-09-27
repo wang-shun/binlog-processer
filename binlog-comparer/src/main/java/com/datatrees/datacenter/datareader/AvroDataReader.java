@@ -45,11 +45,6 @@ public class AvroDataReader extends BaseDataReader {
     private String tableName;
     private String recordId;
     private String recordLastUpdateTime;
-    /**
-     * 是否需要获取记录各字段名称
-     */
-    private boolean fieldGetOff = true;
-    private boolean fieldExists = false;
     private SchemaBuilder.FieldAssembler<Schema> fieldAssembler;
 
     @Override
@@ -107,7 +102,7 @@ public class AvroDataReader extends BaseDataReader {
                 } else {
                     jsonObject = JSONObject.parseObject(r.get(0).toString());
                 }
-                if (jsonObject != null) {
+                if (jsonObject!= null) {
                     String id = String.valueOf(jsonObject.get(recordId));
                     String lastUpdateTime = String.valueOf(jsonObject.getLong(recordLastUpdateTime));
 
@@ -339,12 +334,11 @@ public class AvroDataReader extends BaseDataReader {
                     GenericData.Record record = genericRecordBuilder.build();
                     genericRecordList.add(record);
                     System.out.println(record.toString());
-
                 }
                 return genericRecordList;
             }
         } catch (IOException e) {
-            LOG.info("can't not read data from avro with error info :", e);
+            LOG.info("can't not read data from avro file with error info :", e);
         }
         return null;
     }

@@ -110,8 +110,8 @@ public class Test {
         Map<String,Long> record=batchGetFromHBase.parrallelBatchSearch(rowKeyList,"streaming_warehouse_rowId2recId_tbl","f","update_time");
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
-       BaseDataCompare dataCompare = new HiveCompareByFile();
-       dataCompare.binLogCompare("1537938006166-bin-log.000096", "update");
+       /*BaseDataCompare dataCompare = new HiveCompareByFile();
+       dataCompare.binLogCompare("1538015720021-bin-log.000542", "update");*/
 
        /*String str="203639789160243200";
        String[] idArr=str.split(",");
