@@ -2,10 +2,7 @@ package com.datatrees.datacenter.datareader;
 
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.compare.BaseDataCompare;
-import com.datatrees.datacenter.core.utility.DBServer;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.HDFSFileUtility;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
@@ -13,9 +10,11 @@ import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
 import javafx.beans.binding.ObjectExpression;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
+import org.apache.avro.SchemaBuilder.FieldTypeBuilder;
 import org.apache.avro.file.DataFileStream;
-import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.*;
+import org.apache.avro.io.*;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
@@ -25,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.SQLException;
 import java.sql.SQLOutput;
 import java.util.*;
@@ -37,6 +37,10 @@ public class AvroDataReader extends BaseDataReader {
     private static final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
     private static final List<String> idColumnList = FieldNameOp.getConfigField("id");
     private static final List<String> lastUpdateColumnList = FieldNameOp.getConfigField("update");
+    private static final String AFTER_TAG = "After";
+    private static final String OP_TAG = "op";
+    private static final String KEY_TAG = "key";
+    private static final String HIVE_AFTER_TAG = "after";
     private String dataBase;
     private String tableName;
     private String recordId;
@@ -46,6 +50,7 @@ public class AvroDataReader extends BaseDataReader {
      */
     private boolean fieldGetOff = true;
     private boolean fieldExists = false;
+    private SchemaBuilder.FieldAssembler<Schema> fieldAssembler;
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
@@ -56,7 +61,9 @@ public class AvroDataReader extends BaseDataReader {
             if (null != fs) {
                 is = fs.open(new Path(filePath));
                 if (null != is) {
+                    //avroSchemaConvert(is);
                     recordMap = readFromAvro(is);
+                    //return null;
                     return recordMap;
                 }
             }
@@ -81,21 +88,15 @@ public class AvroDataReader extends BaseDataReader {
         DataFileStream<Object> reader = null;
         try {
             reader = new DataFileStream<>(is, new GenericDatumReader<>());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Iterator<Object> iterator = null;
-        if (reader != null) {
-            iterator = reader.iterator();
-        }
-        //r.getSchema().getFields().get(0).schema();
-        System.out.println(reader.getSchema().getFields().get(1).schema().getFields().get(2));
-       /* List<Schema.Field> list=r.getSchema().getFields().get(0).schema().getFields();
-        for (int i = 0; i <list.size() ; i++) {
-            System.out.println(list.get(i).name());
-            System.out.println(list.get(i).schema());
-        }*/
-        if (iterator != null) {
+            Iterator<Object> iterator = reader.iterator();
+            List<Schema.Field> fieldList = reader.getSchema().getField("After").schema().getTypes().get(1).getFields();
+            Set<String> fieldSet = new HashSet<>(fieldList.size());
+            fieldList.forEach(x -> fieldSet.add(x.name()));
+            recordId = FieldNameOp.getFieldName(fieldSet, idColumnList);
+            LOG.info("the id field name is :" + recordId);
+            recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, lastUpdateColumnList);
+            LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
+
             while (iterator.hasNext()) {
                 Object o = iterator.next();
                 GenericRecord r = (GenericRecord) o;
@@ -107,30 +108,21 @@ public class AvroDataReader extends BaseDataReader {
                     jsonObject = JSONObject.parseObject(r.get(0).toString());
                 }
                 if (jsonObject != null) {
-                    if (fieldGetOff) {
-                        Set<String> fieldSet = jsonObject.keySet();
-                        fieldGetOff = false;
-                        recordId = FieldNameOp.getFieldName(fieldSet, idColumnList);
-                        LOG.info("the id field name is :" + recordId);
-                        recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, lastUpdateColumnList);
-                        LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
-                        if (null != recordId && null != recordLastUpdateTime) {
-                            fieldExists = true;
-                        }
-                    }
-                    if (fieldExists) {
-                        String id = String.valueOf(jsonObject.get(recordId));
-                        long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
-                        if (id != null) {
+                    String id = String.valueOf(jsonObject.get(recordId));
+                    String lastUpdateTime = String.valueOf(jsonObject.getLong(recordLastUpdateTime));
+
+                    if (id != null && lastUpdateTime != null) {
+                        if (!"null".equals(id)&&!"null".equals(lastUpdateTime)) {
+                            long timeStamp = Long.parseLong(lastUpdateTime);
                             switch (operator) {
                                 case "Create":
-                                    createMap.put(id, lastUpdateTime);
+                                    createMap.put(id, timeStamp);
                                     break;
                                 case "Update":
-                                    updateMap.put(id, lastUpdateTime);
+                                    updateMap.put(id, timeStamp);
                                     break;
                                 case "Delete":
-                                    deleteMap.put(id, lastUpdateTime);
+                                    deleteMap.put(id, timeStamp);
                                     break;
                                 default:
                                     break;
@@ -139,24 +131,29 @@ public class AvroDataReader extends BaseDataReader {
                     }
                 }
             }
-        }
-        try {
-            is.close();
-            if (reader != null) {
-                reader.close();
+            createMap = BaseDataCompare.diffCompare(createMap, updateMap);
+            if (createMap != null) {
+                createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
             }
+            updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
+            recordMap.put(OperateType.Delete.toString(), deleteMap);
+            recordMap.put(OperateType.Create.toString(), createMap);
+            recordMap.put(OperateType.Update.toString(), updateMap);
+            return recordMap;
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        createMap = BaseDataCompare.diffCompare(createMap, updateMap);
-        if (createMap != null) {
-            createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
-        }
-        updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
-        recordMap.put(OperateType.Delete.toString(), deleteMap);
-        recordMap.put(OperateType.Create.toString(), createMap);
-        recordMap.put(OperateType.Update.toString(), updateMap);
-        return recordMap;
+
     }
 
     public static Map<String, List<Set<Map.Entry<String, Object>>>> readAllDataFromAvro(String filePath) {
@@ -245,7 +242,8 @@ public class AvroDataReader extends BaseDataReader {
         return dataRecord;
     }
 
-    private static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String dataBase, String tableName, Map<String, List<String>> opIdMap) {
+    private static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String
+            dataBase, String tableName, Map<String, List<String>> opIdMap) {
         InputStream is;
         List<String> fileList = HDFSFileUtility.getFilesPath(filePath);
         Collections.sort(fileList);
@@ -284,7 +282,6 @@ public class AvroDataReader extends BaseDataReader {
                                 }
                             }
                         }
-
                     }
                 }
             } catch (IOException e) {
@@ -294,22 +291,62 @@ public class AvroDataReader extends BaseDataReader {
         return oprRecordMap;
     }
 
-    private static void avroSchemaConvert(InputStream inputStream) {
-        DataFileStream<Object> reader = null;
+
+    private static List<GenericRecord> avroSchemaConvert(InputStream inputStream) {
+        DataFileStream<Object> reader;
         try {
             reader = new DataFileStream<>(inputStream, new GenericDatumReader<>());
+            Schema schema = reader.getSchema();
+            String name = schema.getName();
+            String nameSpace = schema.getNamespace();
+
+            Schema afterSchema = reader.getSchema().getField(AFTER_TAG).schema().getTypes().get(1);
+            List<Schema.Field> fields = afterSchema.getFields();
+            Set<String> fieldName = new HashSet<>(fields.size());
+            fields.forEach(x -> fieldName.add(x.schema().getName()));
+            String idField = FieldNameOp.getFieldName(fieldName, idColumnList);
+            if (idField != null) {
+                for (int i = 0; i < fields.size(); i++) {
+                    System.out.println(fields.get(i));
+                    System.out.println(fields.get(i).schema().getType());
+                }
+                Schema opSchema = reader.getSchema().getField(OP_TAG).schema();
+                SchemaBuilder.FieldAssembler<Schema> fieldAssembler = SchemaBuilder
+                        .record(name)
+                        .namespace(nameSpace).fields();
+
+                fieldAssembler.name(HIVE_AFTER_TAG).type(afterSchema).noDefault();
+                fieldAssembler.name(OP_TAG).type(opSchema).noDefault();
+                fieldAssembler.name(KEY_TAG).type(SchemaBuilder
+                        .record(KEY_TAG)
+                        .namespace(name)
+                        .fields()
+                        .name("Key")
+                        .type(Schema.create(Schema.Type.LONG)).noDefault().endRecord()).noDefault();
+
+                Schema finalcSchema = fieldAssembler.endRecord();
+
+                System.out.println(finalcSchema);
+                Iterator iterator = reader.iterator();
+                GenericRecordBuilder genericRecordBuilder = new GenericRecordBuilder(finalcSchema);
+                List<GenericRecord> genericRecordList = new ArrayList<>();
+                String id = null;
+                while (iterator.hasNext()) {
+                    GenericRecord genericRecord = (GenericRecord) iterator.next();
+                    genericRecordBuilder.set(HIVE_AFTER_TAG, genericRecord.get(1));
+                    genericRecordBuilder.set(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
+                    genericRecordBuilder.set(KEY_TAG, id);
+                    GenericData.Record record = genericRecordBuilder.build();
+                    genericRecordList.add(record);
+                    System.out.println(record.toString());
+
+                }
+                return genericRecordList;
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.info("can't not read data from avro with error info :", e);
         }
-        Iterator<Object> iterator = reader.iterator();
-        Object object;
-        while (iterator.hasNext()) {
-            object = iterator.next();
-            GenericRecord genericRecord = (GenericRecord) object;
-            genericRecord.getSchema().getType();
-        }
-
-
+        return null;
     }
 
     public String getDataBase() {

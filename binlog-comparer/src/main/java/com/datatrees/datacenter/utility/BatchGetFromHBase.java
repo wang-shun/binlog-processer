@@ -1,7 +1,6 @@
 package com.datatrees.datacenter.utility;
 
 import avro.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.datatrees.datacenter.compare.TiDBCompareFile;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
@@ -167,10 +166,8 @@ public class BatchGetFromHBase {
             hashedIdList = new ArrayList<>();
             for (int i = 0; i < idList.size(); i++) {
                 String id = idList.get(i);
-                //LOG.info("the current id is :" + id);
                 String idHashed = GenericRowIdUtils.addIdWithHash(id);
-                //LOG.info("the hashed id is :" + idHashed);
-                hashedIdList.add(GenericRowIdUtils.addIdWithHash(idHashed));
+                hashedIdList.add(idHashed);
             }
         }
         return hashedIdList;

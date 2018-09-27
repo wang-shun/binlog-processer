@@ -1,0 +1,102 @@
+{
+  "type": "record",
+  "name": "t_user_contacts",
+  "namespace": "gongfudai.loandb",
+  "fields": [
+    {
+      "name": "Before",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "Value",
+          "namespace": "",
+          "fields": [
+            {
+              "name": "Id",
+              "type": "int"
+            },
+            {
+              "name": "UserId",
+              "type": "int"
+            },
+            {
+              "name": "Contacts",
+              "type": {
+                "type": "bytes",
+                "logicalType": "logical-byte",
+                "java-class": "java.lang.Byte"
+              }
+            },
+            {
+              "name": "Total",
+              "type": "int",
+              "default": 0
+            },
+            {
+              "name": "Current",
+              "type": "int",
+              "default": 0
+            },
+            {
+              "name": "Status",
+              "type": "int",
+              "default": 0
+            },
+            {
+              "name": "Device",
+              "type": [
+                "null",
+                "int"
+              ]
+            },
+            {
+              "name": "DeviceKey",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "CreateDate",
+              "type": [
+                "null",
+                {
+                  "type": "long",
+                  "logicalType": "timestamp-millis",
+                  "java-class": "java.sql.Timestamp"
+                }
+              ],
+              "default": 1536153254995
+            },
+            {
+              "name": "LastUpdateDate",
+              "type": [
+                "null",
+                {
+                  "type": "long",
+                  "logicalType": "timestamp-millis",
+                  "java-class": "java.sql.Timestamp"
+                }
+              ],
+              "default": 1536153254995
+            }
+          ]
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "After",
+      "type": [
+        "null",
+        "Value"
+      ],
+      "default": null
+    },
+    {
+      "name": "op",
+      "type": "string"
+    }
+  ]
+}
