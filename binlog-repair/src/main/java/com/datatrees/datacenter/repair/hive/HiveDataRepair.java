@@ -1,15 +1,18 @@
-package com.datatrees.datacenter.repair;
+package com.datatrees.datacenter.repair.hive;
 
 
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.operate.OperateType;
+import com.datatrees.datacenter.repair.BaseDataRepair;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
 import com.tree.finance.bigdata.hive.streaming.utils.InsertMutation;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.com.esotericsoftware.minlog.Log;
@@ -36,6 +39,9 @@ public class HiveDataRepair implements BaseDataRepair {
     @Override
     public void repairByIdList(CheckResult checkResult, String checkTable) {
         Map<String, List<Set<Map.Entry<String, Object>>>> dataMap = AvroDataReader.readAvroDataById(checkResult, checkTable);
+        HiveConf hiveConf=new HiveConf();
+        Schema schema = null;
+        GenericData.Record record = null;
         if (dataMap != null && dataMap.size() > 0) {
             String dataBase = checkResult.getDataBase();
             String table = checkResult.getTableName();
@@ -43,14 +49,14 @@ public class HiveDataRepair implements BaseDataRepair {
                 if (OperateType.Create.equals(dataEntry.getKey())) {
 
                 } else {
-                   /* InsertMutation mutation = new InsertMutation(dataBase, table, "", new ArrayList<>(), metastoreUris, new HBaseConfiguration());
-                    mutation.beginFixTransaction();
-                    mutation.insert();
+                    InsertMutation mutation = new InsertMutation(dataBase, table, "", new ArrayList<>(), metastoreUris, new HBaseConfiguration());
                     try {
+                        mutation.beginFixTransaction(schema,hiveConf);
+                        mutation.insert(record);
                         mutation.commitTransaction();
                     } catch (Exception e) {
                         e.printStackTrace();
-                    }*/
+                    }
                 }
             }
             Map<String, Object> whereMap = new HashMap<>();

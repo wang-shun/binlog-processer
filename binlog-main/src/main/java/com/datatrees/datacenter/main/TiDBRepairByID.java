@@ -1,6 +1,6 @@
 package com.datatrees.datacenter.main;
 
-import com.datatrees.datacenter.repair.TiDBDataRepair;
+import com.datatrees.datacenter.repair.tidb.TiDBDataRepair;
 import com.datatrees.datacenter.table.CheckResult;
 
 public class TiDBRepairByID {

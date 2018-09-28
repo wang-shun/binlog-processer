@@ -12,8 +12,8 @@ public class Test {
 
     public static void main(String[] args) {
         // TODO: 2018/8/27 新版本发布前需要检查配置文件是否需要更新
-        /*AvroDataReader reader = new AvroDataReader();
-        reader.readSrcData("hdfs://cloudera2/data/warehouse/update/gongfudai/loandb/t_audit_credit_log/year=2018/month=9/day=17/1537138222-mysql-bin.001129.avro");*/
+        AvroDataReader reader = new AvroDataReader();
+        reader.readSrcData("hdfs://cloudera2/data/warehouse/update/gongfudai/loandb/t_audit_credit_log/year=2018/month=9/day=17/1537138222-mysql-bin.001129.avro");
 
         /*BaseDataCompare dataCompare = new TiDBCompareFile();
         dataCompare.binLogCompare("1537081989-mysql-bin.001072", "update");*/
@@ -113,7 +113,7 @@ public class Test {
        /*BaseDataCompare dataCompare = new HiveCompareByFile();
        dataCompare.binLogCompare("1538015720021-bin-log.000542", "update");*/
 
-       /*String str="203639789160243200";
+       /*String str="3407142,3407263,3407384,3407141,3407262";
        String[] idArr=str.split(",");
        for (int i=0;i<idArr.length;i++) {
            String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
