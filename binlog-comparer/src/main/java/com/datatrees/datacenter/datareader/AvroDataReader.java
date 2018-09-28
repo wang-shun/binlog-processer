@@ -12,12 +12,9 @@ import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
 import org.apache.avro.Schema;
-import org.apache.avro.SchemaBuilder;
 import org.apache.avro.file.DataFileStream;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -143,6 +140,11 @@ public class AvroDataReader extends BaseDataReader {
 
     }
 
+    /**
+     * 读取某个分区目录下的所有文件
+     * @param filePath 文件路径
+     * @return Avro记录
+     */
     public static Map<String, List<Set<Map.Entry<String, Object>>>> readAllDataFromAvro(String filePath) {
         InputStream is;
         Map<String, List<Set<Map.Entry<String, Object>>>> oprRecordMap = null;
@@ -192,6 +194,13 @@ public class AvroDataReader extends BaseDataReader {
         return oprRecordMap;
     }
 
+    /**
+     * 读出指定avro中指定id的数据
+     *
+     * @param checkResult 表信息
+     * @param checkTable  检查信息表
+     * @return Avro记录
+     */
     public static Map<String, List<Set<Map.Entry<String, Object>>>> readAvroDataById(CheckResult checkResult, String checkTable) {
         Map<String, Object> whereMap = new HashMap<>();
         String dbInstance = checkResult.getDbInstance();
@@ -229,6 +238,14 @@ public class AvroDataReader extends BaseDataReader {
         return dataRecord;
     }
 
+    /**
+     * 根据ID过滤数据
+     * @param filePath 文件路径
+     * @param dataBase 数据库
+     * @param tableName 表
+     * @param opIdMap 操作类型map
+     * @return Avro记录
+     */
     private static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String
             dataBase, String tableName, Map<String, List<String>> opIdMap) {
         InputStream is;

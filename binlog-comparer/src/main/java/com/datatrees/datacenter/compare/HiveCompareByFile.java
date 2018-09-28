@@ -23,6 +23,7 @@ public class HiveCompareByFile extends BaseDataCompare {
     private static final String ROWKEY_SEP = "_";
     private static final String DATABASE_TABLE_UNION = ".";
     private static final String ROWKEY_POSTFIX = "_id";
+    private static final String BANK_BILL="bankbill";
     private static final String BANKBILL_ALIAS = "bill";
 
     @Override
@@ -185,10 +186,10 @@ public class HiveCompareByFile extends BaseDataCompare {
     private Map<String, Long> compareWithHBase(String dataBase, String tableName, List<String> createIdList) {
         if (null != createIdList && createIdList.size() > 0) {
             LOG.info("search data from HBase...");
-            if ("bankbill".equals(dataBase)) {
-                return BatchGetFromHBase.parrallelBatchSearch(createIdList, dataBase + DATABASE_TABLE_UNION + tableName + ROWKEY_POSTFIX, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
-            } else {
+            if (BANK_BILL.equals(dataBase)) {
                 return BatchGetFromHBase.parrallelBatchSearch(createIdList, BANKBILL_ALIAS + DATABASE_TABLE_UNION + tableName + ROWKEY_POSTFIX, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+            } else {
+                return BatchGetFromHBase.parrallelBatchSearch(createIdList, dataBase + DATABASE_TABLE_UNION + tableName + ROWKEY_POSTFIX, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
             }
         }
         return null;

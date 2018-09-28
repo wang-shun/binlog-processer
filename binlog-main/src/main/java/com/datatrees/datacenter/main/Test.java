@@ -12,8 +12,8 @@ public class Test {
 
     public static void main(String[] args) {
         // TODO: 2018/8/27 新版本发布前需要检查配置文件是否需要更新
-        AvroDataReader reader = new AvroDataReader();
-        reader.readSrcData("hdfs://cloudera2/data/warehouse/update/gongfudai/loandb/t_audit_credit_log/year=2018/month=9/day=17/1537138222-mysql-bin.001129.avro");
+        /*AvroDataReader reader = new AvroDataReader();
+        reader.readSrcData("hdfs://cloudera2/data/warehouse/update/gongfudai/loandb/t_audit_credit_log/year=2018/month=9/day=17/1537138222-mysql-bin.001129.avro");*/
 
         /*BaseDataCompare dataCompare = new TiDBCompareFile();
         dataCompare.binLogCompare("1537081989-mysql-bin.001072", "update");*/
@@ -111,14 +111,14 @@ public class Test {
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
        /*BaseDataCompare dataCompare = new HiveCompareByFile();
-       dataCompare.binLogCompare("1538015720021-bin-log.000542", "update");*/
+       dataCompare.binLogCompare("1538108418904-bin-log.001406", "update");*/
 
-       /*String str="3407142,3407263,3407384,3407141,3407262";
-       String[] idArr=str.split(",");
-       for (int i=0;i<idArr.length;i++) {
-           String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
-           System.out.println(id);
-       }*/
+        String str = "8761392,18761407,18761396,18761395,18761401,18761404";
+        String[] idArr = str.split(",");
+        for (int i = 0; i < idArr.length; i++) {
+            String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
+            System.out.println(id);
+        }
        /* boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
         System.out.println(flag);*/
     }

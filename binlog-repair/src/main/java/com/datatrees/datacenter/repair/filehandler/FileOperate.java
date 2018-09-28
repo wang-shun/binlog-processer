@@ -17,7 +17,7 @@ public class FileOperate {
     private static final Properties PROPERTIES = PropertiesUtility.defaultProperties();
     private static final String AVRO_PATH = PROPERTIES.getProperty("AVRO_HDFS_PATH");
 
-    InputStream getHdfsFileInput(String filePath) {
+    public static InputStream getHdfsFileInput(String filePath) {
         InputStream is;
         FileSystem fs = HDFSFileUtility.getFileSystem(AVRO_PATH);
         try {

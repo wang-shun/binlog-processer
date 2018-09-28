@@ -18,6 +18,7 @@ import java.util.concurrent.*;
 
 public class BatchGetFromHBase {
     private static Logger LOG = LoggerFactory.getLogger(BatchGetFromHBase.class);
+    private static final int PARALLEL_FACTOR=25;
 
     /**
      * 根据rowkey批量查询数据
@@ -96,10 +97,10 @@ public class BatchGetFromHBase {
      */
     public static Map<String, Long> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
         Map<String, Long> dataMap = new HashMap<>();
-        int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 3;
+        int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 2;
         List<List<String>> batchIdList;
         if (null != idList && idList.size() > 0) {
-            if (idList.size() < parallel) {
+            if (idList.size() < parallel * PARALLEL_FACTOR) {
                 batchIdList = new ArrayList<>(1);
                 batchIdList.add(idList);
             } else {

@@ -1,5 +1,7 @@
 package com.datatrees.datacenter.repair.schema;
 
+import com.alibaba.fastjson.JSONObject;
+import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.FieldNameOp;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -16,7 +18,7 @@ import java.io.InputStream;
 import java.util.*;
 
 public class AvroDataBuilder {
-    private static Logger LOG = LoggerFactory.getLogger(SchemaConvertor.class);
+    private static Logger LOG = LoggerFactory.getLogger(AvroDataBuilder.class);
 
     private static final List<String> ID_COLUMN_LIST = FieldNameOp.getConfigField("id");
     private static final String AFTER_TAG = "After";
@@ -26,7 +28,7 @@ public class AvroDataBuilder {
     private static final String NULL_STRING = "null";
 
 
-    private static List<GenericRecord> avroSchemaBuilder(InputStream inputStream) {
+    public static List<GenericRecord> avroSchemaDataBuilder(InputStream inputStream, List<String> idList, String operateType) {
         DataFileStream<Object> reader;
         try {
             reader = new DataFileStream<>(inputStream, new GenericDatumReader<>());
@@ -69,7 +71,11 @@ public class AvroDataBuilder {
 
                 Schema finalSchema = fieldAssembler.endRecord();
                 LOG.info("final schema:" + finalSchema);
-                return getGenericRecords(reader, idField, finalSchema);
+                if (idList != null && idList.size() > 0) {
+                    return getGenericRecords(reader, idField, finalSchema);
+                } else {
+                    return getGenericRecords(reader, idField, schema, idList, operateType);
+                }
             }
         } catch (IOException e) {
             LOG.info("can't not read data from avro file with error info :", e);
@@ -77,9 +83,9 @@ public class AvroDataBuilder {
         return null;
     }
 
-    private static List<GenericRecord> getGenericRecords(DataFileStream<Object> reader, String idField, Schema finalSchema) {
+    private static List<GenericRecord> getGenericRecords(DataFileStream<Object> reader, String idField, Schema schema) {
         Iterator iterator = reader.iterator();
-        GenericRecordBuilder genericRecordBuilder = new GenericRecordBuilder(finalSchema);
+        GenericRecordBuilder genericRecordBuilder = new GenericRecordBuilder(schema);
         List<GenericRecord> genericRecordList = new ArrayList<>();
         while (iterator.hasNext()) {
             GenericRecord genericRecord = (GenericRecord) iterator.next();
@@ -89,6 +95,33 @@ public class AvroDataBuilder {
             GenericData.Record record = genericRecordBuilder.build();
             genericRecordList.add(record);
             System.out.println(record.toString());
+        }
+        return genericRecordList;
+    }
+
+    private static List<GenericRecord> getGenericRecords(DataFileStream<Object> reader, String idField, Schema schema, List<String> idList, String operateType) {
+        Iterator iterator = reader.iterator();
+        GenericRecordBuilder genericRecordBuilder = new GenericRecordBuilder(schema);
+        List<GenericRecord> genericRecordList = new ArrayList<>();
+        JSONObject jsonObject;
+        GenericRecord genericRecord;
+        while (iterator.hasNext()) {
+            genericRecord = (GenericRecord) iterator.next();
+            Object genericObj;
+            if (null != genericRecord.get(1)) {
+                genericObj = genericRecord.get(1);
+            } else {
+                genericObj = genericRecord.get(0);
+            }
+            jsonObject = JSONObject.parseObject(genericObj.toString());
+            if (idList.contains(jsonObject.get(idField).toString())) {
+                genericRecordBuilder.set(HIVE_AFTER_TAG, genericObj);
+                genericRecordBuilder.set(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
+                genericRecordBuilder.set(KEY_TAG, idField);
+                GenericData.Record record = genericRecordBuilder.build();
+                genericRecordList.add(record);
+                LOG.info(record.toString());
+            }
         }
         return genericRecordList;
     }
