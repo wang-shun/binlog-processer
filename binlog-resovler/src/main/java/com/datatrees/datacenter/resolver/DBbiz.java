@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -156,7 +157,7 @@ public class DBbiz {
       List<Map<String, Object>> ignore = DBUtil
         .query(DBServer.DBServerType.MYSQL.toString(), dataBase, "t_binlog_ignore",
           ImmutableMap.<String, Object>builder().put("file_name", file).build());
-      if (ignore.size() > 0) {
+      if (ignore != null && ignore.size() > 0) {
         Object ignoreDatabases = ignore.get(0).get("database_name");
         if (null != ignoreDatabases) {
           return Arrays.asList(ignoreDatabases.toString().split(","));
@@ -164,7 +165,7 @@ public class DBbiz {
       }
     } catch (Exception e) {
       logger.error(String
-        .format("error to report status"), e);
+        .format("error to ignore file %s", file), e);
     }
     return emptyList();
   }
@@ -177,7 +178,7 @@ public class DBbiz {
       List<Map<String, Object>> ignore = DBUtil
         .query(DBServer.DBServerType.MYSQL.toString(), dataBase, "t_binlog_ignore",
           ImmutableMap.<String, Object>builder().put("file_name", file).build());
-      if (ignore.size() > 0) {
+      if (ignore != null && ignore.size() > 0) {
         Object ignoreTables = ignore.get(0).get("table_name");
         if (null != ignoreTables) {
           return Arrays.asList(ignoreTables.toString().split(","));
@@ -202,6 +203,30 @@ public class DBbiz {
     } catch (SQLException e) {
       logger.error(String
         .format("error to report status"), e);
+    }
+  }
+
+  public static void updateUnresolvedTempfile(Set<String> filenames) {
+    try {
+      DBUtil.delete(DBType, dataBase, "t_binlog_unresolved_temp_file",
+        ImmutableMap.<String, Object>builder()
+          .put("server_type", PropertiesUtility.defaultProperties().getProperty("SERVER_TYPE"))
+          .put("server_ip", IPUtility.ipAddress())
+          .build());
+    } catch (SQLException e) {
+      logger.error(e.getMessage(), e);
+    }
+    try {
+      DBUtil
+        .insertAll(DBType, dataBase, "t_binlog_unresolved_temp_file",
+          filenames.stream()
+            .map(r -> ImmutableMap.<String, Object>builder()
+              .put("file_name", r)
+              .put("server_type", PropertiesUtility.defaultProperties().getProperty("SERVER_TYPE"))
+              .put("server_ip", IPUtility.ipAddress()).build()
+            ).collect(toList()));
+    } catch (SQLException e) {
+      logger.error(e.getMessage(), e);
     }
   }
 }
