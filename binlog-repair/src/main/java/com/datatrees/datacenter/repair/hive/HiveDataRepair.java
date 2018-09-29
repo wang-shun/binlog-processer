@@ -4,16 +4,13 @@ package com.datatrees.datacenter.repair.hive;
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
-import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.repair.BaseDataRepair;
 import com.datatrees.datacenter.repair.dbhandler.BinlogDBHandler;
 import com.datatrees.datacenter.repair.filehandler.FileOperate;
 import com.datatrees.datacenter.repair.schema.AvroDataBuilder;
-import com.datatrees.datacenter.repair.schema.SchemaConvertor;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
-import com.datatrees.datacenter.utility.StringBuilderUtil;
 import com.tree.finance.bigdata.hive.streaming.utils.InsertMutation;
 import com.tree.finance.bigdata.hive.streaming.utils.UpdateMutation;
 import org.apache.avro.Schema;
@@ -21,7 +18,6 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hive.com.esotericsoftware.minlog.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +31,7 @@ public class HiveDataRepair implements BaseDataRepair {
     private static Logger LOG = LoggerFactory.getLogger(HiveDataRepair.class);
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static final String AVRO_HDFS_PATH = properties.getProperty("AVRO_HDFS_PATH");
-    private static final String metastoreUris = "thrift://cdh2:9083";
+    private static final String metastoreUris = "thrift://hadoop3:9083";
     private static final String FILE_SEP = File.separator;
     private static final String DATE_SEP = "=";
     private String hiveCheckTableByFile = "t_binlog_check_hive";
@@ -53,7 +49,6 @@ public class HiveDataRepair implements BaseDataRepair {
 
     @Override
     public void repairByIdList(CheckResult checkResult, String checkTable) {
-        // TODO: 2018/9/28 先从数据库查询需要修复的数据信息 ，在读Avro，再调用接口
         HiveConf hiveConf = new HiveConf();
         HBaseConfiguration hBaseConfiguration = new HBaseConfiguration();
         Schema schema = null;
@@ -79,19 +74,22 @@ public class HiveDataRepair implements BaseDataRepair {
             hivePartitionBuilder.append("p_y=")
                     .append(year)
                     .append(File.separator)
-                    .append("p_m")
+                    .append("p_m=")
                     .append(month)
                     .append(File.separator)
-                    .append("p_d")
+                    .append("p_d=")
                     .append(day);
 
             hivePartition = hivePartitionBuilder.toString();
-            hivePartitions = Arrays.asList(date);
+            hivePartitions = new ArrayList<>();
+            hivePartitions.add(year);
+            hivePartitions.add(month);
+            hivePartitions.add(day);
 
             // TODO: 2018/9/28 idc和阿里云使用了相同的路径
             if (dbInstance != null || !"null".equals(dbInstance)) {
                 filePathBuilder
-                        .append(AVRO_HDFS_PATH)
+                        .append(AVRO_HDFS_PATH.split("_")[0])
                         .append(File.separator)
                         .append(partitionType)
                         .append(File.separator)
@@ -103,7 +101,8 @@ public class HiveDataRepair implements BaseDataRepair {
                         .append(File.separator)
                         .append(partition)
                         .append(File.separator)
-                        .append(fileName);
+                        .append(fileName)
+                        .append(".avro");
             } else {
                 filePathBuilder
                         .append(AVRO_HDFS_PATH)
@@ -116,7 +115,8 @@ public class HiveDataRepair implements BaseDataRepair {
                         .append(File.separator)
                         .append(partition)
                         .append(File.separator)
-                        .append(fileName);
+                        .append(fileName)
+                        .append(".avro");
             }
             filePath = filePathBuilder.toString();
             InputStream inputStream = FileOperate.getHdfsFileInput(filePath);
@@ -128,46 +128,49 @@ public class HiveDataRepair implements BaseDataRepair {
                         Map.Entry entry = (Map.Entry) iterator.next();
                         String operate = String.valueOf(entry.getKey());
                         List<String> idList = (List<String>) entry.getValue();
-                        List<GenericRecord> genericRecordList = AvroDataBuilder.avroSchemaDataBuilder(inputStream, idList, operate);
-                        if (OperateType.Create.toString().equals(operate)) {
-                            InsertMutation mutation = new InsertMutation(dataBase, tableName, hivePartition, hivePartitions, metastoreUris, hBaseConfiguration);
-                            for (int i = 0; i < genericRecordList.size(); i++) {
-                                GenericData.Record record = (GenericData.Record) genericRecordList.get(i);
+                        if (idList != null && idList.size() > 0) {
+                            List<GenericRecord> genericRecordList = AvroDataBuilder.avroSchemaDataBuilder(inputStream, idList, operate);
+                            if (OperateType.Create.toString().equals(operate)) {
+                                InsertMutation mutation = new InsertMutation(dataBase, tableName, hivePartition, hivePartitions, metastoreUris, hBaseConfiguration);
                                 try {
-                                    mutation.beginFixTransaction(schema, hiveConf);
-                                    mutation.insert(record);
+                                    for (GenericRecord record : genericRecordList) {
+                                        mutation.beginFixTransaction(schema, hiveConf);
+                                        mutation.insert((GenericData.Record) record);
+                                    }
                                     mutation.commitTransaction();
                                 } catch (Exception e) {
+                                    mutation.abortTxn();
                                     e.printStackTrace();
                                 }
-                            }
-                        } else {
-                            UpdateMutation mutation = new UpdateMutation(dataBase, tableName, hivePartition, hivePartitions, metastoreUris, hBaseConfiguration);
-                            for (GenericRecord record : genericRecordList) {
+
+                            } else {
+                                UpdateMutation mutation = new UpdateMutation(dataBase, tableName, hivePartition, hivePartitions, metastoreUris, hBaseConfiguration);
                                 try {
-                                    mutation.beginFixTransaction(schema, hiveConf);
-                                    mutation.update((GenericData.Record) record, false);
+                                    for (GenericRecord record : genericRecordList) {
+                                        mutation.beginFixTransaction(schema, hiveConf);
+                                        mutation.update((GenericData.Record) record);
+                                    }
                                     mutation.commitTransaction();
                                 } catch (Exception e) {
+                                    mutation.abortTxn();
                                     e.printStackTrace();
                                 }
+
                             }
-                        }
-                        Map<String, Object> whereMap = new HashMap<>();
-                        whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
-                        whereMap.put(CheckTable.DATA_BASE, dataBase);
-                        whereMap.put(CheckTable.TABLE_NAME, tableName);
-                        whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
-                        whereMap.put(CheckTable.FILE_PARTITION, partition);
-                        whereMap.values().remove("");
-                        StringBuilder whereExpress = StringBuilderUtil.getStringBuilder(whereMap);
-                        String sql = "select id_list,files_path,operate_type from " + checkTable + " " + whereExpress;
-                        Map<String, Object> valueMap = new HashMap<>();
-                        valueMap.put(CheckTable.STATUS, 1);
-                        try {
-                            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, checkTable, valueMap, whereMap);
-                        } catch (SQLException e) {
-                            e.printStackTrace();
+                            Map<String, Object> whereMap = new HashMap<>();
+                            whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
+                            whereMap.put(CheckTable.DATA_BASE, dataBase);
+                            whereMap.put(CheckTable.TABLE_NAME, tableName);
+                            whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+                            whereMap.put(CheckTable.FILE_PARTITION, partition);
+                            whereMap.values().remove("");
+                            Map<String, Object> valueMap = new HashMap<>(1);
+                            valueMap.put(CheckTable.STATUS, 1);
+                            try {
+                                DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, checkTable, valueMap, whereMap);
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }

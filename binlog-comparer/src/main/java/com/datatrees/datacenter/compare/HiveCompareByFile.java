@@ -40,9 +40,8 @@ public class HiveCompareByFile extends BaseDataCompare {
                 String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
 
-                String filePath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance);
-                LOG.info("read avro from: " + filePath);
-                String avroPath = super.AVRO_HDFS_PATH + File.separator + type + File.separator + filePath;
+                String avroPath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance,type);
+                LOG.info("read avro from: " + avroPath);
                 Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
                 if (null != avroData && avroData.size() > 0) {
                     Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
@@ -56,7 +55,7 @@ public class HiveCompareByFile extends BaseDataCompare {
                     result.setDataBase(dataBase);
                     result.setFileName(fileName);
                     result.setSaveTable(CheckTable.BINLOG_CHECK_HIVE_TABLE);
-                    result.setFilesPath(filePath);
+                    result.setFilesPath(avroPath);
                     result.setDbInstance(dbInstance);
 
                     createRecordProcess(dataBase, tableName, createRecord, result);
@@ -138,9 +137,11 @@ public class HiveCompareByFile extends BaseDataCompare {
         }
     }
 
-    String assembleFilePath(String dataBase, String tableName, String fileName, String partition, String dbInstance) {
+    String assembleFilePath(String dataBase, String tableName, String fileName, String partition, String dbInstance,String type) {
         String filePath;
-        String filePathWithoutDbInstance = dataBase +
+        String idcHdfsPath=AVRO_HDFS_PATH + File.separator + type;
+        String aliyunHdfsPath=AVRO_HDFS_PATH.split("_")[0] + File.separator + type;
+        String filePathWithoutDbInstance =dataBase +
                 File.separator +
                 tableName +
                 File.separator +
@@ -149,9 +150,9 @@ public class HiveCompareByFile extends BaseDataCompare {
                 fileName +
                 CheckTable.FILE_LAST_NAME;
         if (IpMatchUtility.isboolIp(dbInstance)) {
-            filePath = filePathWithoutDbInstance;
+            filePath = idcHdfsPath+File.separator+filePathWithoutDbInstance;
         } else {
-            filePath = dbInstance + File.separator + filePathWithoutDbInstance;
+            filePath = aliyunHdfsPath+File.separator+dbInstance + File.separator + filePathWithoutDbInstance;
         }
         return filePath;
     }

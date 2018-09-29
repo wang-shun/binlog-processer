@@ -3,6 +3,8 @@ package com.datatrees.datacenter.main;
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.HiveCompareByFile;
 import com.datatrees.datacenter.datareader.AvroDataReader;
+import com.datatrees.datacenter.repair.hive.HiveDataRepair;
+import com.datatrees.datacenter.table.CheckResult;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,13 +115,31 @@ public class Test {
        /*BaseDataCompare dataCompare = new HiveCompareByFile();
        dataCompare.binLogCompare("1538108418904-bin-log.001406", "update");*/
 
-        String str = "8761392,18761407,18761396,18761395,18761401,18761404";
+       /* String str = "8761392,18761407,18761396,18761395,18761401,18761404";
         String[] idArr = str.split(",");
         for (int i = 0; i < idArr.length; i++) {
             String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
             System.out.println(id);
-        }
+        }*/
        /* boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
         System.out.println(flag);*/
+
+        HiveDataRepair dataRepair=new HiveDataRepair();
+        CheckResult checkResult=new CheckResult();
+        String dbInstance = "client-relationship";
+        String dataBase = "clientrelationship";
+        String partition = "year=2018/month=9/day=22";
+        String partitionType = "update";
+        String tableName = "t_associated_mobile";
+        String fileName="1537568284-mysql-bin.000602";
+
+        checkResult.setDbInstance(dbInstance);
+        checkResult.setDataBase(dataBase);
+        checkResult.setFilePartition(partition);
+        checkResult.setPartitionType(partitionType);
+        checkResult.setTableName(tableName);
+        checkResult.setFileName(fileName);
+
+        dataRepair.repairByIdList(checkResult,"t_binlog_check_hive");
     }
 }
