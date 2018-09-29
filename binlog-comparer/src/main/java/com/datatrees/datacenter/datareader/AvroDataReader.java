@@ -32,7 +32,7 @@ public class AvroDataReader extends BaseDataReader {
     private static final Properties PROPERTIES = PropertiesUtility.defaultProperties();
     private static final String AVRO_PATH = PROPERTIES.getProperty("AVRO_HDFS_PATH");
     private static final List<String> ID_COLUMN_LIST = FieldNameOp.getConfigField("id");
-    private static final List<String> lastUpdateColumnList = FieldNameOp.getConfigField("update");
+    private static final List<String> LAST_UPDATE_COLUMN_LIST = FieldNameOp.getConfigField("update");
     private String dataBase;
     private String tableName;
     private String recordId;
@@ -78,7 +78,7 @@ public class AvroDataReader extends BaseDataReader {
             fieldList.forEach(x -> fieldSet.add(x.name()));
             recordId = FieldNameOp.getFieldName(fieldSet, ID_COLUMN_LIST);
             LOG.info("the id field name is :" + recordId);
-            recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, lastUpdateColumnList);
+            recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, LAST_UPDATE_COLUMN_LIST);
             LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
 
             while (iterator.hasNext()) {

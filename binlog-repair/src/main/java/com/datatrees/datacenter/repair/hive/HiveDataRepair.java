@@ -1,9 +1,7 @@
 package com.datatrees.datacenter.repair.hive;
 
 
-import com.datatrees.datacenter.core.utility.DBServer;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.repair.BaseDataRepair;
 import com.datatrees.datacenter.repair.dbhandler.BinlogDBHandler;
@@ -51,7 +49,6 @@ public class HiveDataRepair implements BaseDataRepair {
     public void repairByIdList(CheckResult checkResult, String checkTable) {
         HiveConf hiveConf = new HiveConf();
         HBaseConfiguration hBaseConfiguration = new HBaseConfiguration();
-        Schema schema = null;
 
         String dataBase = checkResult.getDataBase();
         String dbInstance = checkResult.getDbInstance();
@@ -87,13 +84,11 @@ public class HiveDataRepair implements BaseDataRepair {
             hivePartitions.add(day);
 
             // TODO: 2018/9/28 idc和阿里云使用了相同的路径
-            if (dbInstance != null || !"null".equals(dbInstance)) {
+            if (IpMatchUtility.isboolIp(dbInstance)) {
                 filePathBuilder
-                        .append(AVRO_HDFS_PATH.split("_")[0])
+                        .append(AVRO_HDFS_PATH)
                         .append(File.separator)
                         .append(partitionType)
-                        .append(File.separator)
-                        .append(dbInstance)
                         .append(File.separator)
                         .append(dataBase)
                         .append(File.separator)
@@ -105,9 +100,11 @@ public class HiveDataRepair implements BaseDataRepair {
                         .append(".avro");
             } else {
                 filePathBuilder
-                        .append(AVRO_HDFS_PATH)
+                        .append(AVRO_HDFS_PATH.split("_")[0])
                         .append(File.separator)
                         .append(partitionType)
+                        .append(File.separator)
+                        .append(dbInstance)
                         .append(File.separator)
                         .append(dataBase)
                         .append(File.separator)
@@ -129,13 +126,15 @@ public class HiveDataRepair implements BaseDataRepair {
                         String operate = String.valueOf(entry.getKey());
                         List<String> idList = (List<String>) entry.getValue();
                         if (idList != null && idList.size() > 0) {
-                            List<GenericRecord> genericRecordList = AvroDataBuilder.avroSchemaDataBuilder(inputStream, idList, operate);
+                            Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, idList, operate);
+                            Schema schema = (Schema) genericRecordListMap.get("schema");
+                            List<GenericData.Record> genericRecordList = (List<GenericData.Record>) genericRecordListMap.get("record");
                             if (OperateType.Create.toString().equals(operate)) {
                                 InsertMutation mutation = new InsertMutation(dataBase, tableName, hivePartition, hivePartitions, metastoreUris, hBaseConfiguration);
                                 try {
-                                    for (GenericRecord record : genericRecordList) {
+                                    for (GenericData.Record record : genericRecordList) {
                                         mutation.beginFixTransaction(schema, hiveConf);
-                                        mutation.insert((GenericData.Record) record);
+                                        mutation.insert(record);
                                     }
                                     mutation.commitTransaction();
                                 } catch (Exception e) {
@@ -146,9 +145,9 @@ public class HiveDataRepair implements BaseDataRepair {
                             } else {
                                 UpdateMutation mutation = new UpdateMutation(dataBase, tableName, hivePartition, hivePartitions, metastoreUris, hBaseConfiguration);
                                 try {
-                                    for (GenericRecord record : genericRecordList) {
+                                    for (GenericData.Record record : genericRecordList) {
                                         mutation.beginFixTransaction(schema, hiveConf);
-                                        mutation.update((GenericData.Record) record);
+                                        mutation.update(record);
                                     }
                                     mutation.commitTransaction();
                                 } catch (Exception e) {
@@ -157,7 +156,7 @@ public class HiveDataRepair implements BaseDataRepair {
                                 }
 
                             }
-                            Map<String, Object> whereMap = new HashMap<>();
+                            Map<String, Object> whereMap = new HashMap<>(5);
                             whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
                             whereMap.put(CheckTable.DATA_BASE, dataBase);
                             whereMap.put(CheckTable.TABLE_NAME, tableName);

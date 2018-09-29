@@ -126,12 +126,12 @@ public class Test {
 
         HiveDataRepair dataRepair=new HiveDataRepair();
         CheckResult checkResult=new CheckResult();
-        String dbInstance = "client-relationship";
-        String dataBase = "clientrelationship";
-        String partition = "year=2018/month=9/day=22";
-        String partitionType = "update";
-        String tableName = "t_associated_mobile";
-        String fileName="1537568284-mysql-bin.000602";
+        String dbInstance = "172.6.100.26";
+        String dataBase = "credit_audit";
+        String partition = "year=2018/month=9/day=14";
+        String partitionType = "create";
+        String tableName = "aud_rule_hit_log";
+        String fileName="1537397631451-bin-log.000796";
 
         checkResult.setDbInstance(dbInstance);
         checkResult.setDataBase(dataBase);

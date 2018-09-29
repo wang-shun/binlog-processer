@@ -26,7 +26,7 @@
         <fastjson.version>1.2.7</fastjson.version>
         <property.version>4.5.1</property.version>
         <hadoop.version>2.5.0</hadoop.version>
-        <hbase.version>1.2.0</hbase.version>
+        <hbase.version>1.2.0-cdh5.12.1</hbase.version>
         <hcatalog.version>1.2.0</hcatalog.version>
         <com.google.guava>13.0.1</com.google.guava>
         <org.apache.avro>1.8.2</org.apache.avro>
@@ -56,7 +56,7 @@
         <io.prometheus>0.4.0</io.prometheus>
         <logback.version>1.1.7</logback.version>
         <slf4j.version>1.7.21</slf4j.version>
-        <hive.version>2.3.0</hive.version>
+        <hive.version>2.3.3-1</hive.version>
     </properties>
 
     <dependencyManagement>

@@ -7,7 +7,6 @@ import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.HBaseTableInfo;
 import com.datatrees.datacenter.utility.BatchGetFromHBase;
-import jodd.util.PropertiesUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +22,7 @@ public class HiveCompareByFile extends BaseDataCompare {
     private static final String ROWKEY_POSTFIX = "_id";
     private static final String BANK_BILL = "bankbill";
     private static final String BANKBILL_ALIAS = "bill";
-    private static final String ID_LIST_MAX = PropertiesUtility.defaultProperties().getProperty("ID_LIST_MAX", "100000");
+    private static final String ID_LIST_MAX = PropertiesUtility.defaultProperties().getProperty("ID_LIST_MAX", "1000");
 
     @Override
     public void binLogCompare(String file, String type) {
@@ -237,7 +236,8 @@ public class HiveCompareByFile extends BaseDataCompare {
     private static void resultInsert(CheckResult result, Map<String, Long> afterComp) {
 
         if (afterComp != null && afterComp.size() > 0) {
-            LOG.info("record size is :" + afterComp.size());
+            int dataSize = afterComp.size();
+            LOG.info("record size is :" + dataSize);
             Map<String, Object> dataMap = new HashMap<>(11);
             dataMap.put(CheckTable.FILE_NAME, result.getFileName());
             dataMap.put(CheckTable.DB_INSTANCE, result.getDbInstance());
@@ -247,10 +247,15 @@ public class HiveCompareByFile extends BaseDataCompare {
             dataMap.put(CheckTable.FILE_PARTITION, result.getFilePartition());
             dataMap.put(CheckTable.OP_TYPE, result.getOpType());
             dataMap.put(CheckTable.FILES_PATH, result.getFilesPath());
-            int dataSize = afterComp.size();
             dataMap.put(CheckTable.DATA_COUNT, dataSize);
+            int max_size = Integer.parseInt(ID_LIST_MAX);
             if (dataSize < Integer.parseInt(ID_LIST_MAX)) {
                 dataMap.put(CheckTable.ID_LIST, afterComp.keySet().toString());
+            } else {
+                List<String> idList = new ArrayList<>(afterComp.keySet());
+                LOG.info("the record size is :" + dataSize);
+                dataMap.put(CheckTable.ID_LIST, idList.subList(0, max_size + 1).toString());
+                LOG.info("insert size of database is :" + max_size);
             }
             long currentTime = System.currentTimeMillis();
             dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(currentTime));

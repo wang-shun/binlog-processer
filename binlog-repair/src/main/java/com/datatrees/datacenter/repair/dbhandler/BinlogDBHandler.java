@@ -14,17 +14,15 @@ public class BinlogDBHandler {
 
     public static Map<String, List<String>> readAvroDataById(CheckResult checkResult, String checkTable) {
         Map<String, Object> whereMap = new HashMap<>();
-        String dbInstance = checkResult.getDbInstance();
         String dataBase = checkResult.getDataBase();
         String tableName = checkResult.getTableName();
         String partition = checkResult.getFilePartition();
         String partitionType = checkResult.getPartitionType();
-        whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
         whereMap.put(CheckTable.DATA_BASE, dataBase);
         whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
         whereMap.put(CheckTable.FILE_PARTITION, partition);
-        whereMap.values().remove("");
+        whereMap.values().remove(null);
         StringBuilder whereExpress = StringBuilderUtil.getStringBuilder(whereMap);
         String sql = "select id_list,files_path,operate_type from " + checkTable + " " + whereExpress;
         Map<String, List<String>> opIdMap=null;

@@ -18,7 +18,7 @@ import java.util.concurrent.*;
 
 public class BatchGetFromHBase {
     private static Logger LOG = LoggerFactory.getLogger(BatchGetFromHBase.class);
-    private static final int PARALLEL_FACTOR=25;
+    private static final int PARALLEL_FACTOR = 25;
 
     /**
      * 根据rowkey批量查询数据
@@ -63,7 +63,6 @@ public class BatchGetFromHBase {
                 }
             }
         }
-        LOG.info("the record number find from HBase is :" + (resultMap == null ? 0 : resultMap.size()));
         return resultMap;
     }
 
@@ -158,6 +157,7 @@ public class BatchGetFromHBase {
                 }
             }
         }
+        LOG.info("the record number find from HBase is :" + (dataMap == null ? 0 : dataMap.size()));
         return dataMap;
     }
 

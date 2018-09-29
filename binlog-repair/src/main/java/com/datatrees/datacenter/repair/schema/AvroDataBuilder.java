@@ -27,7 +27,7 @@ public class AvroDataBuilder {
     private static final String NULL_STRING = "null";
 
 
-    public static List<GenericRecord> avroSchemaDataBuilder(InputStream inputStream, List<String> idList, String operateType) {
+    public static Map<String,Object> avroSchemaDataBuilder(InputStream inputStream, List<String> idList, String operateType) {
         DataFileStream<Object> reader;
         try {
             reader = new DataFileStream<>(inputStream, new GenericDatumReader<>());
@@ -71,7 +71,7 @@ public class AvroDataBuilder {
                 Schema finalSchema = fieldAssembler.endRecord();
                 LOG.info("final schema:" + finalSchema);
                 if (idList != null && idList.size() > 0) {
-                    return getGenericRecords(reader, idField, schema, idList, operateType);
+                    return getGenericRecords(reader, idField, finalSchema, idList, operateType);
                 } else {
                     return getGenericRecords(reader, idField, finalSchema);
                 }
@@ -82,30 +82,31 @@ public class AvroDataBuilder {
         return null;
     }
 
-    private static List<GenericRecord> getGenericRecords(DataFileStream<Object> reader, String idField, Schema schema) {
+    private static Map<String,Object> getGenericRecords(DataFileStream<Object> reader, String idField, Schema schema) {
         Iterator iterator = reader.iterator();
-        GenericRecordBuilder genericRecordBuilder = new GenericRecordBuilder(schema);
-        List<GenericRecord> genericRecordList = new ArrayList<>();
+        GenericData.Record  dataRecord= new GenericData.Record(schema);
+        List<GenericData.Record> genericRecordList = new ArrayList<>();
         while (iterator.hasNext()) {
             GenericRecord genericRecord = (GenericRecord) iterator.next();
-            genericRecordBuilder.set(HIVE_AFTER_TAG, genericRecord.get(1));
-            genericRecordBuilder.set(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
-            genericRecordBuilder.set(KEY_TAG, idField);
-            GenericData.Record record = genericRecordBuilder.build();
-            genericRecordList.add(record);
-            System.out.println(record.toString());
+            dataRecord.put(HIVE_AFTER_TAG, genericRecord.get(1));
+            dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
+            dataRecord.put(KEY_TAG, idField);
+            genericRecordList.add(dataRecord);
         }
-        return genericRecordList;
+        Map<String,Object> schemaListMap=new HashMap<>(1);
+        schemaListMap.put("schema",schema);
+        schemaListMap.put("record",genericRecordList);
+        return schemaListMap;
     }
 
-    private static List<GenericRecord> getGenericRecords(DataFileStream<Object> reader, String idField, Schema schema, List<String> idList, String operateType) {
+    private static Map<String,Object> getGenericRecords(DataFileStream<Object> reader, String idField, Schema schema, List<String> idList, String operateType) {
         Iterator iterator = reader.iterator();
-        GenericRecordBuilder genericRecordBuilder = new GenericRecordBuilder(schema);
-        List<GenericRecord> genericRecordList = new ArrayList<>();
+        List<GenericData.Record> genericRecordList = new ArrayList<>();
         JSONObject jsonObject;
-        GenericRecord genericRecord;
+        GenericData.Record genericRecord;
         while (iterator.hasNext()) {
-            genericRecord = (GenericRecord) iterator.next();
+            GenericData.Record dataRecord = new GenericData.Record(schema);
+            genericRecord = (GenericData.Record) iterator.next();
             String operate=genericRecord.get(2).toString();
             Object genericObj;
             if(operateType.equals(operate)) {
@@ -116,16 +117,22 @@ public class AvroDataBuilder {
                 }
                 jsonObject = JSONObject.parseObject(genericObj.toString());
                 if (idList.contains(jsonObject.get(idField).toString())) {
-                    genericRecordBuilder.set(HIVE_AFTER_TAG, genericObj);
-                    genericRecordBuilder.set(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
-                    genericRecordBuilder.set(KEY_TAG, idField);
-                    GenericData.Record record = genericRecordBuilder.build();
-                    genericRecordList.add(record);
-                    LOG.info(record.toString());
+                    dataRecord.put(HIVE_AFTER_TAG, genericObj);
+                    dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
+                    Schema schema1=schema.getField("key").schema();
+                    GenericData.Record record=new GenericData.Record(schema1);
+                    record.put("Key",idField);
+                    System.out.println("*******"+schema1);
+                    dataRecord.put(KEY_TAG, record);
+                    genericRecordList.add(dataRecord);
+                    LOG.info(dataRecord.toString());
                 }
             }
         }
-        return genericRecordList;
+        Map<String,Object> schemaListMap=new HashMap<>(1);
+        schemaListMap.put("schema",schema);
+        schemaListMap.put("record",genericRecordList);
+        return schemaListMap;
     }
 
     private static Set<String> getFieldName(Schema schema) {
