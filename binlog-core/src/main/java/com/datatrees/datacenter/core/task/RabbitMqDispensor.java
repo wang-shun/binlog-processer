@@ -24,6 +24,7 @@ public class RabbitMqDispensor extends TaskDispensor {
       Connection connection = null;
       Channel channel = null;
       try {
+        logger.info(String.format("begin to dispense message [%s] to %s.", binlog, topic));
         connection = factory.newConnection();
         channel = connection.createChannel();
         channel.queueDeclare(topic, false, false, false, null);
@@ -32,8 +33,9 @@ public class RabbitMqDispensor extends TaskDispensor {
             (binlog.getClass().isAssignableFrom(String.class)) ? ((String) binlog).
               getBytes("UTF-8")
               : JSON.toJSONString(binlog).getBytes("UTF-8"));
+        logger.info(String.format("success to dispense message [%s] to %s.", binlog, topic));
       } catch (IOException e) {
-        logger.error(e.getMessage(), e);
+        logger.error("error to publish rabbit mq message because of io error", e);
       } catch (TimeoutException e) {
         logger.error("error to publish rabbit mq message because of"
           + e.getMessage(), e);

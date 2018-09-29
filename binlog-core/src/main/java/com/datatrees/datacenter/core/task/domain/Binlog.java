@@ -31,7 +31,7 @@ public class Binlog implements Serializable {
   }
 
   public static void main(String[] args) {
-    System.out.println( "10.10.1.1".replaceAll("\\.", "#"));
+    System.out.println("10.10.1.1".replaceAll("\\.", "#"));
   }
 
   public String getInstanceId() {
@@ -81,7 +81,7 @@ public class Binlog implements Serializable {
   public String toString() {
     StringBuilder stringBuilder = new StringBuilder();
     stringBuilder.append("[" + this.getIdentity() + ",");
-    stringBuilder.append("[" + this.getJdbcUrl() + ",");
+    stringBuilder.append(this.getJdbcUrl() + ",");
     stringBuilder.append(this.getPath() + "]");
     return stringBuilder.toString();
   }
