@@ -78,6 +78,7 @@ public class BinLogFileUtil {
         DescribeBinlogFilesResponse binlogFilesResponse = null;
         try {
             binlogFilesResponse = client.getAcsResponse(binlogFilesRequest, profile);
+            // TODO: 2018/9/20 此处需要验证实例在阿里云上是否存在
         } catch (ClientException e) {
             LOG.error("can't get binlog file from AliYun, please check the server",e);
         }

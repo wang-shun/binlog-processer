@@ -11,44 +11,38 @@ import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
+import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.sql.SQLOutput;
 import java.util.*;
 import java.util.stream.Collectors;
 
 
 public class AvroDataReader extends BaseDataReader {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataReader.class);
-    private static final Properties properties = PropertiesUtility.defaultProperties();
-    private static final String avroPath = properties.getProperty("AVRO_HDFS_PATH");
-    private static final List<String> idColumnList = FieldNameOp.getConfigField("id");
+    private static final Properties PROPERTIES = PropertiesUtility.defaultProperties();
+    private static final String AVRO_PATH = PROPERTIES.getProperty("AVRO_HDFS_PATH");
+    private static final List<String> ID_COLUMN_LIST = FieldNameOp.getConfigField("id");
     private static final List<String> lastUpdateColumnList = FieldNameOp.getConfigField("update");
     private String dataBase;
     private String tableName;
     private String recordId;
     private String recordLastUpdateTime;
-    /**
-     * 是否需要获取记录各字段名称
-     */
-    private boolean fieldGetOff = true;
-    private boolean fieldExists = false;
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
         InputStream is;
         Map<String, Map<String, Long>> recordMap;
-        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+        FileSystem fs = HDFSFileUtility.getFileSystem(AVRO_PATH);
         try {
             if (null != fs) {
                 is = fs.open(new Path(filePath));
@@ -78,14 +72,15 @@ public class AvroDataReader extends BaseDataReader {
         DataFileStream<Object> reader = null;
         try {
             reader = new DataFileStream<>(is, new GenericDatumReader<>());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Iterator<Object> iterator = null;
-        if (reader != null) {
-            iterator = reader.iterator();
-        }
-        if (iterator != null) {
+            Iterator<Object> iterator = reader.iterator();
+            List<Schema.Field> fieldList = reader.getSchema().getField("After").schema().getTypes().get(1).getFields();
+            Set<String> fieldSet = new HashSet<>(fieldList.size());
+            fieldList.forEach(x -> fieldSet.add(x.name()));
+            recordId = FieldNameOp.getFieldName(fieldSet, ID_COLUMN_LIST);
+            LOG.info("the id field name is :" + recordId);
+            recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, lastUpdateColumnList);
+            LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
+
             while (iterator.hasNext()) {
                 Object o = iterator.next();
                 GenericRecord r = (GenericRecord) o;
@@ -96,30 +91,22 @@ public class AvroDataReader extends BaseDataReader {
                 } else {
                     jsonObject = JSONObject.parseObject(r.get(0).toString());
                 }
-                // TODO: 2018/9/20 修改
                 if (jsonObject != null) {
-                    if (fieldGetOff) {
-                        Set<String> fieldSet = jsonObject.keySet();
-                        fieldGetOff = false;
-                        recordId = FieldNameOp.getFieldName(fieldSet, idColumnList);
-                        recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, lastUpdateColumnList);
-                        if (null != recordId && null != recordLastUpdateTime) {
-                            fieldExists = true;
-                        }
-                    }
-                    if (fieldExists) {
-                        String id = String.valueOf(jsonObject.get(recordId));
-                        long lastUpdateTime = jsonObject.getLong(recordLastUpdateTime);
-                        if (id != null) {
+                    String id = String.valueOf(jsonObject.get(recordId));
+                    String lastUpdateTime = String.valueOf(jsonObject.getLong(recordLastUpdateTime));
+
+                    if (id != null && lastUpdateTime != null) {
+                        if (!"null".equals(id) && !"null".equals(lastUpdateTime)) {
+                            long timeStamp = Long.parseLong(lastUpdateTime);
                             switch (operator) {
                                 case "Create":
-                                    createMap.put(id, lastUpdateTime);
+                                    createMap.put(id, timeStamp);
                                     break;
                                 case "Update":
-                                    updateMap.put(id, lastUpdateTime);
+                                    updateMap.put(id, timeStamp);
                                     break;
                                 case "Delete":
-                                    deleteMap.put(id, lastUpdateTime);
+                                    deleteMap.put(id, timeStamp);
                                     break;
                                 default:
                                     break;
@@ -128,29 +115,40 @@ public class AvroDataReader extends BaseDataReader {
                     }
                 }
             }
-        }
-        try {
-            is.close();
-            reader.close();
+            createMap = BaseDataCompare.diffCompare(createMap, updateMap);
+            if (createMap != null) {
+                createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
+            }
+            updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
+            recordMap.put(OperateType.Delete.toString(), deleteMap);
+            recordMap.put(OperateType.Create.toString(), createMap);
+            recordMap.put(OperateType.Update.toString(), updateMap);
+            return recordMap;
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        createMap = BaseDataCompare.diffCompare(createMap, updateMap);
-        if (createMap != null) {
-            createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
-        }
-        updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
-        recordMap.put(OperateType.Delete.toString(), deleteMap);
-        recordMap.put(OperateType.Create.toString(), createMap);
-        recordMap.put(OperateType.Update.toString(), updateMap);
-        return recordMap;
 
     }
 
+    /**
+     * 读取某个分区目录下的所有文件
+     * @param filePath 文件路径
+     * @return Avro记录
+     */
     public static Map<String, List<Set<Map.Entry<String, Object>>>> readAllDataFromAvro(String filePath) {
         InputStream is;
         Map<String, List<Set<Map.Entry<String, Object>>>> oprRecordMap = null;
-        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+        FileSystem fs = HDFSFileUtility.getFileSystem(AVRO_PATH);
         if (null != fs) {
             try {
                 is = fs.open(new Path(filePath));
@@ -196,6 +194,13 @@ public class AvroDataReader extends BaseDataReader {
         return oprRecordMap;
     }
 
+    /**
+     * 读出指定avro中指定id的数据
+     *
+     * @param checkResult 表信息
+     * @param checkTable  检查信息表
+     * @return Avro记录
+     */
     public static Map<String, List<Set<Map.Entry<String, Object>>>> readAvroDataById(CheckResult checkResult, String checkTable) {
         Map<String, Object> whereMap = new HashMap<>();
         String dbInstance = checkResult.getDbInstance();
@@ -233,7 +238,16 @@ public class AvroDataReader extends BaseDataReader {
         return dataRecord;
     }
 
-    public static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String dataBase, String tableName, Map<String, List<String>> opIdMap) {
+    /**
+     * 根据ID过滤数据
+     * @param filePath 文件路径
+     * @param dataBase 数据库
+     * @param tableName 表
+     * @param opIdMap 操作类型map
+     * @return Avro记录
+     */
+    private static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String
+            dataBase, String tableName, Map<String, List<String>> opIdMap) {
         InputStream is;
         List<String> fileList = HDFSFileUtility.getFilesPath(filePath);
         Collections.sort(fileList);
@@ -242,14 +256,13 @@ public class AvroDataReader extends BaseDataReader {
             List<Set<Map.Entry<String, Object>>> recordList = new ArrayList<>();
             oprRecordMap.put(key, recordList);
         }
-        FileSystem fs = HDFSFileUtility.getFileSystem(avroPath);
+        FileSystem fs = HDFSFileUtility.getFileSystem(AVRO_PATH);
         if (null != fs) {
             try {
                 Collection<Object> allFieldSet = FieldNameOp.getAllFieldName(dataBase, tableName);
-                String recordId = FieldNameOp.getFieldName(allFieldSet, idColumnList);
-                for (int i = 0; i < fileList.size(); i++) {
-                    System.out.println("read file:" + fileList.get(i));
-                    Path path = new Path(fileList.get(i));
+                String recordId = FieldNameOp.getFieldName(allFieldSet, ID_COLUMN_LIST);
+                for (String aFileList : fileList) {
+                    Path path = new Path(aFileList);
                     is = fs.open(path);
                     DataFileStream<Object> reader = new DataFileStream<>(is, new GenericDatumReader<>());
                     Iterator<Object> iterator = reader.iterator();
@@ -273,7 +286,6 @@ public class AvroDataReader extends BaseDataReader {
                                 }
                             }
                         }
-
                     }
                 }
             } catch (IOException e) {

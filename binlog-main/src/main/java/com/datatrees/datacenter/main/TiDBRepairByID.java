@@ -1,6 +1,6 @@
 package com.datatrees.datacenter.main;
 
-import com.datatrees.datacenter.repair.TiDBDataRepair;
+import com.datatrees.datacenter.repair.tidb.TiDBDataRepair;
 import com.datatrees.datacenter.table.CheckResult;
 
 public class TiDBRepairByID {
@@ -14,7 +14,6 @@ public class TiDBRepairByID {
             checkResult.setTableName(args[4]);
             TiDBDataRepair tiDBDataRepair = new TiDBDataRepair();
             tiDBDataRepair.repairByIdList(checkResult, checkTable);
-
         } else if (args.length == 4) {
             CheckResult checkResult = new CheckResult();
             checkResult.setDataBase(args[0]);

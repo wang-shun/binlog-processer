@@ -1,8 +1,7 @@
 package com.datatrees.datacenter;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
-import com.datatrees.datacenter.compare.HiveCompare;
-import com.datatrees.datacenter.compare.TiDBCompareFile;
+import com.datatrees.datacenter.compare.HiveCompareByFile;
 import com.datatrees.datacenter.core.task.TaskRunner;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
 import com.datatrees.datacenter.resolver.TaskProcessor;
@@ -12,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 public class CompareTask implements TaskRunner {
     private static Logger LOG = LoggerFactory.getLogger(CompareTask.class);
-
+    private final String partitionType = PropertiesUtility.defaultProperties().getProperty("partition.type");
 
     public void startCheck() {
         TaskProcessor.defaultProcessor()
@@ -21,13 +20,15 @@ public class CompareTask implements TaskRunner {
                         new TaskProcessorListner() {
                             @Override
                             public void onMessageReceived(String desc) {
-                                BaseDataCompare compare = new TiDBCompareFile();
+                               /* BaseDataCompare TiDBCompare = new TiDBCompareByFile();
                                 LOG.info("start TiDB check...");
-                                compare.binLogCompare(desc, "update");
-                                LOG.info("TiDB check finished");
-                                compare = new HiveCompare();
+                                TiDBCompare.binLogCompare(desc, "update");
+                                LOG.info("TiDB check finished");*/
+
+                                BaseDataCompare hiveCompare = new HiveCompareByFile();
                                 LOG.info("start Hive check...");
-                                compare.binLogCompare(desc, "update");
+                                hiveCompare.binLogCompare(desc, partitionType);
+                                LOG.info("Hive check finished");
                             }
                         }).process();
     }

@@ -6,6 +6,8 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +17,9 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class BatchGetFromHBase {
+    private static Logger LOG = LoggerFactory.getLogger(BatchGetFromHBase.class);
+    private static final int PARALLEL_FACTOR=25;
+
     /**
      * 根据rowkey批量查询数据
      *
@@ -58,6 +63,7 @@ public class BatchGetFromHBase {
                 }
             }
         }
+        LOG.info("the record number find from HBase is :" + (resultMap == null ? 0 : resultMap.size()));
         return resultMap;
     }
 
@@ -91,10 +97,10 @@ public class BatchGetFromHBase {
      */
     public static Map<String, Long> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
         Map<String, Long> dataMap = new HashMap<>();
-        int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 3;
+        int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 2;
         List<List<String>> batchIdList;
         if (null != idList && idList.size() > 0) {
-            if (idList.size() < parallel) {
+            if (idList.size() < parallel * PARALLEL_FACTOR) {
                 batchIdList = new ArrayList<>(1);
                 batchIdList.add(idList);
             } else {
@@ -160,7 +166,9 @@ public class BatchGetFromHBase {
         if (null != idList && idList.size() > 0) {
             hashedIdList = new ArrayList<>();
             for (int i = 0; i < idList.size(); i++) {
-                hashedIdList.add(GenericRowIdUtils.addIdWithHash(idList.get(i)));
+                String id = idList.get(i);
+                String idHashed = GenericRowIdUtils.addIdWithHash(id);
+                hashedIdList.add(idHashed);
             }
         }
         return hashedIdList;

@@ -1,10 +1,12 @@
-{"type": "record",
+{
+  "type": "record",
   "name": "t_user_contacts",
   "namespace": "gongfudai.loandb",
   "fields": [
     {
       "name": "Before",
-      "type": ["null",
+      "type": [
+        "null",
         {
           "type": "record",
           "name": "Value",
