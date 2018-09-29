@@ -1,15 +1,13 @@
 package com.datatrees.datacenter.compare;
 
-import com.datatrees.datacenter.core.utility.DBServer;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.IpMatchUtility;
-import com.datatrees.datacenter.core.utility.TimeUtil;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.HBaseTableInfo;
 import com.datatrees.datacenter.utility.BatchGetFromHBase;
+import jodd.util.PropertiesUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +21,9 @@ public class HiveCompareByFile extends BaseDataCompare {
     private static final String ROWKEY_SEP = "_";
     private static final String DATABASE_TABLE_UNION = ".";
     private static final String ROWKEY_POSTFIX = "_id";
-    private static final String BANK_BILL="bankbill";
+    private static final String BANK_BILL = "bankbill";
     private static final String BANKBILL_ALIAS = "bill";
+    private static final String ID_LIST_MAX = PropertiesUtility.defaultProperties().getProperty("ID_LIST_MAX", "100000");
 
     @Override
     public void binLogCompare(String file, String type) {
@@ -40,7 +39,7 @@ public class HiveCompareByFile extends BaseDataCompare {
                 String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
 
-                String avroPath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance,type);
+                String avroPath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance, type);
                 LOG.info("read avro from: " + avroPath);
                 Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
                 if (null != avroData && avroData.size() > 0) {
@@ -89,7 +88,7 @@ public class HiveCompareByFile extends BaseDataCompare {
             LOG.info("the operateType is :[Delete]");
             if (rawDeleteRocord != null && rawDeleteRocord.size() > 0) {
                 resultInsert(result, rawDeleteRocord);
-            }else{
+            } else {
                 LOG.info("no record find in the hbase");
             }
         }
@@ -137,11 +136,11 @@ public class HiveCompareByFile extends BaseDataCompare {
         }
     }
 
-    String assembleFilePath(String dataBase, String tableName, String fileName, String partition, String dbInstance,String type) {
+    String assembleFilePath(String dataBase, String tableName, String fileName, String partition, String dbInstance, String type) {
         String filePath;
-        String idcHdfsPath=AVRO_HDFS_PATH + File.separator + type;
-        String aliyunHdfsPath=AVRO_HDFS_PATH.split("_")[0] + File.separator + type;
-        String filePathWithoutDbInstance =dataBase +
+        String idcHdfsPath = AVRO_HDFS_PATH + File.separator + type;
+        String aliyunHdfsPath = AVRO_HDFS_PATH.split("_")[0] + File.separator + type;
+        String filePathWithoutDbInstance = dataBase +
                 File.separator +
                 tableName +
                 File.separator +
@@ -150,9 +149,9 @@ public class HiveCompareByFile extends BaseDataCompare {
                 fileName +
                 CheckTable.FILE_LAST_NAME;
         if (IpMatchUtility.isboolIp(dbInstance)) {
-            filePath = idcHdfsPath+File.separator+filePathWithoutDbInstance;
+            filePath = idcHdfsPath + File.separator + filePathWithoutDbInstance;
         } else {
-            filePath = aliyunHdfsPath+File.separator+dbInstance + File.separator + filePathWithoutDbInstance;
+            filePath = aliyunHdfsPath + File.separator + dbInstance + File.separator + filePathWithoutDbInstance;
         }
         return filePath;
     }
@@ -247,9 +246,12 @@ public class HiveCompareByFile extends BaseDataCompare {
             dataMap.put(CheckTable.PARTITION_TYPE, result.getPartitionType());
             dataMap.put(CheckTable.FILE_PARTITION, result.getFilePartition());
             dataMap.put(CheckTable.OP_TYPE, result.getOpType());
-            dataMap.put(CheckTable.ID_LIST, afterComp.keySet().toString());
             dataMap.put(CheckTable.FILES_PATH, result.getFilesPath());
-            dataMap.put(CheckTable.DATA_COUNT, afterComp.size());
+            int dataSize = afterComp.size();
+            dataMap.put(CheckTable.DATA_COUNT, dataSize);
+            if (dataSize < Integer.parseInt(ID_LIST_MAX)) {
+                dataMap.put(CheckTable.ID_LIST, afterComp.keySet().toString());
+            }
             long currentTime = System.currentTimeMillis();
             dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(currentTime));
             try {
