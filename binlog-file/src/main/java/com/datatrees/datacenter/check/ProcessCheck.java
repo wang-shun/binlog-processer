@@ -80,7 +80,6 @@ public class ProcessCheck {
                         while (iterator.hasNext()) {
                             oneRecord = iterator.next();
                             String instanceId = String.valueOf(oneRecord.get(TableInfo.DB_INSTANCE));
-                            LOG.info("instanceId:" + instanceId);
                             String fileName = String.valueOf(oneRecord.get(TableInfo.FILE_NAME));
 
                             // send to kafka
@@ -90,7 +89,6 @@ public class ProcessCheck {
                             if (!IpMatchUtility.isboolIp(instanceId)) {
                                 mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
                                 String bakInstanceId = String.valueOf(oneRecord.get(TableInfo.BAK_INSTANCE_ID));
-                                LOG.info("bakInstanceId:" + bakInstanceId);
                                 filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                             } else {
                                 filePath = DEST + File.separator + instanceId + File.separator + fileName;

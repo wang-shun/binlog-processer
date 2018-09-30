@@ -80,7 +80,7 @@ public class BinLogFileUtil {
             binlogFilesResponse = client.getAcsResponse(binlogFilesRequest, profile);
             binlogFilesRequest.getDBInstanceId();
         } catch (ClientException e) {
-            LOG.error("can't get dbInstance id:" + binlogFilesRequest.getDBInstanceId() + "from AliYun, please check the server", e);
+            LOG.error("can't get dbInstance id:" + binlogFilesRequest.getDBInstanceId() + " from AliYun, please check the server", e);
         }
         int totalRecordCount = 0;
         if (binlogFilesResponse != null) {
