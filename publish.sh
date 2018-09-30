@@ -3,7 +3,7 @@
 mvn clean package -Dmaven.test.skip=true;
 
 
-BROKERS="application5"
+BROKERS="application1 application2 application3 application4 application5"
 BINLOG_PROCESS_HOME="/data1/application/binlog-process"
 BINLOG_PROCESS_HOME2="/data1/application/binlog-process-2"
 

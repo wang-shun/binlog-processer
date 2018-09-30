@@ -41,7 +41,7 @@ public class BinLogFileUtil {
         Matcher matcher = pattern.matcher(link);
         if (matcher.find()) {
             fileName = matcher.group();
-            LOG.info("fileName :"+fileName);
+            LOG.info("fileName :" + fileName);
         } else {
             LOG.info("no fileName get from the link,please check the url or the regex pattern");
         }
@@ -78,9 +78,9 @@ public class BinLogFileUtil {
         DescribeBinlogFilesResponse binlogFilesResponse = null;
         try {
             binlogFilesResponse = client.getAcsResponse(binlogFilesRequest, profile);
-            // TODO: 2018/9/20 此处需要验证实例在阿里云上是否存在
+            binlogFilesRequest.getDBInstanceId();
         } catch (ClientException e) {
-            LOG.error("can't get binlog file from AliYun, please check the server",e);
+            LOG.error("can't get dbInstance id:" + binlogFilesRequest.getDBInstanceId() + "from AliYun, please check the server", e);
         }
         int totalRecordCount = 0;
         if (binlogFilesResponse != null) {
@@ -105,7 +105,7 @@ public class BinLogFileUtil {
                 binLogFiles.addAll(items);
             }
         }
-        BinLogFile binLogFile=new BinLogFile();
+        BinLogFile binLogFile = new BinLogFile();
         binLogFile.getChecksum();
         return binLogFiles;
     }
