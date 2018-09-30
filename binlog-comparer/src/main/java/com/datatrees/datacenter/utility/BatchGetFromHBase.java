@@ -95,10 +95,11 @@ public class BatchGetFromHBase {
      * @return map
      */
     public static Map<String, Long> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
-        Map<String, Long> dataMap = new HashMap<>();
+        Map<String, Long> dataMap = null;
         int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 2;
         List<List<String>> batchIdList;
         if (null != idList && idList.size() > 0) {
+            dataMap = new HashMap<>();
             if (idList.size() < parallel * PARALLEL_FACTOR) {
                 batchIdList = new ArrayList<>(1);
                 batchIdList.add(idList);
@@ -157,6 +158,7 @@ public class BatchGetFromHBase {
                 }
             }
         }
+        LOG.info("the data number read from avro is:" + (idList == null ? 0 : idList.size()));
         LOG.info("the record number find from HBase is :" + (dataMap == null ? 0 : dataMap.size()));
         return dataMap;
     }

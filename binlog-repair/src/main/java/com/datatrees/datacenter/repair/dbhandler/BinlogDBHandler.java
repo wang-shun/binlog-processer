@@ -44,4 +44,21 @@ public class BinlogDBHandler {
         return opIdMap;
     }
 
+    public static void updateCheckedFile(String checkTable, String dataBase, String dbInstance, String tableName, String partition, String partitionType) {
+        Map<String, Object> whereMap = new HashMap<>(5);
+        whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
+        whereMap.put(CheckTable.DATA_BASE, dataBase);
+        whereMap.put(CheckTable.TABLE_NAME, tableName);
+        whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+        whereMap.put(CheckTable.FILE_PARTITION, partition);
+        whereMap.values().remove("");
+        Map<String, Object> valueMap = new HashMap<>(1);
+        valueMap.put(CheckTable.STATUS, 1);
+        try {
+            DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, checkTable, valueMap, whereMap);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

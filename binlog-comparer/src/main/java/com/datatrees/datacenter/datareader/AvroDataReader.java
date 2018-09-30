@@ -11,6 +11,7 @@ import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.table.FieldNameOp;
 import com.datatrees.datacenter.utility.StringBuilderUtil;
+import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
@@ -52,7 +53,7 @@ public class AvroDataReader extends BaseDataReader {
                 }
             }
         } catch (IOException e) {
-            LOG.info("File :" + filePath + " doesn't exist");
+            LOG.info("File :" + filePath + " doesn't exist or read file failed");
         }
         return null;
     }
@@ -80,52 +81,58 @@ public class AvroDataReader extends BaseDataReader {
             LOG.info("the id field name is :" + recordId);
             recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, LAST_UPDATE_COLUMN_LIST);
             LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
+            try {
 
-            while (iterator.hasNext()) {
-                Object o = iterator.next();
-                GenericRecord r = (GenericRecord) o;
-                String operator = r.get(2).toString();
-                JSONObject jsonObject;
-                if (null != r.get(1)) {
-                    jsonObject = JSONObject.parseObject(r.get(1).toString());
-                } else {
-                    jsonObject = JSONObject.parseObject(r.get(0).toString());
-                }
-                if (jsonObject != null) {
-                    String id = String.valueOf(jsonObject.get(recordId));
-                    String lastUpdateTime = String.valueOf(jsonObject.getLong(recordLastUpdateTime));
 
-                    if (id != null && lastUpdateTime != null) {
-                        if (!"null".equals(id) && !"null".equals(lastUpdateTime)) {
-                            long timeStamp = Long.parseLong(lastUpdateTime);
-                            switch (operator) {
-                                case "Create":
-                                    createMap.put(id, timeStamp);
-                                    break;
-                                case "Update":
-                                    updateMap.put(id, timeStamp);
-                                    break;
-                                case "Delete":
-                                    deleteMap.put(id, timeStamp);
-                                    break;
-                                default:
-                                    break;
+                while (iterator.hasNext()) {
+                    Object o = iterator.next();
+                    GenericRecord r = (GenericRecord) o;
+                    String operator = r.get(2).toString();
+                    JSONObject jsonObject;
+                    if (null != r.get(1)) {
+                        jsonObject = JSONObject.parseObject(r.get(1).toString());
+                    } else {
+                        jsonObject = JSONObject.parseObject(r.get(0).toString());
+                    }
+                    if (jsonObject != null) {
+                        String id = String.valueOf(jsonObject.get(recordId));
+                        String lastUpdateTime = String.valueOf(jsonObject.getLong(recordLastUpdateTime));
+
+                        if (id != null && lastUpdateTime != null) {
+                            if (!"null".equals(id) && !"null".equals(lastUpdateTime)) {
+                                long timeStamp = Long.parseLong(lastUpdateTime);
+                                switch (operator) {
+                                    case "Create":
+                                        createMap.put(id, timeStamp);
+                                        break;
+                                    case "Update":
+                                        updateMap.put(id, timeStamp);
+                                        break;
+                                    case "Delete":
+                                        deleteMap.put(id, timeStamp);
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                         }
                     }
                 }
+                createMap = BaseDataCompare.diffCompare(createMap, updateMap);
+                if (createMap != null) {
+                    createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
+                }
+                updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
+                recordMap.put(OperateType.Delete.toString(), deleteMap);
+                recordMap.put(OperateType.Create.toString(), createMap);
+                recordMap.put(OperateType.Update.toString(), updateMap);
+                return recordMap;
+            } catch (AvroRuntimeException e1) {
+                LOG.info(e1.toString());
+                return null;
             }
-            createMap = BaseDataCompare.diffCompare(createMap, updateMap);
-            if (createMap != null) {
-                createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
-            }
-            updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
-            recordMap.put(OperateType.Delete.toString(), deleteMap);
-            recordMap.put(OperateType.Create.toString(), createMap);
-            recordMap.put(OperateType.Update.toString(), updateMap);
-            return recordMap;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.info(e.getMessage());
             return null;
         } finally {
             try {
@@ -134,7 +141,7 @@ public class AvroDataReader extends BaseDataReader {
                 }
                 is.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.info("close reader or inputStream failed");
             }
         }
 
@@ -142,6 +149,7 @@ public class AvroDataReader extends BaseDataReader {
 
     /**
      * 读取某个分区目录下的所有文件
+     *
      * @param filePath 文件路径
      * @return Avro记录
      */
@@ -240,10 +248,11 @@ public class AvroDataReader extends BaseDataReader {
 
     /**
      * 根据ID过滤数据
-     * @param filePath 文件路径
-     * @param dataBase 数据库
+     *
+     * @param filePath  文件路径
+     * @param dataBase  数据库
      * @param tableName 表
-     * @param opIdMap 操作类型map
+     * @param opIdMap   操作类型map
      * @return Avro记录
      */
     private static Map<String, List<Set<Map.Entry<String, Object>>>> filterDataByIdList(String filePath, String

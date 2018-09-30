@@ -37,28 +37,29 @@ public class HiveCompareByFile extends BaseDataCompare {
                 String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
                 String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
+                if (partition != null && !"null".equals(partition)) {
+                    String avroPath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance, type);
+                    LOG.info("read avro from: " + avroPath);
+                    Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
+                    if (null != avroData && avroData.size() > 0) {
+                        Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
+                        Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
+                        Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
 
-                String avroPath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance, type);
-                LOG.info("read avro from: " + avroPath);
-                Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
-                if (null != avroData && avroData.size() > 0) {
-                    Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
-                    Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
-                    Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
+                        CheckResult result = new CheckResult();
+                        result.setTableName(tableName);
+                        result.setPartitionType(type);
+                        result.setFilePartition(partition);
+                        result.setDataBase(dataBase);
+                        result.setFileName(fileName);
+                        result.setSaveTable(CheckTable.BINLOG_CHECK_HIVE_TABLE);
+                        result.setFilesPath(avroPath);
+                        result.setDbInstance(dbInstance);
 
-                    CheckResult result = new CheckResult();
-                    result.setTableName(tableName);
-                    result.setPartitionType(type);
-                    result.setFilePartition(partition);
-                    result.setDataBase(dataBase);
-                    result.setFileName(fileName);
-                    result.setSaveTable(CheckTable.BINLOG_CHECK_HIVE_TABLE);
-                    result.setFilesPath(avroPath);
-                    result.setDbInstance(dbInstance);
-
-                    createRecordProcess(dataBase, tableName, createRecord, result);
-                    updateRecordProcess(dataBase, tableName, updateRecord, result);
-                    deleteRecordProcess(dataBase, tableName, deleteRecord, result);
+                        createRecordProcess(dataBase, tableName, createRecord, result);
+                        updateRecordProcess(dataBase, tableName, updateRecord, result);
+                        deleteRecordProcess(dataBase, tableName, deleteRecord, result);
+                    }
                 }
             }
             updateCheckedFile(file, type);
