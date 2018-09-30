@@ -44,9 +44,8 @@ public class BinlogDBHandler {
         return opIdMap;
     }
 
-    public static void updateCheckedFile(String checkTable, String dataBase, String dbInstance, String tableName, String partition, String partitionType) {
+    public static void updateCheckedFile(String checkTable, String dataBase, String tableName, String partition, String partitionType) {
         Map<String, Object> whereMap = new HashMap<>(5);
-        whereMap.put(CheckTable.DB_INSTANCE, dbInstance);
         whereMap.put(CheckTable.DATA_BASE, dataBase);
         whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);

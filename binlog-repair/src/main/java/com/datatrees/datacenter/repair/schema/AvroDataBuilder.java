@@ -8,6 +8,10 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.JsonDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,28 +119,13 @@ public class AvroDataBuilder {
                     genericObj = genericRecord.get(0);
                 }
                 jsonObject = JSONObject.parseObject(genericObj.toString());
-                GenericData.Record generRecord = (GenericData.Record) genericObj;
                 List<Schema.Field> fieldList = genericRecord.getSchema().getField("After").schema().getTypes().get(1).getFields();
-                for (Schema.Field field : fieldList) {
-                    System.out.println("8888888888888888888");
-                    System.out.println(field);
-                    System.out.println(field.schema());
-                    System.out.println(field.name());
-                    System.out.println(field.schema().getType());
-                    System.out.println("8888888888888888888");
-                    if (Schema.Type.INT.equals(field.schema().getType())) {
-                        jsonObject.put(field.name(), Schema.Type.LONG);
-                    }
-                    if (Schema.Type.FLOAT.equals(field.schema().getType())) {
-                        jsonObject.put(field.name(), Schema.Type.DOUBLE);
-                    }
-                    if (Schema.Type.BYTES.equals(field.schema().getType())) {
-                        jsonObject.put(field.name(), Schema.Type.STRING);
-                    }
-                }
+                jsonObject=JsonDataTypeConvert(jsonObject, fieldList);
 
+                GenericData.Record recorNew=jsonToAvro(schema.getField("after").schema(),jsonObject.toJSONString());
+                //Object jsonObj=jsonObject;
                 if (idList.contains(jsonObject.get(idField).toString())) {
-                    dataRecord.put(HIVE_AFTER_TAG, genericObj);
+                    dataRecord.put(HIVE_AFTER_TAG, recorNew);
                     dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
                     Schema schema1 = schema.getField("key").schema();
                     GenericData.Record record = new GenericData.Record(schema1);
@@ -154,11 +143,42 @@ public class AvroDataBuilder {
         return schemaListMap;
     }
 
+    private static JSONObject JsonDataTypeConvert(JSONObject jsonObject, List<Schema.Field> fieldList) {
+        for (Schema.Field field : fieldList) {
+            if (Schema.Type.INT.equals(field.schema().getType())) {
+                jsonObject.put(field.name(),Long.valueOf(jsonObject.getIntValue(field.name())));
+            }
+            if (Schema.Type.FLOAT.equals(field.schema().getType())) {
+                jsonObject.put(field.name(), Double.valueOf(jsonObject.getFloatValue(field.name())));
+            }
+            if (Schema.Type.BYTES.equals(field.schema().getType())) {
+                jsonObject.put(field.name(), String.valueOf(jsonObject.getBytes(field.name())));
+            }
+        }
+        return jsonObject;
+    }
+
     private static Set<String> getFieldName(Schema schema) {
         List<Schema.Field> fields = schema.getFields();
         Set<String> fieldNameSet = new HashSet<>(fields.size());
         fields.forEach(x -> fieldNameSet.add(x.name()));
         return fieldNameSet;
+    }
+
+    private static GenericData.Record jsonToAvro(Schema schema,String json)
+    {
+        Schema.Parser parser=new Schema.Parser();
+        Schema schema1=parser.parse(schema.toString());
+        DecoderFactory decoderFactory=new DecoderFactory();
+        try {
+            Decoder decoder=decoderFactory.jsonDecoder(schema1,json);
+            DatumReader<GenericData.Record> reader=new GenericDatumReader<>(schema);
+            GenericData.Record genericRecord=reader.read(null,decoder);
+            return genericRecord;
+        } catch (IOException e) {
+            LOG.info(e.getMessage());
+            return null;
+        }
     }
 
 }

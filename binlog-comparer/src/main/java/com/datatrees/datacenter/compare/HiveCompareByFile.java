@@ -37,6 +37,7 @@ public class HiveCompareByFile extends BaseDataCompare {
                 String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
                 String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
+
                 if (partition != null && !"null".equals(partition)) {
                     String avroPath = assembleFilePath(dataBase, tableName, fileName, partition, dbInstance, type);
                     LOG.info("read avro from: " + avroPath);

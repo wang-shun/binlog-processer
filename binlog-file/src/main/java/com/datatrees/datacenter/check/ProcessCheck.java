@@ -92,13 +92,9 @@ public class ProcessCheck {
                                 String bakInstanceId = String.valueOf(oneRecord.get(TableInfo.BAK_INSTANCE_ID));
                                 LOG.info("bakInstanceId:" + bakInstanceId);
                                 filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
-                                LOG.info("hello");
-                                LOG.info("mysqlURL:" + mysqlURL);
                             } else {
                                 filePath = DEST + File.separator + instanceId + File.separator + fileName;
                                 mysqlURL = instanceId;
-                                LOG.info("kugou");
-                                LOG.info("mysqlURL:" + mysqlURL);
                             }
                             TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
                             LOG.info("send " + identity + " to massage queue");
@@ -113,7 +109,7 @@ public class ProcessCheck {
                             Date process_start = TimeUtil.stampToDate(System.currentTimeMillis());
                             valueMap.put(TableInfo.PROCESS_START, process_start);
                             DBUtil.update(DBServer.DBServerType.MYSQL.toString(), dataBase, TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
-                            LOG.info("update t_binlog_process table, set " + identity + " retry: " + retryTimes + " and process_start: " + process_start);
+                            LOG.info("update t_binlog_process table, set " + fileName + " retry: " + retryTimes + " and process_start: " + process_start);
                         }
                     }
                 } catch (Exception e) {

@@ -81,7 +81,6 @@ public class HiveDataRepair implements BaseDataRepair {
             hivePartitions.add(month);
             hivePartitions.add(day);
 
-            // TODO: 2018/9/28 idc和阿里云使用了相同的路径
             StringBuilder filePathBuilder = new StringBuilder();
             if (IpMatchUtility.isboolIp(dbInstance)) {
                 filePathBuilder
@@ -129,7 +128,7 @@ public class HiveDataRepair implements BaseDataRepair {
                             Schema schema = (Schema) genericRecordListMap.get("schema");
                             List<GenericData.Record> genericRecordList = (List<GenericData.Record>) genericRecordListMap.get("record");
                             repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, genericRecordList);
-                            BinlogDBHandler.updateCheckedFile(checkTable, dataBase, dbInstance, tableName, partition, partitionType);
+                            BinlogDBHandler.updateCheckedFile(checkTable, dataBase, tableName, partition, partitionType);
                         }
                     }
                 }
@@ -153,7 +152,6 @@ public class HiveDataRepair implements BaseDataRepair {
 
         } else {
             UpdateMutation mutation = new UpdateMutation(dataBase, tableName, hivePartition, hivePartitions, metastoreUris, hBaseConfiguration);
-
             try {
                 mutation.beginFixTransaction(schema, hiveConf);
                 for (GenericData.Record record : genericRecordList) {
