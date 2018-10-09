@@ -138,7 +138,5 @@
   } ]
 }
 
-{"name":"key","type":{"type":"record","name":"key","namespace":"aud_rule_hit_log","fields":[{"name":"Key","type":"long"}]}
-
 
 

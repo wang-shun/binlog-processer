@@ -8,10 +8,10 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.io.JsonDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,12 +28,30 @@ public class AvroDataBuilder {
     private static final String KEY_TAG = "key";
     private static final String HIVE_AFTER_TAG = "after";
     private static final String NULL_STRING = "null";
+    private static final String PRIMARY_KEY = "id";
+    private static final String AVRO_UNION_TYPE = "union";
 
 
     public static Map<String, Object> avroSchemaDataBuilder(InputStream inputStream, List<String> idList, String operateType) {
         DataFileStream<Object> reader;
-        try {
-            reader = new DataFileStream<>(inputStream, new GenericDatumReader<>());
+        if (null != inputStream) {
+            try {
+                reader = new DataFileStream<>(inputStream, new GenericDatumReader<>());
+                Schema schema = schemaBuilder(reader);
+                if (idList != null && idList.size() > 0) {
+                    return getGenericRecords(reader, schema, idList, operateType);
+                } else {
+                    return getGenericRecords(reader, schema);
+                }
+            } catch (IOException e) {
+                LOG.info("the avro inputStream is null " + e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private static Schema schemaBuilder(DataFileStream reader) {
+        if (reader != null) {
             Schema schema = reader.getSchema();
             String name = schema.getName();
             String nameSpace = schema.getNamespace();
@@ -43,13 +61,13 @@ public class AvroDataBuilder {
                     .schema()
                     .getTypes()
                     .get(1);
-            LOG.info("origin after schema:" + afterSchema);
+            LOG.info("origin after schema :" + afterSchema);
 
             Set<String> fieldNameSet = getFieldName(afterSchema);
             String idField = FieldNameOp.getFieldName(fieldNameSet, ID_COLUMN_LIST);
             if (idField != null && !NULL_STRING.equals(idField)) {
-                Schema afterSchemaNew = SchemaConvertor.schemaFieldTypeConvert(afterSchema);
-                LOG.info("redefine after schema:" + afterSchemaNew);
+                Schema afterSchemaNew = SchemaConverter.schemaFieldTypeConvert(afterSchema);
+                LOG.info("schema after redefined :" + afterSchemaNew);
                 Schema opSchema = reader
                         .getSchema()
                         .getField(OP_TAG)
@@ -66,26 +84,22 @@ public class AvroDataBuilder {
                         .record(KEY_TAG)
                         .namespace(name)
                         .fields()
-                        .name("Key")
+                        .name(idField.toLowerCase())
                         .type(Schema.create(Schema.Type.LONG))
                         .noDefault().endRecord())
                         .noDefault();
 
                 Schema finalSchema = fieldAssembler.endRecord();
                 LOG.info("final schema:" + finalSchema);
-                if (idList != null && idList.size() > 0) {
-                    return getGenericRecords(reader, idField, finalSchema, idList, operateType);
-                } else {
-                    return getGenericRecords(reader, idField, finalSchema);
-                }
+                return finalSchema;
             }
-        } catch (IOException e) {
-            LOG.info("can't not read data from avro file with error info :", e);
+        } else {
+            LOG.info("the DataFileStream is null");
         }
         return null;
     }
 
-    private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, String idField, Schema schema) {
+    private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, Schema schema) {
         Iterator iterator = reader.iterator();
         GenericData.Record dataRecord = new GenericData.Record(schema);
         List<GenericData.Record> genericRecordList = new ArrayList<>();
@@ -93,7 +107,7 @@ public class AvroDataBuilder {
             GenericRecord genericRecord = (GenericRecord) iterator.next();
             dataRecord.put(HIVE_AFTER_TAG, genericRecord.get(1));
             dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
-            dataRecord.put(KEY_TAG, idField);
+            dataRecord.put(KEY_TAG, PRIMARY_KEY.toLowerCase());
             genericRecordList.add(dataRecord);
         }
         Map<String, Object> schemaListMap = new HashMap<>(1);
@@ -102,7 +116,7 @@ public class AvroDataBuilder {
         return schemaListMap;
     }
 
-    private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, String idField, Schema schema, List<String> idList, String operateType) {
+    private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, Schema schema, List<String> idList, String operateType) {
         Iterator iterator = reader.iterator();
         List<GenericData.Record> genericRecordList = new ArrayList<>();
         JSONObject jsonObject;
@@ -119,19 +133,20 @@ public class AvroDataBuilder {
                     genericObj = genericRecord.get(0);
                 }
                 jsonObject = JSONObject.parseObject(genericObj.toString());
-                List<Schema.Field> fieldList = genericRecord.getSchema().getField("After").schema().getTypes().get(1).getFields();
-                jsonObject=JsonDataTypeConvert(jsonObject, fieldList);
+                List<Schema.Field> fieldList = genericRecord.getSchema().getField(AFTER_TAG).schema().getTypes().get(1).getFields();
+                jsonObject = jsonDataTypeConvert(jsonObject, fieldList);
 
-                GenericData.Record recorNew=jsonToAvro(schema.getField("after").schema(),jsonObject.toJSONString());
-                //Object jsonObj=jsonObject;
-                if (idList.contains(jsonObject.get(idField).toString())) {
-                    dataRecord.put(HIVE_AFTER_TAG, recorNew);
+                // GenericData.Record recordNew = jsonToAvro(schema.getField("after").schema(), jsonObject.toJSONString());
+
+                GenericData.Record record = getRecord(schema, jsonObject);
+                String id = jsonObject.get(PRIMARY_KEY).toString();
+                if (idList.contains(id)) {
+                    dataRecord.put(HIVE_AFTER_TAG, record);
                     dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
-                    Schema schema1 = schema.getField("key").schema();
-                    GenericData.Record record = new GenericData.Record(schema1);
-                    record.put("Key", idField);
-                    System.out.println("*******" + schema1);
-                    dataRecord.put(KEY_TAG, record);
+                    Schema schema1 = schema.getField(KEY_TAG).schema();
+                    GenericData.Record keyRecord = new GenericData.Record(schema1);
+                    keyRecord.put(PRIMARY_KEY.toLowerCase(), Long.valueOf(id));
+                    dataRecord.put(KEY_TAG, keyRecord);
                     genericRecordList.add(dataRecord);
                     LOG.info(dataRecord.toString());
                 }
@@ -143,16 +158,40 @@ public class AvroDataBuilder {
         return schemaListMap;
     }
 
-    private static JSONObject JsonDataTypeConvert(JSONObject jsonObject, List<Schema.Field> fieldList) {
+    private static GenericData.Record getRecord(Schema schema, JSONObject jsonObject) {
+        Schema afterSchema = schema.getField(HIVE_AFTER_TAG).schema();
+        GenericRecordBuilder builder = new GenericRecordBuilder(afterSchema);
+        List<Schema.Field> afterFieldList = afterSchema.getFields();
+        for (Schema.Field field : afterFieldList) {
+            builder.set(field.name(), jsonObject.get(field.name()));
+        }
+        return builder.build();
+    }
+
+    private static JSONObject jsonDataTypeConvert(JSONObject jsonObject, List<Schema.Field> fieldList) {
         for (Schema.Field field : fieldList) {
-            if (Schema.Type.INT.equals(field.schema().getType())) {
-                jsonObject.put(field.name(),Long.valueOf(jsonObject.getIntValue(field.name())));
+            String fieldName = field.name().toLowerCase();
+            Schema.Type fieldType = field.schema().getType();
+            Schema.Type lastFieldType;
+            if (AVRO_UNION_TYPE.equalsIgnoreCase(fieldType.getName())) {
+                lastFieldType = field.schema().getTypes().get(1).getType();
+            } else {
+                lastFieldType = fieldType;
             }
-            if (Schema.Type.FLOAT.equals(field.schema().getType())) {
-                jsonObject.put(field.name(), Double.valueOf(jsonObject.getFloatValue(field.name())));
-            }
-            if (Schema.Type.BYTES.equals(field.schema().getType())) {
-                jsonObject.put(field.name(), String.valueOf(jsonObject.getBytes(field.name())));
+            // FIXME: 2018/10/9 可能存在空值的问题
+            switch (lastFieldType) {
+                case INT:
+                    jsonObject.put(fieldName, (long) jsonObject.getIntValue(field.name()));
+                    break;
+                case FLOAT:
+                    jsonObject.put(fieldName, (double) jsonObject.getFloatValue(field.name()));
+                    break;
+                case BYTES:
+                    jsonObject.put(fieldName, Arrays.toString(jsonObject.getBytes(field.name())));
+                    break;
+                default:
+                    jsonObject.put(fieldName, jsonObject.get(field.name()));
+                    break;
             }
         }
         return jsonObject;
@@ -165,15 +204,14 @@ public class AvroDataBuilder {
         return fieldNameSet;
     }
 
-    private static GenericData.Record jsonToAvro(Schema schema,String json)
-    {
-        Schema.Parser parser=new Schema.Parser();
-        Schema schema1=parser.parse(schema.toString());
-        DecoderFactory decoderFactory=new DecoderFactory();
+    private static GenericData.Record jsonToAvro(Schema schema, String json) {
+        Schema.Parser parser = new Schema.Parser();
+        Schema schema1 = parser.parse(schema.toString());
+        DecoderFactory decoderFactory = new DecoderFactory();
         try {
-            Decoder decoder=decoderFactory.jsonDecoder(schema1,json);
-            DatumReader<GenericData.Record> reader=new GenericDatumReader<>(schema);
-            GenericData.Record genericRecord=reader.read(null,decoder);
+            Decoder decoder = decoderFactory.jsonDecoder(schema1, json);
+            DatumReader<GenericData.Record> reader = new GenericDatumReader<>(schema);
+            GenericData.Record genericRecord = reader.read(null, decoder);
             return genericRecord;
         } catch (IOException e) {
             LOG.info(e.getMessage());

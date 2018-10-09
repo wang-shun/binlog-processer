@@ -115,7 +115,7 @@ public class Test {
        /*BaseDataCompare dataCompare = new HiveCompareByFile();
        dataCompare.binLogCompare("1538108418904-bin-log.001406", "update");*/
 
-       /* String str = "8761392,18761407,18761396,18761395,18761401,18761404";
+       /* String str = "117360435,117360436,117360437";
         String[] idArr = str.split(",");
         for (int i = 0; i < idArr.length; i++) {
             String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
@@ -126,12 +126,12 @@ public class Test {
 
         HiveDataRepair dataRepair=new HiveDataRepair();
         CheckResult checkResult=new CheckResult();
-        String dbInstance = "172.6.100.26";
-        String dataBase = "credit_audit";
-        String partition = "year=2018/month=9/day=14";
+        String dbInstance = "172.17.100.26";
+        String dataBase = "clientrelationship";
+        String partition = "year=2018/month=10/day=4";
         String partitionType = "create";
-        String tableName = "aud_rule_hit_log";
-        String fileName="1537397631451-bin-log.000796";
+        String tableName = "t_client_relationship_detail";
+        String fileName="1539061844103-bin-log.004813";
 
         checkResult.setDbInstance(dbInstance);
         checkResult.setDataBase(dataBase);

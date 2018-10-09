@@ -40,7 +40,7 @@ public class DBInstanceUtil {
             if (DBINSTANCE_LIST.contains(instanceSeparator)) {
                 instanceIds = Arrays.asList(DBINSTANCE_LIST.split(instanceSeparator));
             } else {
-                LOG.info("the only dbintance id is: " + DBINSTANCE_LIST);
+                LOG.info("the only dbInstance id list is: " + DBINSTANCE_LIST);
                 instanceIds.add(DBINSTANCE_LIST);
             }
         } else {

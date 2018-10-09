@@ -23,12 +23,12 @@ public class ProcessCheck {
     private static final Logger LOG = LoggerFactory.getLogger(ProcessCheck.class);
     private Properties properties = PropertiesUtility.defaultProperties();
     private String dataBase = properties.getProperty("jdbc.database");
-    private String DEST = properties.getProperty("HDFS_PATH");
+    private String dest = properties.getProperty("HDFS_PATH");
     private int interval = Integer.parseInt(properties.getProperty("process.check.interval"));
-    private String TIME_SCALE = properties.getProperty("process.check.time.scale");
-    private long INITIAL_DELAY = Integer.parseInt(properties.getProperty("process.check.schedule.task.initaildelay"));
-    private long THREAD_PERIOD = Integer.parseInt(properties.getProperty("process.check.schedule.task.period"));
-    private int RETRY_TIMES = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
+    private String timeScale = properties.getProperty("process.check.time.scale");
+    private long initialDelay = Integer.parseInt(properties.getProperty("process.check.schedule.task.initaildelay"));
+    private long threadPeriod = Integer.parseInt(properties.getProperty("process.check.schedule.task.period"));
+    private int retryTimes = Integer.parseInt(properties.getProperty("process.check.schedule.task.retry"));
     private List<String> instanceIds = DBInstanceUtil.getAllPrimaryInstanceId();
     private String instanceStr = DBInstanceUtil.getInstancesString(instanceIds);
 
@@ -62,7 +62,7 @@ public class ProcessCheck {
                             .append(TableInfo.RETRY_TIMES)
                             .append(" ")
                             .append("<")
-                            .append(RETRY_TIMES)
+                            .append(retryTimes)
                             .append(" ")
                             .append("and")
                             .append(" ")
@@ -72,7 +72,7 @@ public class ProcessCheck {
                             .append(" ")
                             .append(interval)
                             .append(" ")
-                            .append(TIME_SCALE);
+                            .append(timeScale);
 
                     resultList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql.toString());
                     if (resultList.size() > 0) {
@@ -89,9 +89,9 @@ public class ProcessCheck {
                             if (!IpMatchUtility.isboolIp(instanceId)) {
                                 mysqlURL = DBInstanceUtil.getConnectString((String) oneRecord.get(TableInfo.DB_INSTANCE));
                                 String bakInstanceId = String.valueOf(oneRecord.get(TableInfo.BAK_INSTANCE_ID));
-                                filePath = DEST + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
+                                filePath = dest + File.separator + instanceId + File.separator + bakInstanceId + File.separator + fileName;
                             } else {
-                                filePath = DEST + File.separator + instanceId + File.separator + fileName;
+                                filePath = dest + File.separator + instanceId + File.separator + fileName;
                                 mysqlURL = instanceId;
                             }
                             TaskDispensor.defaultDispensor().dispense(new Binlog(filePath, identity, mysqlURL));
@@ -104,10 +104,10 @@ public class ProcessCheck {
                             whereMap.put(TableInfo.FILE_NAME, fileName);
                             Map<String, Object> valueMap = new HashMap<>(2);
                             valueMap.put(TableInfo.RETRY_TIMES, retryTimes);
-                            Date process_start = TimeUtil.stampToDate(System.currentTimeMillis());
-                            valueMap.put(TableInfo.PROCESS_START, process_start);
+                            Date processStart = TimeUtil.stampToDate(System.currentTimeMillis());
+                            valueMap.put(TableInfo.PROCESS_START, processStart);
                             DBUtil.update(DBServer.DBServerType.MYSQL.toString(), dataBase, TableInfo.BINLOG_PROC_TABLE, valueMap, whereMap);
-                            LOG.info("update t_binlog_process table, set " + fileName + " retry: " + retryTimes + " and process_start: " + process_start);
+                            LOG.info("update t_binlog_process table, set " + fileName + " retry: " + retryTimes + " and process_start: " + processStart);
                         }
                     }
                 } catch (Exception e) {
@@ -121,6 +121,6 @@ public class ProcessCheck {
 
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
         // 第二个参数为首次执行的延时时间，第三个参数为定时执行的间隔时间
-        service.scheduleAtFixedRate(runnable, INITIAL_DELAY, THREAD_PERIOD, TimeUnit.MINUTES);
+        service.scheduleAtFixedRate(runnable, initialDelay, threadPeriod, TimeUnit.MINUTES);
     }
 }
