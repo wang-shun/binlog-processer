@@ -33,11 +33,11 @@ public class HiveDataRepair implements BaseDataRepair {
 
     private String schemaName = "schema";
 
-    private String recordName="record";
+    private String recordName = "record";
 
-    private String rawIpSplit="_";
+    private String rawIpSplit = "_";
 
-    private String replaceIpSplit=".";
+    private String replaceIpSplit = ".";
 
     private String dbInstance;
 
@@ -61,6 +61,7 @@ public class HiveDataRepair implements BaseDataRepair {
         try {
             String binlogProcessLogTable = "t_binlog_process_log";
             List<Map<String, Object>> fileInfos = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), binlogDataBase, binlogProcessLogTable, whereMap);
+
             if (fileInfos != null && fileInfos.size() > 0) {
                 for (Map<String, Object> fileInfo : fileInfos) {
                     dbInstance = String.valueOf(fileInfo.get(CheckTable.DB_INSTANCE)).replaceAll(rawIpSplit, replaceIpSplit);
@@ -85,6 +86,7 @@ public class HiveDataRepair implements BaseDataRepair {
                                             List<GenericData.Record> recordList = operateIdMap.get(operate);
                                             if (recordList != null && recordList.size() > 0) {
                                                 TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, recordList);
+                                                LOG.info("operate type:[" + operate + "] ," + "record number:[" + recordList.size() + "]");
                                             }
                                         }
                                     }
@@ -141,6 +143,7 @@ public class HiveDataRepair implements BaseDataRepair {
                                 Schema schema = (Schema) genericRecordListMap.get(schemaName);
                                 List<GenericData.Record> genericRecordList = (List<GenericData.Record>) genericRecordListMap.get(recordName);
                                 TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, genericRecordList);
+                                LOG.info("operate type:[" + operate + "] ," + "record number:[" + genericRecordList.size() + "]");
                                 BinlogDBHandler.updateCheckedFile(checkTable, fileName, dataBase, tableName, partition, operate, partitionType);
                             } else {
                                 LOG.info("no data record read from the avro file");
