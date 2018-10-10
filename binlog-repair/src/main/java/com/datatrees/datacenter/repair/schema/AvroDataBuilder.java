@@ -64,13 +64,13 @@ public class AvroDataBuilder {
                     .schema()
                     .getTypes()
                     .get(1);
-            LOG.info("origin after schema :" + afterSchema);
+            //LOG.info("origin after schema :" + afterSchema);
 
             Set<String> fieldNameSet = getFieldName(afterSchema);
             String idField = FieldNameOp.getFieldName(fieldNameSet, ID_COLUMN_LIST);
             if (idField != null && !NULL_STRING.equals(idField)) {
                 Schema afterSchemaNew = SchemaConverter.schemaFieldTypeConvert(afterSchema);
-                LOG.info("schema after redefined :" + afterSchemaNew);
+                //LOG.info("schema after redefined :" + afterSchemaNew);
                 Schema opSchema = reader
                         .getSchema()
                         .getField(OP_TAG)
@@ -93,7 +93,7 @@ public class AvroDataBuilder {
                         .noDefault();
 
                 Schema finalSchema = fieldAssembler.endRecord();
-                LOG.info("final schema:" + finalSchema);
+                //LOG.info("final schema:" + finalSchema);
                 return finalSchema;
             }
         } else {
@@ -107,7 +107,6 @@ public class AvroDataBuilder {
         GenericData.Record genericRecord;
         Iterator iterator = reader.iterator();
         Map<String, List<GenericData.Record>> operateRecordMap = new HashMap<>(3);
-        Map<Schema, Map<String, List<GenericData.Record>>> schemaRecordMap = new HashMap<>(1);
         List<GenericData.Record> createRecord = new ArrayList<>();
         List<GenericData.Record> updateRecord = new ArrayList<>();
         List<GenericData.Record> deleteRecord = new ArrayList<>();

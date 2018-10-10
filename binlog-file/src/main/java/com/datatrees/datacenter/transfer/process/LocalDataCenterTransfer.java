@@ -10,14 +10,12 @@ import com.datatrees.datacenter.core.utility.TimeUtil;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.LocalCenterInfo;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
-import com.datatrees.datacenter.transfer.process.thread.ThreadPoolInstance;
+import com.datatrees.datacenter.core.threadpool.ThreadPoolInstance;
 import com.datatrees.datacenter.transfer.utility.DBInstanceUtil;
 import com.datatrees.datacenter.transfer.utility.SshUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.Arrays;

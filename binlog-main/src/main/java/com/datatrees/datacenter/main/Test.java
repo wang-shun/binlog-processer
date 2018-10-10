@@ -113,7 +113,7 @@ public class Test {
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
        /*BaseDataCompare dataCompare = new HiveCompareByFile();
-       dataCompare.binLogCompare("1538108418904-bin-log.001406", "update");*/
+       dataCompare.binLogCompare("1538796979780-bin-log.000239", "create");*/
 
        /* String str = "117360435,117360436,117360437";
         String[] idArr = str.split(",");
@@ -124,14 +124,14 @@ public class Test {
        /* boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
         System.out.println(flag);*/
 
-        HiveDataRepair dataRepair=new HiveDataRepair();
-        CheckResult checkResult=new CheckResult();
+        HiveDataRepair dataRepair = new HiveDataRepair();
+        CheckResult checkResult = new CheckResult();
         String dbInstance = "172.17.100.26";
         String dataBase = "clientrelationship";
         String partition = "year=2018/month=10/day=3";
         String partitionType = "create";
         String tableName = "t_client_associated_data";
-        String fileName="1538537504487-bin-log.004778";
+        String fileName = "1538537504487-bin-log.004778";
 
         checkResult.setDbInstance(dbInstance);
         checkResult.setDataBase(dataBase);
@@ -141,6 +141,6 @@ public class Test {
         checkResult.setFileName(fileName);
 
         //dataRepair.repairByIdList(checkResult,"t_binlog_check_hive");
-        dataRepair.repairByFile(fileName,"create");
+        dataRepair.repairByFile(fileName, "create");
     }
 }

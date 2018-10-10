@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.repair.hive;
 
 
+import com.datatrees.datacenter.core.threadpool.ThreadPoolInstance;
 import com.datatrees.datacenter.core.utility.DBServer;
 import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.core.utility.PropertiesUtility;
@@ -19,8 +20,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
+/**
+ * @author personalc
+ */
 public class HiveDataRepair implements BaseDataRepair {
 
     private static Logger LOG = LoggerFactory.getLogger(HiveDataRepair.class);
@@ -29,16 +34,6 @@ public class HiveDataRepair implements BaseDataRepair {
 
     private String binlogDataBase = properties.getProperty("jdbc.database");
 
-    private static String[] operateArr = {"Create", "Update", "Delete"};
-
-    private String schemaName = "schema";
-
-    private String recordName = "record";
-
-    private String rawIpSplit = "_";
-
-    private String replaceIpSplit = ".";
-
     private String dbInstance;
 
     private String tableName;
@@ -46,6 +41,8 @@ public class HiveDataRepair implements BaseDataRepair {
     private String dataBase;
 
     private String partition;
+
+    private ThreadPoolExecutor executors;
 
 
     @Override
@@ -61,46 +58,28 @@ public class HiveDataRepair implements BaseDataRepair {
         try {
             String binlogProcessLogTable = "t_binlog_process_log";
             List<Map<String, Object>> fileInfos = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), binlogDataBase, binlogProcessLogTable, whereMap);
-
             if (fileInfos != null && fileInfos.size() > 0) {
+                executors = ThreadPoolInstance.getExecutors();
                 for (Map<String, Object> fileInfo : fileInfos) {
-                    dbInstance = String.valueOf(fileInfo.get(CheckTable.DB_INSTANCE)).replaceAll(rawIpSplit, replaceIpSplit);
+                    dbInstance = String.valueOf(fileInfo.get(CheckTable.DB_INSTANCE)).replaceAll("_", ".");
                     dataBase = String.valueOf(fileInfo.get(CheckTable.DATA_BASE));
                     tableName = String.valueOf(fileInfo.get(CheckTable.TABLE_NAME));
                     partition = String.valueOf(fileInfo.get(CheckTable.FILE_PARTITION));
                     String filePath = FileOperate.getFilePath(dataBase, dbInstance, tableName, partition, partitionType, fileName);
-                    // TODO: 2018/10/10
-                    if ("clientrelationship".equals(dataBase)) {
-                        if (partition != null) {
-                            Map<String, String> dateMap = partitionHandler.getDateMap(partition);
-                            String hivePartition = partitionHandler.getHivePartition(dateMap);
-                            List<String> hivePartitions = partitionHandler.getPartitions(dateMap);
-                            InputStream inputStream = FileOperate.getHdfsFileInputStream(filePath);
-                            if (inputStream != null) {
-                                Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, null, null);
-                                if (genericRecordListMap != null) {
-                                    Schema schema = (Schema) genericRecordListMap.get(schemaName);
-                                    Map<String, List<GenericData.Record>> operateIdMap = (Map<String, List<GenericData.Record>>) genericRecordListMap.get(recordName);
-                                    if (operateIdMap != null && operateIdMap.size() > 0) {
-                                        for (String operate : operateArr) {
-                                            List<GenericData.Record> recordList = operateIdMap.get(operate);
-                                            if (recordList != null && recordList.size() > 0) {
-                                                TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, recordList);
-                                                LOG.info("operate type:[" + operate + "] ," + "record number:[" + recordList.size() + "]");
-                                            }
-                                        }
-                                    }
-                                    BinlogDBHandler.updateBinlogProcessLog(binlogProcessLogTable, fileName, dataBase, tableName, partition, partitionType);
-                                } else {
-                                    LOG.info("no data record read from the avro file");
-                                }
-
-                            } else {
-                                LOG.info("can't get the avro file inputStream from HDFS");
-                            }
-                        }
-                    }
+                    System.out.println(filePath);
+                    RepairThread repairThread = new RepairThread(tableName, dataBase, partition, filePath, fileName, partitionType);
+                    executors.submit(repairThread);
                 }
+                executors.shutdown();
+                while (true) {
+                    if (executors.isTerminated()) {
+                        System.out.println("all threads has finished！");
+                        BinlogDBHandler.updateBinlogProcessLog(binlogProcessLogTable, fileName, dataBase, tableName, partition, partitionType);
+                        break;
+                    }
+                    Thread.sleep(1000);
+                }
+
             } else {
                 LOG.info("no avro files find in the database");
             }
@@ -119,12 +98,10 @@ public class HiveDataRepair implements BaseDataRepair {
         String partitionType = checkResult.getPartitionType();
         String fileName = checkResult.getFileName();
 
-        String hivePartition;
-        List<String> hivePartitions;
         if (partition != null) {
             Map<String, String> dateMap = partitionHandler.getDateMap(partition);
-            hivePartition = partitionHandler.getHivePartition(dateMap);
-            hivePartitions = partitionHandler.getPartitions(dateMap);
+            String hivePartition = partitionHandler.getHivePartition(dateMap);
+            List<String> hivePartitions = partitionHandler.getPartitions(dateMap);
 
             String filePath = FileOperate.getFilePath(dataBase, dbInstance, tableName, partition, partitionType, fileName);
             Map<String, List<String>> opIdMap = BinlogDBHandler.getOpreateIdList(checkResult, checkTable);
@@ -140,7 +117,9 @@ public class HiveDataRepair implements BaseDataRepair {
                         if (idList != null && idList.size() > 0) {
                             Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, idList, operate);
                             if (genericRecordListMap != null) {
+                                String schemaName = "schema";
                                 Schema schema = (Schema) genericRecordListMap.get(schemaName);
+                                String recordName = "record";
                                 List<GenericData.Record> genericRecordList = (List<GenericData.Record>) genericRecordListMap.get(recordName);
                                 TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, genericRecordList);
                                 LOG.info("operate type:[" + operate + "] ," + "record number:[" + genericRecordList.size() + "]");
@@ -160,4 +139,5 @@ public class HiveDataRepair implements BaseDataRepair {
             }
         }
     }
+
 }

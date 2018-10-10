@@ -1,5 +1,6 @@
 package com.datatrees.datacenter.transfer.process.thread;
 
+import com.datatrees.datacenter.core.threadpool.ThreadPoolInstance;
 import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.HttpAccessStatus;

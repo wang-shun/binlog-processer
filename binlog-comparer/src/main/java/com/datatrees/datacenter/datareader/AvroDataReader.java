@@ -82,8 +82,6 @@ public class AvroDataReader extends BaseDataReader {
             recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, LAST_UPDATE_COLUMN_LIST);
             LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
             try {
-
-
                 while (iterator.hasNext()) {
                     Object o = iterator.next();
                     GenericRecord r = (GenericRecord) o;
@@ -97,7 +95,6 @@ public class AvroDataReader extends BaseDataReader {
                     if (jsonObject != null) {
                         String id = String.valueOf(jsonObject.get(recordId));
                         String lastUpdateTime = String.valueOf(jsonObject.getLong(recordLastUpdateTime));
-
                         if (id != null && lastUpdateTime != null) {
                             if (!"null".equals(id) && !"null".equals(lastUpdateTime)) {
                                 long timeStamp = Long.parseLong(lastUpdateTime);
