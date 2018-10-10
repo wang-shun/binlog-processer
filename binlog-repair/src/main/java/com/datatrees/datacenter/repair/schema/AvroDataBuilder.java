@@ -2,6 +2,7 @@ package com.datatrees.datacenter.repair.schema;
 
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.table.FieldNameOp;
+import com.sun.tools.javah.Gen;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.file.DataFileStream;
@@ -41,7 +42,9 @@ public class AvroDataBuilder {
                 if (idList != null && idList.size() > 0) {
                     return getGenericRecords(reader, schema, idList, operateType);
                 } else {
-                    LOG.info("id list is null read from database");
+                    if (operateType == null) {
+                        return getGenericRecords(reader, schema);
+                    }
                 }
             } catch (IOException e) {
                 LOG.info("the avro inputStream is null " + e.getMessage());
@@ -100,27 +103,62 @@ public class AvroDataBuilder {
     }
 
     private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, Schema schema) {
+        JSONObject jsonObject;
+        GenericData.Record genericRecord;
         Iterator iterator = reader.iterator();
-        GenericData.Record dataRecord = new GenericData.Record(schema);
-        List<GenericData.Record> genericRecordList = new ArrayList<>();
+        Map<String, List<GenericData.Record>> operateRecordMap = new HashMap<>(3);
+        Map<Schema, Map<String, List<GenericData.Record>>> schemaRecordMap = new HashMap<>(1);
+        List<GenericData.Record> createRecord = new ArrayList<>();
+        List<GenericData.Record> updateRecord = new ArrayList<>();
+        List<GenericData.Record> deleteRecord = new ArrayList<>();
         while (iterator.hasNext()) {
-            GenericRecord genericRecord = (GenericRecord) iterator.next();
-            dataRecord.put(HIVE_AFTER_TAG, genericRecord.get(1));
+            GenericData.Record dataRecord = new GenericData.Record(schema);
+            genericRecord = (GenericData.Record) iterator.next();
+            String operate = genericRecord.get(2).toString();
+            Object genericObj;
+            if (null != genericRecord.get(1)) {
+                genericObj = genericRecord.get(1);
+            } else {
+                genericObj = genericRecord.get(0);
+            }
+
+            jsonObject = JSONObject.parseObject(genericObj.toString());
+            List<Schema.Field> fieldList = genericRecord.getSchema().getField(AFTER_TAG).schema().getTypes().get(1).getFields();
+            jsonObject = jsonDataTypeConvert(jsonObject, fieldList);
+
+            GenericData.Record record = getRecord(schema, jsonObject);
+            String id = jsonObject.get(PRIMARY_KEY).toString();
+
+            dataRecord.put(HIVE_AFTER_TAG, record);
             dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
-            dataRecord.put(KEY_TAG, PRIMARY_KEY.toLowerCase());
-            genericRecordList.add(dataRecord);
+            Schema schema1 = schema.getField(KEY_TAG).schema();
+            GenericData.Record keyRecord = new GenericData.Record(schema1);
+            keyRecord.put(PRIMARY_KEY.toLowerCase(), Long.valueOf(id));
+            dataRecord.put(KEY_TAG, keyRecord);
+            if ("Create".equals(operate)) {
+                createRecord.add(dataRecord);
+            }
+            if ("Update".equals(operate)) {
+                updateRecord.add(dataRecord);
+            }
+            if ("Delete".equals(operate)) {
+                deleteRecord.add(dataRecord);
+            }
         }
+        operateRecordMap.put("Create", createRecord);
+        operateRecordMap.put("Update", updateRecord);
+        operateRecordMap.put("Delete", deleteRecord);
         Map<String, Object> schemaListMap = new HashMap<>(1);
         schemaListMap.put("schema", schema);
-        schemaListMap.put("record", genericRecordList);
+        schemaListMap.put("record", operateRecordMap);
         return schemaListMap;
     }
 
     private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, Schema schema, List<String> idList, String operateType) {
-        Iterator iterator = reader.iterator();
         List<GenericData.Record> genericRecordList = new ArrayList<>();
         JSONObject jsonObject;
         GenericData.Record genericRecord;
+        Iterator iterator = reader.iterator();
         while (iterator.hasNext()) {
             GenericData.Record dataRecord = new GenericData.Record(schema);
             genericRecord = (GenericData.Record) iterator.next();
@@ -135,8 +173,6 @@ public class AvroDataBuilder {
                 jsonObject = JSONObject.parseObject(genericObj.toString());
                 List<Schema.Field> fieldList = genericRecord.getSchema().getField(AFTER_TAG).schema().getTypes().get(1).getFields();
                 jsonObject = jsonDataTypeConvert(jsonObject, fieldList);
-
-                // GenericData.Record recordNew = jsonToAvro(schema.getField("after").schema(), jsonObject.toJSONString());
 
                 GenericData.Record record = getRecord(schema, jsonObject);
                 String id = jsonObject.get(PRIMARY_KEY).toString();
@@ -178,7 +214,6 @@ public class AvroDataBuilder {
             } else {
                 lastFieldType = fieldType;
             }
-            // FIXME: 2018/10/9 可能存在空值的问题
             switch (lastFieldType) {
                 case INT:
                     jsonObject.put(fieldName, (long) jsonObject.getIntValue(field.name()));
@@ -203,20 +238,4 @@ public class AvroDataBuilder {
         fields.forEach(x -> fieldNameSet.add(x.name()));
         return fieldNameSet;
     }
-
-    private static GenericData.Record jsonToAvro(Schema schema, String json) {
-        Schema.Parser parser = new Schema.Parser();
-        Schema schema1 = parser.parse(schema.toString());
-        DecoderFactory decoderFactory = new DecoderFactory();
-        try {
-            Decoder decoder = decoderFactory.jsonDecoder(schema1, json);
-            DatumReader<GenericData.Record> reader = new GenericDatumReader<>(schema);
-            GenericData.Record genericRecord = reader.read(null, decoder);
-            return genericRecord;
-        } catch (IOException e) {
-            LOG.info(e.getMessage());
-            return null;
-        }
-    }
-
 }

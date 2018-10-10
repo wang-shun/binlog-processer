@@ -128,10 +128,10 @@ public class Test {
         CheckResult checkResult=new CheckResult();
         String dbInstance = "172.17.100.26";
         String dataBase = "clientrelationship";
-        String partition = "year=2018/month=10/day=4";
+        String partition = "year=2018/month=10/day=3";
         String partitionType = "create";
-        String tableName = "t_client_relationship_detail";
-        String fileName="1539061844103-bin-log.004813";
+        String tableName = "t_client_associated_data";
+        String fileName="1538537504487-bin-log.004778";
 
         checkResult.setDbInstance(dbInstance);
         checkResult.setDataBase(dataBase);
@@ -140,6 +140,7 @@ public class Test {
         checkResult.setTableName(tableName);
         checkResult.setFileName(fileName);
 
-        dataRepair.repairByIdList(checkResult,"t_binlog_check_hive");
+        //dataRepair.repairByIdList(checkResult,"t_binlog_check_hive");
+        dataRepair.repairByFile(fileName,"create");
     }
 }

@@ -109,9 +109,9 @@ public class HiveCompareByFile extends BaseDataCompare {
         } else {
             updateRecordNoFind = updateRecord;
         }
-        result.setOpType(OperateType.Update.toString());
         LOG.info("the operateType is :[Update]");
         if (updateRecordNoFind != null && updateRecordNoFind.size() > 0) {
+            result.setOpType(OperateType.Update.toString());
             resultInsert(result, updateRecordNoFind);
         } else {
             LOG.info("all the records have find in the Hbase");

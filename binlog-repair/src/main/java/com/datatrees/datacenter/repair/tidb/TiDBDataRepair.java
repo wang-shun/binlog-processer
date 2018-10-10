@@ -62,7 +62,7 @@ public class TiDBDataRepair implements BaseDataRepair {
             List<Map<String, Object>> tableInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), mysqlDataBase, sqlStr);
             if (null != tableInfo && tableInfo.size() > 0) {
                 //先检查表是否存在
-                String tableQuerySql = "SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA='" + this.dataBase + "'" + " and TABLE_NAME ='" + this.tableName + "'";
+                String tableQuerySql = "select * from information_schema.TABLES WHERE TABLE_SCHEMA='" + this.dataBase + "'" + " and TABLE_NAME ='" + this.tableName + "'";
                 List<Map<String, Object>> tableExists = DBUtil.query(DBServer.DBServerType.TIDB.toString(), "information_schema", tableQuerySql);
                 List<Set<Map.Entry<String, Object>>> createList;
                 List<Set<Map.Entry<String, Object>>> updateList;
@@ -117,7 +117,7 @@ public class TiDBDataRepair implements BaseDataRepair {
                     }
                 }
             }
-            Map<String, Object> whereMap = new HashMap<>();
+            Map<String, Object> whereMap = new HashMap<>(5);
             String dbInstance = checkResult.getDbInstance();
             String tableName = checkResult.getTableName();
             String partition = checkResult.getFilePartition();
