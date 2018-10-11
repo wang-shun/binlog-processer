@@ -23,7 +23,7 @@ public class TransactionOperate {
     // FIXME: 2018/10/9 从配置文件中读取
     private static final String METASTORE_URIS = "thrift://hadoop3:9083";
 
-    private static final int TRANSACTION_SIZE = 100000;
+    private static final int TRANSACTION_SIZE = 10000;
 
     public static void repairTransaction(String dataBase, String tableName, String hivePartition, List<String> hivePartitions, String operate, Schema schema, List<GenericData.Record> genericRecordList) {
         List<List<GenericData.Record>> splitList = Lists.partition(genericRecordList, TRANSACTION_SIZE);

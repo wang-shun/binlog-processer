@@ -2,12 +2,18 @@ package com.datatrees.datacenter.main;
 
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.HiveCompareByFile;
+import com.datatrees.datacenter.core.utility.DBServer;
+import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.repair.hive.HiveDataRepair;
 import com.datatrees.datacenter.table.CheckResult;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 public class Test {
     private static Logger LOG = LoggerFactory.getLogger(Test.class);
@@ -113,9 +119,9 @@ public class Test {
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
        /*BaseDataCompare dataCompare = new HiveCompareByFile();
-       dataCompare.binLogCompare("1538796979780-bin-log.000239", "create");*/
+       dataCompare.binLogCompare("1539073528312-bin-log.000318", "create");*/
 
-       /* String str = "117360435,117360436,117360437";
+      /* String str = "3218,3215,3146,3145";
         String[] idArr = str.split(",");
         for (int i = 0; i < idArr.length; i++) {
             String id = GenericRowIdUtils.addIdWithHash(idArr[i]);
@@ -123,24 +129,35 @@ public class Test {
         }*/
        /* boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
         System.out.println(flag);*/
-
         HiveDataRepair dataRepair = new HiveDataRepair();
-        CheckResult checkResult = new CheckResult();
-        String dbInstance = "172.17.100.26";
-        String dataBase = "clientrelationship";
-        String partition = "year=2018/month=10/day=3";
-        String partitionType = "create";
-        String tableName = "t_client_associated_data";
-        String fileName = "1538537504487-bin-log.004778";
+        try {
+            List<Map<String, Object>> dataMapList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", "select db_instance,file_partitions operate_type,file_name from t_binlog_check_hive where database_name='" + "point" + "' and table_name='" + "t_point_channel" + "'");
+            if (dataMapList != null && dataMapList.size() > 0) {
+                for (Map<String, Object> map : dataMapList) {
 
-        checkResult.setDbInstance(dbInstance);
-        checkResult.setDataBase(dataBase);
-        checkResult.setFilePartition(partition);
-        checkResult.setPartitionType(partitionType);
-        checkResult.setTableName(tableName);
-        checkResult.setFileName(fileName);
+                    CheckResult checkResult = new CheckResult();
+                    String dbInstance = (String) map.get("db_instance");
+                    dbInstance = dbInstance.replaceAll("_", ".");
+                    String dataBase = "point";
+                    String partition = (String) map.get("file_partitions");
+                    String partitionType = "create";
+                    String tableName = "t_point_channel";
+                    String fileName = (String) map.get("file_name");
 
-        //dataRepair.repairByIdList(checkResult,"t_binlog_check_hive");
-        dataRepair.repairByFile(fileName, "create");
+                    checkResult.setDbInstance(dbInstance);
+                    checkResult.setDataBase(dataBase);
+                    checkResult.setFilePartition(partition);
+                    checkResult.setPartitionType(partitionType);
+                    checkResult.setTableName(tableName);
+                    checkResult.setFileName(fileName);
+
+                    dataRepair.repairByIdList(checkResult, "t_binlog_check_hive");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        //dataRepair.repairByFile(fileName, "create");
     }
 }

@@ -34,6 +34,12 @@ public class HiveDataRepair implements BaseDataRepair {
 
     private String binlogDataBase = properties.getProperty("jdbc.database");
 
+    private static final String ID_LIST_MAX = PropertiesUtility.defaultProperties().getProperty("ID_LIST_MAX", "1000");
+
+    private String binlogProcessLogTable = "t_binlog_process_log";
+
+    private String binlogRecordTable = "t_binlog_record";
+
     private String dbInstance;
 
     private String tableName;
@@ -46,8 +52,15 @@ public class HiveDataRepair implements BaseDataRepair {
 
 
     @Override
-    public void repairByTime(String dataBase, String tableName, String partition, String type) {
-
+    public void repairByTime(String dataBase, String tableName, String start, String end, String type) {
+        Map<String, Object> whereMap = new HashMap<>();
+        whereMap.put(CheckTable.DATA_BASE, dataBase);
+        whereMap.put(CheckTable.TABLE_NAME, tableName);
+        try {
+            DBUtil.query(DBServer.DBServerType.MYSQL.toString(), binlogDataBase, binlogRecordTable, whereMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -56,19 +69,20 @@ public class HiveDataRepair implements BaseDataRepair {
         whereMap.put(CheckTable.FILE_NAME, fileName);
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
         try {
-            String binlogProcessLogTable = "t_binlog_process_log";
+
             List<Map<String, Object>> fileInfos = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), binlogDataBase, binlogProcessLogTable, whereMap);
             if (fileInfos != null && fileInfos.size() > 0) {
                 executors = ThreadPoolInstance.getExecutors();
                 for (Map<String, Object> fileInfo : fileInfos) {
                     dbInstance = String.valueOf(fileInfo.get(CheckTable.DB_INSTANCE)).replaceAll("_", ".");
                     dataBase = String.valueOf(fileInfo.get(CheckTable.DATA_BASE));
+                    dataBase = "bankbill".equalsIgnoreCase(dataBase) ? "bill" : dataBase;
                     tableName = String.valueOf(fileInfo.get(CheckTable.TABLE_NAME));
                     partition = String.valueOf(fileInfo.get(CheckTable.FILE_PARTITION));
                     String filePath = FileOperate.getFilePath(dataBase, dbInstance, tableName, partition, partitionType, fileName);
                     System.out.println(filePath);
-                    RepairThread repairThread = new RepairThread(tableName, dataBase, partition, filePath, fileName, partitionType);
-                    executors.submit(repairThread);
+                    RepairByFileThread repairByFileThread = new RepairByFileThread(tableName, dataBase, partition, filePath, fileName, partitionType);
+                    executors.submit(repairByFileThread);
                 }
                 executors.shutdown();
                 while (true) {
@@ -92,7 +106,8 @@ public class HiveDataRepair implements BaseDataRepair {
     public void repairByIdList(CheckResult checkResult, String checkTable) {
 
         dataBase = checkResult.getDataBase();
-        dbInstance = checkResult.getDbInstance();
+        dataBase = "bankbill".equalsIgnoreCase(dataBase) ? "bill" : dataBase;
+        dbInstance = checkResult.getDbInstance().replaceAll("_", ".");
         tableName = checkResult.getTableName();
         partition = checkResult.getFilePartition();
         String partitionType = checkResult.getPartitionType();
@@ -107,20 +122,18 @@ public class HiveDataRepair implements BaseDataRepair {
             Map<String, List<String>> opIdMap = BinlogDBHandler.getOpreateIdList(checkResult, checkTable);
 
             if (opIdMap != null && opIdMap.size() > 0) {
-                InputStream inputStream = FileOperate.getHdfsFileInputStream(filePath);
-                if (inputStream != null) {
-                    Iterator iterator = opIdMap.entrySet().iterator();
-                    while (iterator.hasNext()) {
-                        Map.Entry entry = (Map.Entry) iterator.next();
-                        String operate = String.valueOf(entry.getKey());
-                        List<String> idList = (List<String>) entry.getValue();
-                        if (idList != null && idList.size() > 0) {
+                InputStream inputStream ;
+                for (Object o : opIdMap.entrySet()) {
+                    Map.Entry entry = (Map.Entry) o;
+                    String operate = String.valueOf(entry.getKey());
+                    List<String> idList = (List<String>) entry.getValue();
+                    if (idList != null && idList.size() > 0) {
+                        if (idList.size() < Integer.parseInt(ID_LIST_MAX)) {
+                            inputStream=FileOperate.getHdfsFileInputStream(filePath);
                             Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, idList, operate);
                             if (genericRecordListMap != null) {
-                                String schemaName = "schema";
-                                Schema schema = (Schema) genericRecordListMap.get(schemaName);
-                                String recordName = "record";
-                                List<GenericData.Record> genericRecordList = (List<GenericData.Record>) genericRecordListMap.get(recordName);
+                                Schema schema = (Schema) genericRecordListMap.get("schema");
+                                List<GenericData.Record> genericRecordList = (List<GenericData.Record>) genericRecordListMap.get("record");
                                 TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, genericRecordList);
                                 LOG.info("operate type:[" + operate + "] ," + "record number:[" + genericRecordList.size() + "]");
                                 BinlogDBHandler.updateCheckedFile(checkTable, fileName, dataBase, tableName, partition, operate, partitionType);
@@ -128,16 +141,31 @@ public class HiveDataRepair implements BaseDataRepair {
                                 LOG.info("no data record read from the avro file");
                             }
                         } else {
-                            LOG.info("no id find of operate :" + operate);
+                            inputStream=FileOperate.getHdfsFileInputStream(filePath);
+                            Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, null, null);
+                            if (genericRecordListMap != null) {
+                                Schema schema = (Schema) genericRecordListMap.get("schema");
+                                Map<String, List<GenericData.Record>> operateIdMap = (Map<String, List<GenericData.Record>>) genericRecordListMap.get("record");
+                                if (operateIdMap != null && operateIdMap.size() > 0) {
+                                    List<GenericData.Record> recordList = operateIdMap.get(operate);
+                                    if (recordList != null && recordList.size() > 0) {
+                                        TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, recordList);
+                                        LOG.info("operate type:[" + operate + "] ," + "record number:[" + recordList.size() + "]");
+                                    }
+                                }
+                            } else {
+                                LOG.info("no data record read from the avro file");
+                            }
                         }
+                    } else {
+                        LOG.info("no id list find from database ");
                     }
-                } else {
-                    LOG.info("can't get the avro file inputStream from HDFS");
                 }
             } else {
-                LOG.info("no id list find from the database");
+                LOG.info("can't get the avro file inputStream from HDFS");
             }
+        } else {
+            LOG.info("no id list find from the database");
         }
     }
-
 }
