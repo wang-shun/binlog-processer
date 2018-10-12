@@ -1,5 +1,8 @@
 package com.datatrees.datacenter.resolver;
 
+import static com.datatrees.datacenter.core.utility.DBUtil.delete;
+import static com.datatrees.datacenter.core.utility.DBUtil.insert;
+import static com.datatrees.datacenter.core.utility.DBUtil.insertAll;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
@@ -81,25 +84,24 @@ public class DBbiz {
   public static void updateLog(String file, HashMap<String, WriteResultValue> valueHashMap) {
 
     try {
-      DBUtil.delete(DBType, dataBase, "t_binlog_process_log", ImmutableMap.<String, Object>builder()
+      delete(DBType, dataBase, "t_binlog_process_log", ImmutableMap.<String, Object>builder()
         .put("file_name", file).build());
     } catch (SQLException e) {
       logger.error(e.getMessage(), e);
     }
     try {
-      DBUtil
-        .insertAll(DBType, dataBase, "t_binlog_process_log",
-          newArrayList(valueHashMap.entrySet().iterator()).stream()
-            .map(r -> ImmutableMap.<String, Object>builder().put("file_name", file)
-              .put("type", r.getKey().split("\\.")[0])
-              .put("db_instance", r.getKey().split("\\.")[1])
-              .put("database_name", r.getKey().split("\\.")[2])
-              .put("table_name", r.getKey().split("\\.")[3])
-              .put("file_partitions", r.getKey().split("\\.")[4])
-              .put("insert_cnt", r.getValue().getInsert().intValue())
-              .put("update_cnt", r.getValue().getUpdate().intValue())
-              .put("delete_cnt", r.getValue().getDelete().intValue()).build()
-            ).collect(toList()));
+      insertAll(DBType, dataBase, "t_binlog_process_log",
+        newArrayList(valueHashMap.entrySet().iterator()).stream()
+          .map(r -> ImmutableMap.<String, Object>builder().put("file_name", file)
+            .put("type", r.getKey().split("\\.")[0])
+            .put("db_instance", r.getKey().split("\\.")[1])
+            .put("database_name", r.getKey().split("\\.")[2])
+            .put("table_name", r.getKey().split("\\.")[3])
+            .put("file_partitions", r.getKey().split("\\.")[4])
+            .put("insert_cnt", r.getValue().getInsert().intValue())
+            .put("update_cnt", r.getValue().getUpdate().intValue())
+            .put("delete_cnt", r.getValue().getDelete().intValue()).build()
+          ).collect(toList()));
     } catch (SQLException e) {
       logger.error(e.getMessage(), e);
     }
@@ -114,8 +116,8 @@ public class DBbiz {
           .put("table_name", v.getKey().split("\\.")[2])
           .put("file_partitions", v.getKey().split("\\.")[3])
           .put("avrofile", v.getValue()).build();
-        DBUtil.delete(DBType, dataBase, "t_binlog_partitions", parameters);
-        DBUtil.insert(DBType, dataBase, "t_binlog_partitions", parameters);
+        delete(DBType, dataBase, "t_binlog_partitions", parameters);
+        insert(DBType, dataBase, "t_binlog_partitions", parameters);
       } catch (Exception e) {
         logger.error(String
           .format("error to updatePartitions for %s because of %s", v.getKey().split("\\.")[2],
@@ -128,7 +130,7 @@ public class DBbiz {
     int mps, int sap,
     int sql) {
     try {
-      DBUtil.insert(DBType, dataBase, "t_binlog_process_report",
+      insert(DBType, dataBase, "t_binlog_process_report",
         ImmutableMap.<String, Object>builder()
           .put("topic", topic == null ? "null" : topic)
           .put("local_queue_size", lqs)
@@ -208,7 +210,7 @@ public class DBbiz {
 
   public static void updateUnresolvedTempfile(Set<String> filenames) {
     try {
-      DBUtil.delete(DBType, dataBase, "t_binlog_unresolved_temp_file",
+      delete(DBType, dataBase, "t_binlog_unresolved_temp_file",
         ImmutableMap.<String, Object>builder()
           .put("server_type", PropertiesUtility.defaultProperties().getProperty("SERVER_TYPE"))
           .put("server_ip", IPUtility.ipAddress())
@@ -217,14 +219,97 @@ public class DBbiz {
       logger.error(e.getMessage(), e);
     }
     try {
-      DBUtil
-        .insertAll(DBType, dataBase, "t_binlog_unresolved_temp_file",
-          filenames.stream()
-            .map(r -> ImmutableMap.<String, Object>builder()
-              .put("file_name", r)
-              .put("server_type", PropertiesUtility.defaultProperties().getProperty("SERVER_TYPE"))
-              .put("server_ip", IPUtility.ipAddress()).build()
-            ).collect(toList()));
+      insertAll(DBType, dataBase, "t_binlog_unresolved_temp_file",
+        filenames.stream()
+          .map(r -> ImmutableMap.<String, Object>builder()
+            .put("file_name", r)
+            .put("server_type", PropertiesUtility.defaultProperties().getProperty("SERVER_TYPE"))
+            .put("server_ip", IPUtility.ipAddress()).build()
+          ).collect(toList()));
+    } catch (SQLException e) {
+      logger.error(e.getMessage(), e);
+    }
+  }
+
+  public static void updateCorruptFiles(String filePartition, List<String> corruptFiles) {
+    try {
+      delete(DBType, dataBase, "t_binlog_corrupt_file",
+        ImmutableMap.<String, Object>builder().put("file_partition", filePartition)
+          .build());
+    } catch (SQLException e) {
+      logger.error(e.getMessage(), e);
+    }
+    try {
+      insertAll(DBType, dataBase, "t_binlog_corrupt_file",
+        corruptFiles.stream()
+          .map(r -> ImmutableMap.<String, Object>builder().put("file_partition", filePartition)
+            .put("file_name", r).build()
+          ).collect(toList()));
+    } catch (SQLException e) {
+      logger.error(e.getMessage(), e);
+    }
+  }
+
+  public static void updateRepairCorruptFilesLog(Boolean flag, String name, String dir,
+    String fileName,
+    String tmpFileName,
+    int corrupt,
+    Object numBlocks,
+    Object numCorruptBlocks, Object numRecords, Object numCorruptRecords) {
+    try {
+      if (flag) {
+        delete(DBType, dataBase, "t_binlog_corrupt_file_repair_log",
+          ImmutableMap.<String, Object>builder().put("file_name", fileName)
+            .build());
+        insert(DBType, dataBase, "t_binlog_corrupt_file_repair_log",
+          ImmutableMap.<String, Object>builder().put("file_name", fileName).put("name", name)
+            .put("dir", dir)
+            .put("tmp_file_name", tmpFileName).build());
+      } else {
+        DBUtil.update(DBType, dataBase, "t_binlog_corrupt_file_repair_log",
+          ImmutableMap.<String, Object>builder()
+            .put("corrupt", corrupt)
+            .put("numBlocks", numBlocks)
+            .put("numCorruptBlocks", numCorruptBlocks)
+            .put("numRecords", numRecords)
+            .put("numCorruptRecords", numCorruptRecords)
+            .build(),
+          ImmutableMap.<String, Object>builder().put("file_name", fileName).build()
+        );
+      }
+    } catch (SQLException e) {
+      logger.error(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * 获取损坏且未修复的文件
+   */
+  public static List<Map<String, Object>> corruptFiles() {
+    try {
+      List<Map<String, Object>> corruptFiles = DBUtil
+        .query(DBServer.DBServerType.MYSQL.toString(), dataBase,
+          "select distinct "
+            + "name,dir,"
+            + "file_name,"
+            + "tmp_file_name,"
+            + "corrupt,"
+            + "repaired from t_binlog_corrupt_file_repair_log where repaired=0");
+      return corruptFiles;
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
+    return null;
+  }
+
+  public static void updateCorruptFileRepair(String file, String dir, int repaired) {
+    try {
+      DBUtil.update(DBType, dataBase, "t_binlog_corrupt_file_repair_log",
+        ImmutableMap.<String, Object>builder()
+          .put("repaired", repaired)
+          .build(),
+        ImmutableMap.<String, Object>builder().put("file_name", file).put("dir", dir).build()
+      );
     } catch (SQLException e) {
       logger.error(e.getMessage(), e);
     }
