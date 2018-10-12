@@ -27,8 +27,15 @@ public class TiDBDataRepair implements BaseDataRepair {
     private String partition;
 
     @Override
-    public void repairByTime(String dataBase, String tableName, String partition, String partitionType) {
-        List<Map<String, Object>> specifiedDateTable = BaseDataCompare.getSpecifiedDateTableInfo(dataBase, tableName, partition, partitionType);
+    public void repairByTime(String dataBase, String tableName, String start, String end ,String partitionType) {
+       String sql="select file_name from t_binlog_record where request_end<'"+end+"'"+" and request_end >'"+start+"'";
+        List<Map<String, Object>> specifiedDateTable = null;
+        try {
+            specifiedDateTable = DBUtil.query(DBServer.DBServerType.MYSQL.toString(),dataBase,sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // TODO: 2018/10/10 需要修改
         if (specifiedDateTable != null && specifiedDateTable.size() > 0) {
             for (Map<String, Object> fileMap : specifiedDateTable) {
                 String[] files = String.valueOf(fileMap.get("files")).split(",");

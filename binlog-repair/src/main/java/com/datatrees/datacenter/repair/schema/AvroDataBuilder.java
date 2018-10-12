@@ -2,17 +2,12 @@ package com.datatrees.datacenter.repair.schema;
 
 import com.alibaba.fastjson.JSONObject;
 import com.datatrees.datacenter.table.FieldNameOp;
-import com.sun.tools.javah.Gen;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.Decoder;
-import org.apache.avro.io.DecoderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +15,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+/**
+ * @author personalc
+ */
 public class AvroDataBuilder {
     private static Logger LOG = LoggerFactory.getLogger(AvroDataBuilder.class);
 
@@ -43,7 +41,7 @@ public class AvroDataBuilder {
                     return getGenericRecords(reader, schema, idList, operateType);
                 } else {
                     if (operateType == null) {
-                        return getGenericRecords(reader, schema);
+                        return getGenericRecords(reader, schema, operateType);
                     }
                 }
             } catch (IOException e) {
@@ -64,13 +62,12 @@ public class AvroDataBuilder {
                     .schema()
                     .getTypes()
                     .get(1);
-            //LOG.info("origin after schema :" + afterSchema);
-
+            LOG.info("origin after schema :" + afterSchema);
             Set<String> fieldNameSet = getFieldName(afterSchema);
             String idField = FieldNameOp.getFieldName(fieldNameSet, ID_COLUMN_LIST);
             if (idField != null && !NULL_STRING.equals(idField)) {
                 Schema afterSchemaNew = SchemaConverter.schemaFieldTypeConvert(afterSchema);
-                //LOG.info("schema after redefined :" + afterSchemaNew);
+                LOG.info("schema after redefined :" + afterSchemaNew);
                 Schema opSchema = reader
                         .getSchema()
                         .getField(OP_TAG)
@@ -91,9 +88,8 @@ public class AvroDataBuilder {
                         .type(Schema.create(Schema.Type.LONG))
                         .noDefault().endRecord())
                         .noDefault();
-
                 Schema finalSchema = fieldAssembler.endRecord();
-                //LOG.info("final schema:" + finalSchema);
+                LOG.info("final schema:" + finalSchema);
                 return finalSchema;
             }
         } else {
@@ -102,46 +98,75 @@ public class AvroDataBuilder {
         return null;
     }
 
-    private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, Schema schema) {
-        JSONObject jsonObject;
+    private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, Schema schema, String operateType) {
         GenericData.Record genericRecord;
         Iterator iterator = reader.iterator();
+        Schema oldSchema = reader.getSchema().getField(AFTER_TAG).schema().getTypes().get(1);
+        //List<Schema.Field> fieldList = reader.getSchema().getField(AFTER_TAG).schema().getTypes().get(1).getFields();
         Map<String, List<GenericData.Record>> operateRecordMap = new HashMap<>(3);
         List<GenericData.Record> createRecord = new ArrayList<>();
         List<GenericData.Record> updateRecord = new ArrayList<>();
         List<GenericData.Record> deleteRecord = new ArrayList<>();
-        while (iterator.hasNext()) {
-            GenericData.Record dataRecord = new GenericData.Record(schema);
-            genericRecord = (GenericData.Record) iterator.next();
-            String operate = genericRecord.get(2).toString();
-            Object genericObj;
-            if (null != genericRecord.get(1)) {
-                genericObj = genericRecord.get(1);
-            } else {
-                genericObj = genericRecord.get(0);
+        if (operateType == null || "".equals(operateType)) {
+            while (iterator.hasNext()) {
+                GenericData.Record dataRecord = new GenericData.Record(schema);
+                genericRecord = (GenericData.Record) iterator.next();
+                String operate = genericRecord.get(2).toString();
+                GenericData.Record genericObj;
+                if (null != genericRecord.get(1)) {
+                    genericObj = (GenericData.Record) genericRecord.get(1);
+                } else {
+                    genericObj = (GenericData.Record) genericRecord.get(0);
+                }
+                GenericData.Record record = recordConvert(oldSchema, schema, genericObj);
+                String id = genericObj.get("Id").toString();
+                dataRecord.put(HIVE_AFTER_TAG, record);
+                dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
+                Schema keySchema = schema.getField(KEY_TAG).schema();
+                GenericData.Record keyRecord = new GenericData.Record(keySchema);
+                keyRecord.put(PRIMARY_KEY.toLowerCase(), Long.valueOf(id));
+                dataRecord.put(KEY_TAG, keyRecord);
+                if ("Create".equals(operate)) {
+                    createRecord.add(dataRecord);
+                }
+                if ("Update".equals(operate)) {
+                    updateRecord.add(dataRecord);
+                }
+                if ("Delete".equals(operate)) {
+                    deleteRecord.add(dataRecord);
+                }
             }
-
-            jsonObject = JSONObject.parseObject(genericObj.toString());
-            List<Schema.Field> fieldList = genericRecord.getSchema().getField(AFTER_TAG).schema().getTypes().get(1).getFields();
-            jsonObject = jsonDataTypeConvert(jsonObject, fieldList);
-
-            GenericData.Record record = getRecord(schema, jsonObject);
-            String id = jsonObject.get(PRIMARY_KEY).toString();
-
-            dataRecord.put(HIVE_AFTER_TAG, record);
-            dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
-            Schema schema1 = schema.getField(KEY_TAG).schema();
-            GenericData.Record keyRecord = new GenericData.Record(schema1);
-            keyRecord.put(PRIMARY_KEY.toLowerCase(), Long.valueOf(id));
-            dataRecord.put(KEY_TAG, keyRecord);
-            if ("Create".equals(operate)) {
-                createRecord.add(dataRecord);
-            }
-            if ("Update".equals(operate)) {
-                updateRecord.add(dataRecord);
-            }
-            if ("Delete".equals(operate)) {
-                deleteRecord.add(dataRecord);
+        } else {
+            while (iterator.hasNext()) {
+                GenericData.Record dataRecord = new GenericData.Record(schema);
+                genericRecord = (GenericData.Record) iterator.next();
+                String operate = genericRecord.get(2).toString();
+                if (operateType.equalsIgnoreCase(operate)) {
+                    GenericData.Record genericObj;
+                    if (null != genericRecord.get(1)) {
+                        genericObj = (GenericData.Record) genericRecord.get(1);
+                    } else {
+                        genericObj = (GenericData.Record) genericRecord.get(0);
+                    }
+                    GenericData.Record record = recordConvert(oldSchema, schema, genericObj);
+                    String id = genericObj.get("Id").toString();
+                    dataRecord.put(HIVE_AFTER_TAG, record);
+                    dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
+                    Schema keySchema = schema.getField(KEY_TAG).schema();
+                    GenericData.Record keyRecord = new GenericData.Record(keySchema);
+                    keyRecord.put(PRIMARY_KEY.toLowerCase(), Long.valueOf(id));
+                    dataRecord.put(KEY_TAG, keyRecord);
+                    LOG.info(dataRecord.toString());
+                    if ("Create".equals(operate)) {
+                        createRecord.add(dataRecord);
+                    }
+                    if ("Update".equals(operate)) {
+                        updateRecord.add(dataRecord);
+                    }
+                    if ("Delete".equals(operate)) {
+                        deleteRecord.add(dataRecord);
+                    }
+                }
             }
         }
         operateRecordMap.put("Create", createRecord);
@@ -155,31 +180,28 @@ public class AvroDataBuilder {
 
     private static Map<String, Object> getGenericRecords(DataFileStream<Object> reader, Schema schema, List<String> idList, String operateType) {
         List<GenericData.Record> genericRecordList = new ArrayList<>();
-        JSONObject jsonObject;
         GenericData.Record genericRecord;
+        Schema oldSchema = reader.getSchema().getField(AFTER_TAG).schema().getTypes().get(1);
         Iterator iterator = reader.iterator();
         while (iterator.hasNext()) {
             GenericData.Record dataRecord = new GenericData.Record(schema);
             genericRecord = (GenericData.Record) iterator.next();
             String operate = genericRecord.get(2).toString();
-            Object genericObj;
+            GenericData.Record genericObj;
             if (operateType.equals(operate)) {
                 if (null != genericRecord.get(1)) {
-                    genericObj = genericRecord.get(1);
+                    genericObj = (GenericData.Record) genericRecord.get(1);
                 } else {
-                    genericObj = genericRecord.get(0);
+                    genericObj = (GenericData.Record) genericRecord.get(0);
                 }
-                jsonObject = JSONObject.parseObject(genericObj.toString());
-                List<Schema.Field> fieldList = genericRecord.getSchema().getField(AFTER_TAG).schema().getTypes().get(1).getFields();
-                jsonObject = jsonDataTypeConvert(jsonObject, fieldList);
-
-                GenericData.Record record = getRecord(schema, jsonObject);
-                String id = jsonObject.get(PRIMARY_KEY).toString();
+                GenericData.Record record = recordConvert(oldSchema, schema, genericObj);
+                // TODO: 2018/10/11  
+                String id = genericObj.get("Id").toString();
                 if (idList.contains(id)) {
                     dataRecord.put(HIVE_AFTER_TAG, record);
                     dataRecord.put(OP_TAG, genericRecord.get(2).toString().substring(0, 1).toLowerCase());
-                    Schema schema1 = schema.getField(KEY_TAG).schema();
-                    GenericData.Record keyRecord = new GenericData.Record(schema1);
+                    Schema keySchema = schema.getField(KEY_TAG).schema();
+                    GenericData.Record keyRecord = new GenericData.Record(keySchema);
                     keyRecord.put(PRIMARY_KEY.toLowerCase(), Long.valueOf(id));
                     dataRecord.put(KEY_TAG, keyRecord);
                     genericRecordList.add(dataRecord);
@@ -193,19 +215,10 @@ public class AvroDataBuilder {
         return schemaListMap;
     }
 
-    private static GenericData.Record getRecord(Schema schema, JSONObject jsonObject) {
-        Schema afterSchema = schema.getField(HIVE_AFTER_TAG).schema();
-        GenericRecordBuilder builder = new GenericRecordBuilder(afterSchema);
-        List<Schema.Field> afterFieldList = afterSchema.getFields();
+    private static GenericData.Record recordConvert(Schema oldSchema, Schema newSchema, GenericData.Record record) {
+        GenericRecordBuilder builder = new GenericRecordBuilder(newSchema.getField(HIVE_AFTER_TAG).schema());
+        List<Schema.Field> afterFieldList = oldSchema.getFields();
         for (Schema.Field field : afterFieldList) {
-            builder.set(field.name(), jsonObject.get(field.name()));
-        }
-        return builder.build();
-    }
-
-    private static JSONObject jsonDataTypeConvert(JSONObject jsonObject, List<Schema.Field> fieldList) {
-        for (Schema.Field field : fieldList) {
-            String fieldName = field.name().toLowerCase();
             Schema.Type fieldType = field.schema().getType();
             Schema.Type lastFieldType;
             if (AVRO_UNION_TYPE.equalsIgnoreCase(fieldType.getName())) {
@@ -213,22 +226,40 @@ public class AvroDataBuilder {
             } else {
                 lastFieldType = fieldType;
             }
+            Object obj = record.get(field.name());
             switch (lastFieldType) {
                 case INT:
-                    jsonObject.put(fieldName, (long) jsonObject.getIntValue(field.name()));
+                    if (null != obj) {
+                        builder.set(field.name().toLowerCase(), Long.valueOf((Integer) obj));
+                    } else {
+                        builder.set(field.name().toLowerCase(), 0L);
+                    }
                     break;
                 case FLOAT:
-                    jsonObject.put(fieldName, (double) jsonObject.getFloatValue(field.name()));
+                    if (null != obj) {
+                        builder.set(field.name().toLowerCase(), Double.valueOf((Float) obj));
+                    } else {
+                        builder.set(field.name().toLowerCase(), 0);
+                    }
                     break;
                 case BYTES:
-                    jsonObject.put(fieldName, Arrays.toString(jsonObject.getBytes(field.name())));
+                    if (null != obj) {
+                        builder.set(field.name().toLowerCase(), String.valueOf(record.get(field.name())));
+                    } else {
+                        builder.set(field.name().toLowerCase(), null);
+                    }
                     break;
                 default:
-                    jsonObject.put(fieldName, jsonObject.get(field.name()));
+                    if (null != obj) {
+                        builder.set(field.name().toLowerCase(), record.get(field.name()));
+                    } else {
+                        builder.set(field.name().toLowerCase(), null);
+                    }
                     break;
             }
         }
-        return jsonObject;
+        GenericData.Record lastRecord = builder.build();
+        return lastRecord;
     }
 
     private static Set<String> getFieldName(Schema schema) {

@@ -4,7 +4,7 @@ import com.datatrees.datacenter.table.CheckResult;
 
 public interface BaseDataRepair {
 
-    void repairByTime(String dataBase, String tableName, String partition, String partitionType);
+    void repairByTime(String dataBase, String tableName, String start,String end, String partitionType);
 
 
     void repairByFile(String fileName, String partitionType);

@@ -1,6 +1,5 @@
 package com.datatrees.datacenter.repair.hive;
 
-import com.datatrees.datacenter.repair.dbhandler.BinlogDBHandler;
 import com.datatrees.datacenter.repair.filehandler.FileOperate;
 import com.datatrees.datacenter.repair.partitions.partitionHandler;
 import com.datatrees.datacenter.repair.schema.AvroDataBuilder;
@@ -14,12 +13,12 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
-public class RepairThread implements Runnable {
+/**
+ * @author personalc
+ */
+public class RepairByFileThread implements Runnable {
 
     private static Logger LOG = LoggerFactory.getLogger(HiveDataRepair.class);
-
-    private String binlogProcessLogTable = "t_binlog_process_log";
-
     private static String[] operateArr = {"Create", "Update", "Delete"};
 
     private String tableName;
@@ -37,36 +36,36 @@ public class RepairThread implements Runnable {
 
     @Override
     public void run() {
-        //if ("clientrelationship".equals(dataBase)) {
-        if (partition != null) {
-            Map<String, String> dateMap = partitionHandler.getDateMap(partition);
-            String hivePartition = partitionHandler.getHivePartition(dateMap);
-            List<String> hivePartitions = partitionHandler.getPartitions(dateMap);
-            InputStream inputStream = FileOperate.getHdfsFileInputStream(filePath);
-            if (inputStream != null) {
-                Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, null, null);
-                if (genericRecordListMap != null) {
-                    Schema schema = (Schema) genericRecordListMap.get("schema");
-                    Map<String, List<GenericData.Record>> operateIdMap = (Map<String, List<GenericData.Record>>) genericRecordListMap.get("record");
-                    if (operateIdMap != null && operateIdMap.size() > 0) {
-                        for (int i = 0; i < operateArr.length; i++) {
-                            String operate = operateArr[i];
-                            List<GenericData.Record> recordList = operateIdMap.get(operate);
-                            if (recordList != null && recordList.size() > 0) {
-                                TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, recordList);
-                                LOG.info("operate type:[" + operate + "] ," + "record number:[" + recordList.size() + "]");
+        if ("clientrelationship".equals(dataBase)) {
+            if (partition != null) {
+                Map<String, String> dateMap = partitionHandler.getDateMap(partition);
+                String hivePartition = partitionHandler.getHivePartition(dateMap);
+                List<String> hivePartitions = partitionHandler.getPartitions(dateMap);
+                InputStream inputStream = FileOperate.getHdfsFileInputStream(filePath);
+                if (inputStream != null) {
+                    Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, null, null);
+                    if (genericRecordListMap != null) {
+                        Schema schema = (Schema) genericRecordListMap.get("schema");
+                        Map<String, List<GenericData.Record>> operateIdMap = (Map<String, List<GenericData.Record>>) genericRecordListMap.get("record");
+                        if (operateIdMap != null && operateIdMap.size() > 0) {
+                            for (int i = 0; i < operateArr.length; i++) {
+                                String operate = operateArr[i];
+                                List<GenericData.Record> recordList = operateIdMap.get(operate);
+                                if (recordList != null && recordList.size() > 0) {
+                                    TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, recordList);
+                                    LOG.info("operate type:[" + operate + "] ," + "record number:[" + recordList.size() + "]");
+                                }
                             }
                         }
+                    } else {
+                        LOG.info("no data record read from the avro file");
                     }
-                } else {
-                    LOG.info("no data record read from the avro file");
-                }
 
-            } else {
-                LOG.info("can't get the avro file inputStream from HDFS");
+                } else {
+                    LOG.info("can't get the avro file inputStream from HDFS");
+                }
             }
         }
-        // }
     }
 
     public String getTableName() {
@@ -117,7 +116,7 @@ public class RepairThread implements Runnable {
         this.partitionType = partitionType;
     }
 
-    public RepairThread(String tableName, String dataBase, String partition, String filePath, String fileName, String partitionType) {
+    public RepairByFileThread(String tableName, String dataBase, String partition, String filePath, String fileName, String partitionType) {
         this.tableName = tableName;
         this.dataBase = dataBase;
         this.partition = partition;

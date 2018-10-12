@@ -22,20 +22,20 @@ class SchemaConverter {
             type = field.schema().getType();
             switch (type) {
                 case INT:
-                    afterFieldAssembler.name(fieldName).type(Schema.create(Schema.Type.LONG)).noDefault();
+                    afterFieldAssembler.name(fieldName).type(Schema.create(Schema.Type.LONG)).withDefault(field.defaultVal());
                     break;
                 case FLOAT:
-                    afterFieldAssembler.name(fieldName).type(Schema.create(Schema.Type.DOUBLE)).noDefault();
+                    afterFieldAssembler.name(fieldName).type(Schema.create(Schema.Type.DOUBLE)).withDefault(field.defaultVal());
                     break;
                 case BYTES:
-                    afterFieldAssembler.name(fieldName).type(Schema.create(Schema.Type.STRING)).noDefault();
+                    afterFieldAssembler.name(fieldName).type(Schema.create(Schema.Type.STRING)).withDefault(field.defaultVal());
                     break;
                 case UNION:
                     List<Schema> typesNew = convertUnionSchemas(field);
-                    afterFieldAssembler.name(fieldName).type(Schema.createUnion(typesNew)).noDefault();
+                    afterFieldAssembler.name(fieldName).type(Schema.createUnion(typesNew)).withDefault(field.defaultVal());
                     break;
                 default:
-                    afterFieldAssembler.name(fieldName).type(field.schema()).noDefault();
+                    afterFieldAssembler.name(fieldName).type(field.schema()).withDefault(field.defaultVal());
             }
         }
         newSchema = afterFieldAssembler.endRecord();

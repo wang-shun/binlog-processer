@@ -83,8 +83,6 @@ public abstract class BaseDataCompare implements DataCheck {
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
         StringBuilder whereExpress = StringBuilderUtil.getStringBuilder(whereMap);
         try {
-          /*  String maxLen = "SET GLOBAL group_concat_max_len = 102400";
-            DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, maxLen);*/
             String sql = "select db_instance,database_name,table_name,GROUP_CONCAT(file_name) as files,file_partitions from " + processLogTable + " " + whereExpress.toString() + " group by database_name,table_name,file_partitions";
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
         } catch (Exception e) {
