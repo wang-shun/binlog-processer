@@ -24,8 +24,12 @@ public class HiveCheckTimeSpanTask {
             List<String> fileNames = new ArrayList<>();
             fileList.forEach(x -> fileNames.add(x.get("file_name").toString()));
             HiveCompareByFile hiveCompareByFile = new HiveCompareByFile();
-            //fileNames.parallelStream().forEach(x -> hiveCompareByFile.binLogCompare(x, "create"));
-            fileNames.parallelStream().forEach(x -> hiveCompareByFile.specialCompare(x, "create","loandb"));
+            if(args.length==3)
+            {
+                fileNames.parallelStream().forEach(x -> hiveCompareByFile.specialCompare(x, "create",args[2]));
+            }else{
+                fileNames.parallelStream().forEach(x -> hiveCompareByFile.binLogCompare(x, "create"));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

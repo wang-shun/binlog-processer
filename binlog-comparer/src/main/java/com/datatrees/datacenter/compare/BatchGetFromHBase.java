@@ -1,7 +1,8 @@
-package com.datatrees.datacenter.utility;
+package com.datatrees.datacenter.compare;
 
 import avro.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.datatrees.datacenter.table.HBaseTableInfo;
+import com.datatrees.datacenter.utility.HBaseHelper;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
