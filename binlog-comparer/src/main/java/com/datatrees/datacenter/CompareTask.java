@@ -20,11 +20,6 @@ public class CompareTask implements TaskRunner {
                         new TaskProcessorListner() {
                             @Override
                             public void onMessageReceived(String desc) {
-                               /* BaseDataCompare TiDBCompare = new TiDBCompareByFile();
-                                LOG.info("start TiDB check...");
-                                TiDBCompare.binLogCompare(desc, "update");
-                                LOG.info("TiDB check finished");*/
-
                                 BaseDataCompare hiveCompare = new HiveCompareByFile();
                                 LOG.info("start Hive check...");
                                 hiveCompare.binLogCompare(desc, partitionType);

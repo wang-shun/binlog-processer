@@ -6,6 +6,7 @@ import com.datatrees.datacenter.datareader.AvroDataReader;
 import com.datatrees.datacenter.operate.OperateType;
 import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
+import com.datatrees.datacenter.utility.FilePathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ public class HiveCompareByDate extends HiveCompareByFile {
                 String[] files = String.valueOf(partitionInfo.get(FILES_FIELD_NAME)).split(FILE_SEP);
                 if (files.length > 0) {
                     for (String fileName : files) {
-                        String filePath = assembleFilePath(database, tableName, fileName, partition, dbInstance,partitionType);
+                        String filePath = FilePathUtil.assembleFilePath(database, tableName, fileName, partition, dbInstance,partitionType);
                         LOG.info("read avro from: " + filePath);
                         String avroPath = super.AVRO_HDFS_PATH + File.separator + partitionType + File.separator + filePath;
                         Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);

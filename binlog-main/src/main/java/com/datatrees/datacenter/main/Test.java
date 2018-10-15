@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -129,7 +130,9 @@ public class Test {
         }*/
        /* boolean flag=IpMatchUtility.isboolIp("172_16_100_66");
         System.out.println(flag);*/
-        HiveDataRepair dataRepair = new HiveDataRepair();
+
+        //hive repair test
+       HiveDataRepair dataRepair = new HiveDataRepair();
         try {
             List<Map<String, Object>> dataMapList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", "select db_instance,file_partitions operate_type,file_name from t_binlog_check_hive where database_name='" + "point" + "' and table_name='" + "t_point_channel" + "'");
             if (dataMapList != null && dataMapList.size() > 0) {

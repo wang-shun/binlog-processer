@@ -31,7 +31,7 @@ public class TiDBDataRepair implements BaseDataRepair {
        String sql="select file_name from t_binlog_record where request_end<'"+end+"'"+" and request_end >'"+start+"'";
         List<Map<String, Object>> specifiedDateTable = null;
         try {
-            specifiedDateTable = DBUtil.query(DBServer.DBServerType.MYSQL.toString(),dataBase,sql);
+            specifiedDateTable = DBUtil.query(DBServer.DBServerType.MYSQL.toString(),mysqlDataBase,sql);
         } catch (SQLException e) {
             e.printStackTrace();
         }

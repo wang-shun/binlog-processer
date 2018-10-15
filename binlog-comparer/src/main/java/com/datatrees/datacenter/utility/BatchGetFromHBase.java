@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.utility;
 
 import avro.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.datatrees.datacenter.table.HBaseTableInfo;
 import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
@@ -163,7 +164,7 @@ public class BatchGetFromHBase {
         return dataMap;
     }
 
-    public static List<String> reHashRowKey(List<String> idList) {
+    private static List<String> reHashRowKey(List<String> idList) {
         List<String> hashedIdList = null;
         if (null != idList && idList.size() > 0) {
             hashedIdList = new ArrayList<>();
@@ -175,4 +176,33 @@ public class BatchGetFromHBase {
         }
         return hashedIdList;
     }
+    public static List<String> assembleRowKey(Map<String, Long> recordMap) {
+        if (null != recordMap && recordMap.size() > 0) {
+            List<String> rowKeyList = new ArrayList<>(recordMap.keySet());
+            rowKeyList = BatchGetFromHBase.reHashRowKey(rowKeyList);
+            return rowKeyList;
+        } else {
+            return null;
+        }
+    }
+
+    private Map<String, Long> compareWithHBase(List<String> createIdList) {
+        if (null != createIdList && createIdList.size() > 0) {
+            return BatchGetFromHBase.parrallelBatchSearch(createIdList, HBaseTableInfo.TABLE_NAME, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+        }
+        return null;
+    }
+
+    public static Map<String, Long> compareWithHBase(String dataBase, String tableName, List<String> createIdList) {
+        if (null != createIdList && createIdList.size() > 0) {
+            LOG.info("search data from HBase...");
+            if ("bankbill".equals(dataBase)) {
+                return BatchGetFromHBase.parrallelBatchSearch(createIdList, "bill" + "." + tableName + "_id", HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+            } else {
+                return BatchGetFromHBase.parrallelBatchSearch(createIdList, dataBase + "." + tableName + "_id", HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
+            }
+        }
+        return null;
+    }
+
 }
