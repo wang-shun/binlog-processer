@@ -44,7 +44,6 @@ public class TransactionOperate {
                 }
                 e.printStackTrace();
             }
-
         } else {
             UpdateMutation mutation = null;
             try {

@@ -53,6 +53,7 @@ public class HiveDataRepair implements BaseDataRepair {
 
     @Override
     public void repairByTime(String dataBase, String tableName, String start, String end, String type) {
+        // TODO: 2018/10/12 未完
         Map<String, Object> whereMap = new HashMap<>();
         whereMap.put(CheckTable.DATA_BASE, dataBase);
         whereMap.put(CheckTable.TABLE_NAME, tableName);
@@ -80,18 +81,17 @@ public class HiveDataRepair implements BaseDataRepair {
                     tableName = String.valueOf(fileInfo.get(CheckTable.TABLE_NAME));
                     partition = String.valueOf(fileInfo.get(CheckTable.FILE_PARTITION));
                     String filePath = FileOperate.getFilePath(dataBase, dbInstance, tableName, partition, partitionType, fileName);
-                    System.out.println(filePath);
                     RepairByFileThread repairByFileThread = new RepairByFileThread(tableName, dataBase, partition, filePath, fileName, partitionType);
                     executors.submit(repairByFileThread);
                 }
                 executors.shutdown();
                 while (true) {
                     if (executors.isTerminated()) {
-                        System.out.println("all threads has finished！");
+                        LOG.info("all threads has finished！");
                         BinlogDBHandler.updateBinlogProcessLog(binlogProcessLogTable, fileName, dataBase, tableName, partition, partitionType);
                         break;
                     }
-                    Thread.sleep(1000);
+                    Thread.sleep(5000);
                 }
 
             } else {
@@ -150,6 +150,7 @@ public class HiveDataRepair implements BaseDataRepair {
                                     List<GenericData.Record> recordList = operateIdMap.get(operate);
                                     if (recordList != null && recordList.size() > 0) {
                                         TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, recordList);
+                                        BinlogDBHandler.updateCheckedFile(checkTable, fileName, dataBase, tableName, partition, operate, partitionType);
                                         LOG.info("operate type:[" + operate + "] ," + "record number:[" + recordList.size() + "]");
                                     }
                                 }

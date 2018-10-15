@@ -1,0 +1,72 @@
+package com.datatrees.datacenter.main;
+
+import com.datatrees.datacenter.core.utility.DBServer;
+import com.datatrees.datacenter.core.utility.DBUtil;
+import com.datatrees.datacenter.operate.OperateType;
+import com.datatrees.datacenter.repair.hive.HiveDataRepair;
+import com.datatrees.datacenter.table.CheckResult;
+
+import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * @author personalc
+ */
+public class HiveRepairByDataBase {
+
+
+    public static void main(String[] args) throws Exception {
+        try {
+            Map<String, Object> whereMap = new HashMap<>(3);
+            whereMap.put("database_name", "loandb");
+            whereMap.put("table_name", "t_loan_order");
+            whereMap.put("repair_status", 0);
+            whereMap.values().remove(null);
+            List<Map<String, Object>> dataMapList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_check_hive", whereMap);
+            Collections.sort(dataMapList, (o1, o2) -> {
+                String type1 = (String) o1.get("operate_type");
+                String type2 = (String) o2.get("operate_type");
+                OperateType operateType1 = OperateType.valueOf(type1);
+                OperateType operateType2 = OperateType.valueOf(type2);
+                return (Integer.compare(operateType1.getValue(), operateType2.getValue()));
+            });
+            List<Map<String, Object>> createList = dataMapList.stream().filter(x -> x.get("operate_type").toString().equals("Create")).collect(Collectors.toList());
+            List<Map<String, Object>> updateList = dataMapList.stream().filter(x -> x.get("operate_type").toString().equals("Update")).collect(Collectors.toList());
+            List<Map<String, Object>> deleteList = dataMapList.stream().filter(x -> x.get("operate_type").toString().equals("Delete")).collect(Collectors.toList());
+            System.out.println(dataMapList);
+            // TODO: 2018/10/12 同一类操作不同文件谢不同分区有问题,不同表可以并行
+            if (createList != null && createList.size() > 0) {
+                createList.parallelStream().forEach(HiveRepairByDataBase::repairPrepare);
+            }
+            if (updateList != null && updateList.size() > 0) {
+                updateList.parallelStream().forEach(HiveRepairByDataBase::repairPrepare);
+            }
+            if (deleteList != null && deleteList.size() > 0) {
+                deleteList.forEach(HiveRepairByDataBase::repairPrepare);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void repairPrepare(Map<String, Object> map) {
+        HiveDataRepair dataRepair = new HiveDataRepair();
+        CheckResult checkResult = new CheckResult();
+        String dbInstance = (String) map.get("db_instance");
+        dbInstance = dbInstance.replaceAll("_", ".");
+        String dataBase = (String) map.get("database_name");
+        String partition = (String) map.get("file_partitions");
+        String partitionType = "create";
+        String tableName = (String) map.get("table_name");
+        String fileName = (String) map.get("file_name");
+
+        checkResult.setDbInstance(dbInstance);
+        checkResult.setDataBase(dataBase);
+        checkResult.setFilePartition(partition);
+        checkResult.setPartitionType(partitionType);
+        checkResult.setTableName(tableName);
+        checkResult.setFileName(fileName);
+        dataRepair.repairByIdList(checkResult, "t_binlog_check_hive");
+    }
+}
