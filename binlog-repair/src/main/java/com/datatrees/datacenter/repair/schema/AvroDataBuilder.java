@@ -39,9 +39,7 @@ public class AvroDataBuilder {
                 if (idList != null && idList.size() > 0) {
                     return getGenericRecords(reader, schema, idList, operateType);
                 } else {
-                    if (operateType == null) {
-                        return getGenericRecords(reader, schema, operateType);
-                    }
+                    return getGenericRecords(reader, schema, operateType);
                 }
             } catch (IOException e) {
                 LOG.info("the avro inputStream is null " + e.getMessage());

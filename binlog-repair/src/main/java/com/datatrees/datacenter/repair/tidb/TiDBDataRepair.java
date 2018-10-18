@@ -61,7 +61,7 @@ public class TiDBDataRepair implements BaseDataRepair {
         whereMap.put(CheckTable.DATA_BASE, dataBase);
         whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.FILE_NAME, fileName);
-        whereMap.put(CheckTable.FILE_PARTITION, partition);
+        whereMap.put(CheckTable.FILE_PARTITION, this.partition);
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
         StringBuilder whereExpress = StringBuilderUtil.getStringBuilder(whereMap);
         String sqlStr = "select * from " + CheckTable.BINLOG_PROCESS_LOG_TABLE + " " + whereExpress;

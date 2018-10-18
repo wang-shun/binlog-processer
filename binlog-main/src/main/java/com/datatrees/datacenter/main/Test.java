@@ -119,8 +119,8 @@ public class Test {
         Map<String,Long> record=batchGetFromHBase.parrallelBatchSearch(rowKeyList,"streaming_warehouse_rowId2recId_tbl","f","update_time");
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
-       /*BaseDataCompare dataCompare = new HiveCompareByFile();
-       dataCompare.binLogCompare("1539073528312-bin-log.000318", "create");*/
+       BaseDataCompare dataCompare = new HiveCompareByFile();
+       dataCompare.binLogCompare("1539073528312-bin-log.000318", "create");
 
       /* String str = "3218,3215,3146,3145";
         String[] idArr = str.split(",");
@@ -132,7 +132,7 @@ public class Test {
         System.out.println(flag);*/
 
         //hive repair test
-       HiveDataRepair dataRepair = new HiveDataRepair();
+       /*HiveDataRepair dataRepair = new HiveDataRepair();
         try {
             List<Map<String, Object>> dataMapList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", "select db_instance,file_partitions operate_type,file_name from t_binlog_check_hive where database_name='" + "point" + "' and table_name='" + "t_point_channel" + "'");
             if (dataMapList != null && dataMapList.size() > 0) {
@@ -159,7 +159,7 @@ public class Test {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        }
+        }*/
 
         //dataRepair.repairByFile(fileName, "create");
     }
