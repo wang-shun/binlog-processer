@@ -203,12 +203,14 @@ public class SchemaProviders {
       }
 
       public CacheKeyBuilder schema(String schema) {
-        this.schema = schema;
+        this.schema = schemaNameMapper.apply(schema);
+//        this.schema = (schema);
         return this;
       }
 
       public CacheKeyBuilder table(String table) {
-        this.table = table;
+        this.table = tableNameMapper.apply(table);
+//        this.table = (table);
         return this;
       }
 

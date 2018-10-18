@@ -19,6 +19,7 @@ import com.google.common.collect.LinkedHashMultimap;
 import io.prometheus.client.Counter;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,7 @@ public class DBbiz {
       logger.error(e.getMessage(), e);
     }
     try {
+      Date now = new Date();
       insertAll(DBType, dataBase, "t_binlog_process_log",
         newArrayList(valueHashMap.entrySet().iterator()).stream()
           .map(r -> ImmutableMap.<String, Object>builder().put("file_name", file)
@@ -100,7 +102,9 @@ public class DBbiz {
             .put("file_partitions", r.getKey().split("\\.")[4])
             .put("insert_cnt", r.getValue().getInsert().intValue())
             .put("update_cnt", r.getValue().getUpdate().intValue())
-            .put("delete_cnt", r.getValue().getDelete().intValue()).build()
+            .put("delete_cnt", r.getValue().getDelete().intValue())
+            .put("create_date", now)
+            .build()
           ).collect(toList()));
     } catch (SQLException e) {
       logger.error(e.getMessage(), e);

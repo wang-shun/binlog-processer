@@ -1,6 +1,7 @@
 package com.datatrees.datacenter.resolver;
 
 import static com.datatrees.datacenter.resolver.DBbiz.updateRepairCorruptFilesLog;
+import static java.util.Objects.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -633,7 +634,7 @@ public class Repair {
 
     @Override
     public int hashCode() {
-      return Objects.hash(getName(), getDir(), getPath(), getRepairPath());
+      return hash(getName(), getDir(), getPath(), getRepairPath());
     }
   }
 }
