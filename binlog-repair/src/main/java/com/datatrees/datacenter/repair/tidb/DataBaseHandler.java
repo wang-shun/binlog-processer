@@ -41,10 +41,10 @@ class DataBaseHandler {
                     if (timeColumns.contains(key)) {
                         String valueStr = String.valueOf(value);
                         if (valueStr.length() == 10) {
-                            long longTimeStamp = Long.valueOf(valueStr) * 1000;
+                            long longTimeStamp = Long.parseLong(valueStr) * 1000;
                             recordMap.put(key, TimeUtil.stampToDate(longTimeStamp));
                         } else {
-                            Long longTimeStamp = Long.valueOf(valueStr);
+                            Long longTimeStamp = Long.parseLong(valueStr);
                             recordMap.put(key, TimeUtil.stampToDate(longTimeStamp));
                         }
                     } else {

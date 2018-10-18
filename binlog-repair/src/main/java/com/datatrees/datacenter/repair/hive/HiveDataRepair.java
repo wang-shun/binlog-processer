@@ -2,13 +2,10 @@ package com.datatrees.datacenter.repair.hive;
 
 
 import com.datatrees.datacenter.core.threadpool.ThreadPoolInstance;
-import com.datatrees.datacenter.core.utility.DBServer;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.core.utility.PropertiesUtility;
+import com.datatrees.datacenter.core.utility.*;
 import com.datatrees.datacenter.repair.BaseDataRepair;
 import com.datatrees.datacenter.repair.dbhandler.BinlogDBHandler;
 import com.datatrees.datacenter.repair.filehandler.FileOperate;
-import com.datatrees.datacenter.repair.partitions.partitionHandler;
 import com.datatrees.datacenter.repair.schema.AvroDataBuilder;
 import com.datatrees.datacenter.repair.transaction.TransactionOperate;
 import com.datatrees.datacenter.table.CheckResult;
@@ -77,7 +74,7 @@ public class HiveDataRepair implements BaseDataRepair {
                 for (Map<String, Object> fileInfo : fileInfos) {
                     dbInstance = String.valueOf(fileInfo.get(CheckTable.DB_INSTANCE)).replaceAll("_", ".");
                     dataBase = String.valueOf(fileInfo.get(CheckTable.DATA_BASE));
-                    dataBase = "bankbill".equalsIgnoreCase(dataBase) ? "bill" : dataBase;
+                    dataBase = DataBaseNameHandler.dataBaseNameChange(dataBase);
                     tableName = String.valueOf(fileInfo.get(CheckTable.TABLE_NAME));
                     partition = String.valueOf(fileInfo.get(CheckTable.FILE_PARTITION));
                     String filePath = FileOperate.getFilePath(dataBase, dbInstance, tableName, partition, partitionType, fileName);
@@ -106,7 +103,7 @@ public class HiveDataRepair implements BaseDataRepair {
     public void repairByIdList(CheckResult checkResult, String checkTable) {
 
         dataBase = checkResult.getDataBase();
-        dataBase = "bankbill".equalsIgnoreCase(dataBase) ? "bill" : dataBase;
+        dataBase =DataBaseNameHandler.dataBaseNameChange(dataBase);
         dbInstance = checkResult.getDbInstance().replaceAll("_", ".");
         tableName = checkResult.getTableName();
         partition = checkResult.getFilePartition();
@@ -114,9 +111,9 @@ public class HiveDataRepair implements BaseDataRepair {
         String fileName = checkResult.getFileName();
 
         if (partition != null) {
-            Map<String, String> dateMap = partitionHandler.getDateMap(partition);
-            String hivePartition = partitionHandler.getHivePartition(dateMap);
-            List<String> hivePartitions = partitionHandler.getPartitions(dateMap);
+            Map<String, String> dateMap = PartitionUtility.getDateMap(partition);
+            String hivePartition = PartitionUtility.getHivePartition(dateMap);
+            List<String> hivePartitions = PartitionUtility.getPartitions(dateMap);
 
             String filePath = FileOperate.getFilePath(dataBase, dbInstance, tableName, partition, partitionType, fileName);
             Map<String, List<String>> opIdMap = BinlogDBHandler.getOpreateIdList(checkResult, checkTable);

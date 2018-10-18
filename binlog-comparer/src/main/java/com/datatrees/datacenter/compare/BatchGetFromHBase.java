@@ -31,8 +31,8 @@ public class BatchGetFromHBase {
      * @param column       列
      * @return Map
      */
-    public static Map<String, Long> getBatchDataFromHBase(List<String> idList, String tableName, String columnFamily, String column) {
-        Map<String, Long> resultMap = null;
+    public static Map<String, byte[]> getBatchDataFromHBase(List<String> idList, String tableName, String columnFamily, String column) {
+        Map<String, byte[]> resultMap = null;
         if (null != idList && idList.size() > 0) {
             Table table = HBaseHelper.getTable(tableName);
             boolean tableExists = false;
@@ -55,7 +55,7 @@ public class BatchGetFromHBase {
                         for (Result result : results) {
                             if (result != null && !result.isEmpty()) {
                                 String rowKey = Bytes.toString(result.getRow());
-                                long time = Bytes.toLong(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
+                                byte[] time = result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column));
                                 resultMap.put(rowKey, time);
                             }
                         }
@@ -68,7 +68,32 @@ public class BatchGetFromHBase {
         return resultMap;
     }
 
-    static class BatchSearchCallable implements Callable<Map<String, Long>> {
+    public static String getLastUpdateTimeFromHBase(String key, String tableName, String columnFamily, String column) {
+        Table table = HBaseHelper.getTable(tableName);
+        boolean tableExists = false;
+        try {
+            tableExists = HBaseHelper.getHBaseConnection().getAdmin().tableExists(table.getName());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String lastUpdateTime = null;
+        if (tableExists) {
+            Get get = new Get(Bytes.toBytes(key));
+            get.addColumn(Bytes.toBytes(columnFamily), Bytes.toBytes(column));
+            Result result;
+            try {
+                result = table.get(get);
+                if (null != result && !result.isEmpty()) {
+                    lastUpdateTime = Bytes.toString(result.getValue(Bytes.toBytes(columnFamily), Bytes.toBytes(column)));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return lastUpdateTime;
+    }
+
+    static class BatchSearchCallable implements Callable<Map<String, byte[]>> {
         private List<String> ids;
         private String tableName;
         private String columnFamily;
@@ -82,9 +107,10 @@ public class BatchGetFromHBase {
         }
 
         @Override
-        public Map<String, Long> call() {
+        public Map<String, byte[]> call() {
             return getBatchDataFromHBase(ids, tableName, columnFamily, column);
         }
+
     }
 
     /**
@@ -96,8 +122,8 @@ public class BatchGetFromHBase {
      * @param column       列名
      * @return map
      */
-    public static Map<String, Long> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
-        Map<String, Long> dataMap = null;
+    public static Map<String, byte[]> parrallelBatchSearch(List<String> idList, String tableName, String columnFamily, String column) {
+        Map<String, byte[]> dataMap = null;
         int parallel = (Runtime.getRuntime().availableProcessors() + 1) * 2;
         List<List<String>> batchIdList;
         if (null != idList && idList.size() > 0) {
@@ -116,14 +142,14 @@ public class BatchGetFromHBase {
                     batchIdList.get(i % parallel).add(idList.get(i));
                 }
             }
-            List<Future<Map<String, Long>>> futures = new ArrayList<>(parallel);
+            List<Future<Map<String, byte[]>>> futures = new ArrayList<>(parallel);
             ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
             builder.setNameFormat("parallelBatchQuery");
             ThreadFactory factory = builder.build();
             ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(parallel, factory);
             for (List<String> keys : batchIdList) {
-                Callable<Map<String, Long>> callable = new BatchSearchCallable(keys, tableName, columnFamily, column);
-                FutureTask<Map<String, Long>> future = (FutureTask<Map<String, Long>>) executor.submit(callable);
+                Callable<Map<String, byte[]>> callable = new BatchSearchCallable(keys, tableName, columnFamily, column);
+                FutureTask<Map<String, byte[]>> future = (FutureTask<Map<String, byte[]>>) executor.submit(callable);
                 futures.add(future);
             }
             executor.shutdown();
@@ -147,7 +173,7 @@ public class BatchGetFromHBase {
             for (Future f : futures) {
                 try {
                     if (f.get() != null) {
-                        dataMap.putAll((Map<String, Long>) f.get());
+                        dataMap.putAll((Map<String, byte[]>) f.get());
                     }
                 } catch (InterruptedException e) {
                     try {
@@ -177,6 +203,7 @@ public class BatchGetFromHBase {
         }
         return hashedIdList;
     }
+
     public static List<String> assembleRowKey(Map<String, Long> recordMap) {
         if (null != recordMap && recordMap.size() > 0) {
             List<String> rowKeyList = new ArrayList<>(recordMap.keySet());
@@ -187,14 +214,14 @@ public class BatchGetFromHBase {
         }
     }
 
-    private Map<String, Long> compareWithHBase(List<String> createIdList) {
+    private Map<String, byte[]> compareWithHBase(List<String> createIdList) {
         if (null != createIdList && createIdList.size() > 0) {
             return BatchGetFromHBase.parrallelBatchSearch(createIdList, HBaseTableInfo.TABLE_NAME, HBaseTableInfo.COLUMNFAMILY, HBaseTableInfo.LAST_UPDATE_TIME);
         }
         return null;
     }
 
-    public static Map<String, Long> compareWithHBase(String dataBase, String tableName, List<String> createIdList) {
+    public static Map<String, byte[]> compareWithHBase(String dataBase, String tableName, List<String> createIdList) {
         if (null != createIdList && createIdList.size() > 0) {
             LOG.info("search data from HBase...");
             if ("bankbill".equals(dataBase)) {

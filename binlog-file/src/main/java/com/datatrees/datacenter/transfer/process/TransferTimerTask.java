@@ -24,7 +24,7 @@ public class TransferTimerTask implements TaskRunner {
 
     ProcessCheck processCheck;
     public static volatile Set processingSet = Collections.synchronizedSet(new HashSet<String>());
-    public static volatile Map<String, Integer> processingMap = new HashMap<>();
+    public static volatile Map<String, Integer> processingMap = Collections.synchronizedMap(new HashMap<>());
 
 
     public TransferTimerTask() {

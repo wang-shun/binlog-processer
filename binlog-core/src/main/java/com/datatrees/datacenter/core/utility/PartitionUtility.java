@@ -1,4 +1,4 @@
-package com.datatrees.datacenter.repair.partitions;
+package com.datatrees.datacenter.core.utility;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class partitionHandler {
+public class PartitionUtility {
     private static final String FILE_SEP = File.separator;
     private static final String DATE_SEP = "=";
     private static final String YEAR = "year";

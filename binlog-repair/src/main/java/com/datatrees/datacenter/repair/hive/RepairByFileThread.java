@@ -1,7 +1,7 @@
 package com.datatrees.datacenter.repair.hive;
 
 import com.datatrees.datacenter.repair.filehandler.FileOperate;
-import com.datatrees.datacenter.repair.partitions.partitionHandler;
+import com.datatrees.datacenter.core.utility.PartitionUtility;
 import com.datatrees.datacenter.repair.schema.AvroDataBuilder;
 import com.datatrees.datacenter.repair.transaction.TransactionOperate;
 import org.apache.avro.Schema;
@@ -36,34 +36,32 @@ public class RepairByFileThread implements Runnable {
 
     @Override
     public void run() {
-        if ("clientrelationship".equals(dataBase)) {
-            if (partition != null) {
-                Map<String, String> dateMap = partitionHandler.getDateMap(partition);
-                String hivePartition = partitionHandler.getHivePartition(dateMap);
-                List<String> hivePartitions = partitionHandler.getPartitions(dateMap);
-                InputStream inputStream = FileOperate.getHdfsFileInputStream(filePath);
-                if (inputStream != null) {
-                    Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, null, null);
-                    if (genericRecordListMap != null) {
-                        Schema schema = (Schema) genericRecordListMap.get("schema");
-                        Map<String, List<GenericData.Record>> operateIdMap = (Map<String, List<GenericData.Record>>) genericRecordListMap.get("record");
-                        if (operateIdMap != null && operateIdMap.size() > 0) {
-                            for (int i = 0; i < operateArr.length; i++) {
-                                String operate = operateArr[i];
-                                List<GenericData.Record> recordList = operateIdMap.get(operate);
-                                if (recordList != null && recordList.size() > 0) {
-                                    TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, recordList);
-                                    LOG.info("operate type:[" + operate + "] ," + "record number:[" + recordList.size() + "]");
-                                }
+        if (partition != null) {
+            Map<String, String> dateMap = PartitionUtility.getDateMap(partition);
+            String hivePartition = PartitionUtility.getHivePartition(dateMap);
+            List<String> hivePartitions = PartitionUtility.getPartitions(dateMap);
+            InputStream inputStream = FileOperate.getHdfsFileInputStream(filePath);
+            if (inputStream != null) {
+                Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, null, null);
+                if (genericRecordListMap != null) {
+                    Schema schema = (Schema) genericRecordListMap.get("schema");
+                    Map<String, List<GenericData.Record>> operateIdMap = (Map<String, List<GenericData.Record>>) genericRecordListMap.get("record");
+                    if (operateIdMap != null && operateIdMap.size() > 0) {
+                        for (int i = 0; i < operateArr.length; i++) {
+                            String operate = operateArr[i];
+                            List<GenericData.Record> recordList = operateIdMap.get(operate);
+                            if (recordList != null && recordList.size() > 0) {
+                                TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, recordList);
+                                LOG.info("operate type:[" + operate + "] ," + "record number:[" + recordList.size() + "]");
                             }
                         }
-                    } else {
-                        LOG.info("no data record read from the avro file");
                     }
-
                 } else {
-                    LOG.info("can't get the avro file inputStream from HDFS");
+                    LOG.info("no data record read from the avro file");
                 }
+
+            } else {
+                LOG.info("can't get the avro file inputStream from HDFS");
             }
         }
     }

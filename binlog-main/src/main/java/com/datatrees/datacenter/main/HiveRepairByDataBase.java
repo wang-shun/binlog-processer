@@ -24,18 +24,18 @@ public class HiveRepairByDataBase {
             whereMap.put("repair_status", 0);
             whereMap.values().remove(null);
             List<Map<String, Object>> dataMapList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_check_hive", whereMap);
-            Collections.sort(dataMapList, (o1, o2) -> {
+            dataMapList.sort((o1, o2) -> {
                 String type1 = (String) o1.get("operate_type");
                 String type2 = (String) o2.get("operate_type");
                 OperateType operateType1 = OperateType.valueOf(type1);
                 OperateType operateType2 = OperateType.valueOf(type2);
                 return (Integer.compare(operateType1.getValue(), operateType2.getValue()));
             });
-            List<Map<String, Object>> createList = dataMapList.stream().filter(x -> x.get("operate_type").toString().equals("Create")).collect(Collectors.toList());
-            List<Map<String, Object>> updateList = dataMapList.stream().filter(x -> x.get("operate_type").toString().equals("Update")).collect(Collectors.toList());
-            List<Map<String, Object>> deleteList = dataMapList.stream().filter(x -> x.get("operate_type").toString().equals("Delete")).collect(Collectors.toList());
+            List<Map<String, Object>> createList = dataMapList.stream().filter(x -> "Create".equals(x.get("operate_type").toString())).collect(Collectors.toList());
+            List<Map<String, Object>> updateList = dataMapList.stream().filter(x -> "Update".equals(x.get("operate_type").toString())).collect(Collectors.toList());
+            List<Map<String, Object>> deleteList = dataMapList.stream().filter(x -> "Delete".equals(x.get("operate_type").toString())).collect(Collectors.toList());
             System.out.println(dataMapList);
-            // TODO: 2018/10/12 同一类操作不同文件谢不同分区有问题,不同表可以并行
+            // TODO: 2018/10/12 同一类操作不同文件写不同分区有问题,不同表可以并行
             if (createList != null && createList.size() > 0) {
                 createList.parallelStream().forEach(HiveRepairByDataBase::repairPrepare);
             }
@@ -50,7 +50,7 @@ public class HiveRepairByDataBase {
         }
     }
 
-    public static void repairPrepare(Map<String, Object> map) {
+    private static void repairPrepare(Map<String, Object> map) {
         HiveDataRepair dataRepair = new HiveDataRepair();
         CheckResult checkResult = new CheckResult();
         String dbInstance = (String) map.get("db_instance");

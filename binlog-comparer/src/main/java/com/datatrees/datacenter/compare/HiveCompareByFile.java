@@ -9,6 +9,7 @@ import com.datatrees.datacenter.table.CheckTable;
 import com.datatrees.datacenter.utility.CheckDBUtil;
 import com.datatrees.datacenter.utility.FilePathUtil;
 import com.datatrees.datacenter.utility.MapCompareUtil;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,21 +22,37 @@ public class HiveCompareByFile extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompareByFile.class);
 
     @Override
-    public void binLogCompare(String file, String type) {
-        List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(file, type);
+    public void binLogCompare(String file, String partitionType) {
+        List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(file, partitionType);
+        compareByPartition(partitionInfos);
+    }
+
+    public void compareByPartition(List<Map<String, Object>> partitionInfos) {
         if (null != partitionInfos && partitionInfos.size() > 0) {
             AvroDataReader avroDataReader = new AvroDataReader();
-            for (Map<String, Object> partitionInfo : partitionInfos) {
-                String dataBase = String.valueOf(partitionInfo.get(CheckTable.DATA_BASE));
-                String tableName = String.valueOf(partitionInfo.get(CheckTable.TABLE_NAME));
-                String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
-                String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
-                String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
-                compareProcess(type, avroDataReader, dataBase, tableName, fileName, partition, dbInstance);
-                updateCheckedFile(file, type, dataBase, tableName, partition);
-            }
-
+            partitionInfos.sort((o1, o2) -> {
+                String type1 = (String) o1.get("file_name");
+                String type2 = (String) o2.get("file_name");
+                return Integer.parseInt(String.valueOf(type1.compareTo(type2)));
+            });
+            //System.out.println(partitionInfos);
+            partitionInfos.parallelStream().forEachOrdered(x -> compareOnePartition(avroDataReader, x));
         }
+    }
+
+    private void compareOnePartition(AvroDataReader avroDataReader, Map<String, Object> partitionInfo) {
+        String dataBase = String.valueOf(partitionInfo.get(CheckTable.DATA_BASE));
+        String tableName = String.valueOf(partitionInfo.get(CheckTable.TABLE_NAME));
+        String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
+        String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
+        String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
+        String partitionType = String.valueOf(partitionInfo.get(CheckTable.PARTITION_TYPE));
+        compareProcess(partitionType, avroDataReader, dataBase, tableName, fileName, partition, dbInstance);
+        updateCheckedFile(fileName, partitionType, dataBase, tableName, partition);
+    }
+    private void compareOnePartition(AvroDataReader avroDataReader, String dbInstance,String dataBase,String tableName,String partition,String partitionType,String fileName) {
+        compareProcess(partitionType, avroDataReader, dataBase, tableName, fileName, partition, dbInstance);
+        updateCheckedFile(fileName, partitionType, dataBase, tableName, partition);
     }
 
     private void compareProcess(String type, AvroDataReader avroDataReader, String dataBase, String tableName, String fileName, String partition, String dbInstance) {
@@ -82,13 +99,13 @@ public class HiveCompareByFile extends BaseDataCompare {
     }
 
     void deleteRecordProcess(String dataBase, String tableName, Map<String, Long> deleteRecord, CheckResult result) {
-        Map<String, Long> deleteRecordFind = BatchGetFromHBase.compareWithHBase(dataBase, tableName, BatchGetFromHBase.assembleRowKey(deleteRecord));
+        Map<String, byte[]> deleteRecordFind = BatchGetFromHBase.compareWithHBase(dataBase, tableName, BatchGetFromHBase.assembleRowKey(deleteRecord));
         if (null != deleteRecordFind && deleteRecordFind.size() > 0) {
             Map<String, Long> rawDeleteRocord = new HashMap<>(deleteRecordFind.size());
-            deleteRecordFind.forEach((key, value) -> rawDeleteRocord.put(key.split("_")[1], value));
+            deleteRecordFind.forEach((key, value) -> rawDeleteRocord.put(key.split("_")[1], Bytes.toLong(value)));
             result.setOpType(OperateType.Delete.toString());
             LOG.info("the operateType is :[Delete]");
-            if (rawDeleteRocord != null && rawDeleteRocord.size() > 0) {
+            if (rawDeleteRocord.size() > 0) {
                 CheckDBUtil.resultInsert(result, rawDeleteRocord);
             } else {
                 LOG.info("no record find in the hbase");
@@ -97,11 +114,11 @@ public class HiveCompareByFile extends BaseDataCompare {
     }
 
     void updateRecordProcess(String dataBase, String tableName, Map<String, Long> updateRecord, CheckResult result) {
-        Map<String, Long> updateRecordFind = BatchGetFromHBase.compareWithHBase(dataBase, tableName, BatchGetFromHBase.assembleRowKey(updateRecord));
+        Map<String, byte[]> updateRecordFind = BatchGetFromHBase.compareWithHBase(dataBase, tableName, BatchGetFromHBase.assembleRowKey(updateRecord));
         Map<String, Long> updateRecordNoFind;
         if (null != updateRecordFind && updateRecordFind.size() > 0) {
             Map<String, Long> updateTmp = new HashMap<>(updateRecordFind.size());
-            updateRecordFind.forEach((key, value) -> updateTmp.put(key.split("_")[1], value));
+            updateRecordFind.forEach((key, value) -> updateTmp.put(key.split("_")[1], Bytes.toLong(value)));
             updateRecordNoFind = diffCompare(updateRecord, updateTmp);
             Map<String, Long> oldUpdateRecord = MapCompareUtil.compareByValue(updateTmp, updateRecord);
             if (null != oldUpdateRecord && oldUpdateRecord.size() > 0) {
@@ -120,11 +137,11 @@ public class HiveCompareByFile extends BaseDataCompare {
     }
 
     void createRecordProcess(String dataBase, String tableName, Map<String, Long> createRecord, CheckResult result) {
-        Map<String, Long> createRecordFind = BatchGetFromHBase.compareWithHBase(dataBase, tableName, BatchGetFromHBase.assembleRowKey(createRecord));
+        Map<String, byte[]> createRecordFind = BatchGetFromHBase.compareWithHBase(dataBase, tableName, BatchGetFromHBase.assembleRowKey(createRecord));
         Map<String, Long> createRecordNoFind;
         if (null != createRecordFind && createRecordFind.size() > 0) {
             Map<String, Long> createTmp = new HashMap<>(createRecordFind.size());
-            createRecordFind.forEach((key, value) -> createTmp.put(key.split("_")[1], value));
+            createRecordFind.forEach((key, value) -> createTmp.put(key.split("_")[1], Bytes.toLong(value)));
             createRecordNoFind = diffCompare(createRecord, createTmp);
         } else {
             createRecordNoFind = createRecord;
