@@ -1,20 +1,8 @@
 package com.datatrees.datacenter.main;
 
-import com.datatrees.datacenter.compare.BaseDataCompare;
-import com.datatrees.datacenter.compare.HiveCompareByFile;
-import com.datatrees.datacenter.core.utility.DBServer;
-import com.datatrees.datacenter.core.utility.DBUtil;
-import com.datatrees.datacenter.datareader.AvroDataReader;
-import com.datatrees.datacenter.repair.hive.HiveDataRepair;
-import com.datatrees.datacenter.table.CheckResult;
-import com.tree.finance.bigdata.hive.streaming.mutation.GenericRowIdUtils;
+import com.datatrees.datacenter.rabbitmq.ConsumerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class Test {
     private static Logger LOG = LoggerFactory.getLogger(Test.class);
@@ -119,8 +107,8 @@ public class Test {
         Map<String,Long> record=batchGetFromHBase.parrallelBatchSearch(rowKeyList,"streaming_warehouse_rowId2recId_tbl","f","update_time");
         System.out.println(record.get("collection.coll_case_lifecycle_106567824424185856"));*/
 
-       BaseDataCompare dataCompare = new HiveCompareByFile();
-       dataCompare.binLogCompare("1539073528312-bin-log.000318", "create");
+      /* BaseDataCompare dataCompare = new HiveCompareByFile();
+       dataCompare.binLogCompare("1539073528312-bin-log.000318", "create");*/
 
       /* String str = "3218,3215,3146,3145";
         String[] idArr = str.split(",");
@@ -162,5 +150,11 @@ public class Test {
         }*/
 
         //dataRepair.repairByFile(fileName, "create");
+
+        for(int i=0;i<4;i++) {
+            ConsumerTask consumer = new ConsumerTask("hive_check_test");
+            Thread thread = new Thread(consumer);
+            thread.start();
+        }
     }
 }

@@ -73,7 +73,7 @@ public class ProcessCheck {
                             .append(interval)
                             .append(" ")
                             .append(timeScale);
-
+                    LOG.info(sql.toString());
                     resultList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql.toString());
                     if (resultList.size() > 0) {
                         Iterator<Map<String, Object>> iterator = resultList.iterator();

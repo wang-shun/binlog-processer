@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 public class CompareTask implements TaskRunner {
     private static Logger LOG = LoggerFactory.getLogger(CompareTask.class);
     private final String partitionType = PropertiesUtility.defaultProperties().getProperty("partition.type");
+    BaseDataCompare hiveCompare = new HiveCompareByFile();
 
     public void startCheck() {
         TaskProcessor.defaultProcessor()
@@ -20,7 +21,6 @@ public class CompareTask implements TaskRunner {
                         new TaskProcessorListner() {
                             @Override
                             public void onMessageReceived(String desc) {
-                                BaseDataCompare hiveCompare = new HiveCompareByFile();
                                 LOG.info("start Hive check...");
                                 hiveCompare.binLogCompare(desc, partitionType);
                                 LOG.info("Hive check finished");

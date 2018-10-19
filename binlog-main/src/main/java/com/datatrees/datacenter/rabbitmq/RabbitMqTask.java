@@ -13,23 +13,22 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
+
 /**
- * Represents a connection with a queue
- *
- * @author syntx
+ * @author personalc
  */
-public abstract class EndPoint {
-    private static Logger LOG = LoggerFactory.getLogger(EndPoint.class);
-    protected static Properties properties=PropertiesUtility.defaultProperties();
+public abstract class RabbitMqTask {
+    private static Logger LOG = LoggerFactory.getLogger(RabbitMqTask.class);
+    private static Properties properties = PropertiesUtility.defaultProperties();
 
-    protected String hostServer=properties.getProperty("queue.server");
-    protected String port=properties.getProperty("queue.port");
-    protected Channel channel;
-    protected Connection connection;
-    protected String endPointName;
+    private String hostServer = properties.getProperty("queue.server");
+    private String port = properties.getProperty("queue.port");
+    Channel channel;
+    private Connection connection;
+    String queue;
 
-    public EndPoint(String endpointName) throws IOException {
-        this.endPointName = endpointName;
+    public RabbitMqTask(String queue) {
+        this.queue = queue;
 
         //Create a connection factory
         ConnectionFactory factory = new ConnectionFactory();
@@ -41,17 +40,18 @@ public abstract class EndPoint {
         //getting a connection
         try {
             connection = factory.newConnection();
+            //creating a channel
+            channel = connection.createChannel();
+            //declaring a queue for this channel. If queue does not exist,
+            //it will be created on the server.
+            channel.queueDeclare(queue, false, false, false, null);
+            channel.basicQos(10);
         } catch (TimeoutException ex) {
             LOG.info("can't get connection");
             connection = null;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        //creating a channel
-        channel = connection.createChannel();
-
-        //declaring a queue for this channel. If queue does not exist,
-        //it will be created on the server.
-        channel.queueDeclare(endpointName, false, false, false, null);
     }
 
 
@@ -60,12 +60,18 @@ public abstract class EndPoint {
      *
      * @throws IOException
      */
-    public void close() throws IOException {
+    public void close() {
         try {
             this.channel.close();
         } catch (TimeoutException ex) {
             Log.info("channel close failed because of :" + ex);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        this.connection.close();
+        try {
+            this.connection.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

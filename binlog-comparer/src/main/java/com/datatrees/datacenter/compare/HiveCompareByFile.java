@@ -18,44 +18,47 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author personalc
+ */
 public class HiveCompareByFile extends BaseDataCompare {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompareByFile.class);
-
+    private AvroDataReader avroDataReader = new AvroDataReader();
+    private String partitionType;
     @Override
     public void binLogCompare(String file, String partitionType) {
+        this.partitionType=partitionType;
         List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(file, partitionType);
         compareByPartition(partitionInfos);
     }
 
     public void compareByPartition(List<Map<String, Object>> partitionInfos) {
         if (null != partitionInfos && partitionInfos.size() > 0) {
-            AvroDataReader avroDataReader = new AvroDataReader();
             partitionInfos.sort((o1, o2) -> {
-                String type1 = (String) o1.get("file_name");
-                String type2 = (String) o2.get("file_name");
+                String type1 = (String) o1.get(CheckTable.FILE_NAME);
+                String type2 = (String) o2.get(CheckTable.FILE_NAME);
                 return Integer.parseInt(String.valueOf(type1.compareTo(type2)));
             });
-            //System.out.println(partitionInfos);
-            partitionInfos.parallelStream().forEachOrdered(x -> compareOnePartition(avroDataReader, x));
+            partitionInfos.parallelStream().forEachOrdered(x -> compareOnePartition(x));
         }
     }
 
-    private void compareOnePartition(AvroDataReader avroDataReader, Map<String, Object> partitionInfo) {
+    private void compareOnePartition(Map<String, Object> partitionInfo) {
         String dataBase = String.valueOf(partitionInfo.get(CheckTable.DATA_BASE));
         String tableName = String.valueOf(partitionInfo.get(CheckTable.TABLE_NAME));
         String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
         String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
         String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
-        String partitionType = String.valueOf(partitionInfo.get(CheckTable.PARTITION_TYPE));
-        compareProcess(partitionType, avroDataReader, dataBase, tableName, fileName, partition, dbInstance);
-        updateCheckedFile(fileName, partitionType, dataBase, tableName, partition);
-    }
-    private void compareOnePartition(AvroDataReader avroDataReader, String dbInstance,String dataBase,String tableName,String partition,String partitionType,String fileName) {
-        compareProcess(partitionType, avroDataReader, dataBase, tableName, fileName, partition, dbInstance);
+        compareProcess(partitionType, dataBase, tableName, fileName, partition, dbInstance);
         updateCheckedFile(fileName, partitionType, dataBase, tableName, partition);
     }
 
-    private void compareProcess(String type, AvroDataReader avroDataReader, String dataBase, String tableName, String fileName, String partition, String dbInstance) {
+    public void compareOnePartition(String dbInstance, String dataBase, String tableName, String partition, String partitionType, String fileName) {
+        compareProcess(partitionType, dataBase, tableName, fileName, partition, dbInstance);
+        updateCheckedFile(fileName, partitionType, dataBase, tableName, partition);
+    }
+
+    private void compareProcess(String type, String dataBase, String tableName, String fileName, String partition, String dbInstance) {
         if (partition != null && !"null".equals(partition)) {
             String avroPath = FilePathUtil.assembleFilePath(dataBase, tableName, fileName, partition, dbInstance, type);
             LOG.info("read avro from: " + avroPath);
@@ -78,6 +81,8 @@ public class HiveCompareByFile extends BaseDataCompare {
                 createRecordProcess(dataBase, tableName, createRecord, result);
                 updateRecordProcess(dataBase, tableName, updateRecord, result);
                 deleteRecordProcess(dataBase, tableName, deleteRecord, result);
+            }else{
+                LOG.info("no record read from avro");
             }
         }
     }
@@ -158,7 +163,6 @@ public class HiveCompareByFile extends BaseDataCompare {
     public void specialCompare(String file, String type, String dataBaseName) {
         List<Map<String, Object>> partitionInfos = getCurrentPartitionInfo(file, type);
         if (null != partitionInfos && partitionInfos.size() > 0) {
-            AvroDataReader avroDataReader = new AvroDataReader();
             for (Map<String, Object> partitionInfo : partitionInfos) {
                 String dataBase = String.valueOf(partitionInfo.get(CheckTable.DATA_BASE));
                 if (dataBaseName.equals(dataBase)) {
@@ -166,7 +170,7 @@ public class HiveCompareByFile extends BaseDataCompare {
                     String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
                     String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
                     String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
-                    compareProcess(type, avroDataReader, dataBase, tableName, fileName, partition, dbInstance);
+                    compareProcess(type, dataBase, tableName, fileName, partition, dbInstance);
                     updateCheckedFile(file, type, dataBase, tableName, partition);
                 }
             }

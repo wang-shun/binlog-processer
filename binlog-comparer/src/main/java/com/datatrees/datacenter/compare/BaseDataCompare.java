@@ -37,7 +37,7 @@ public abstract class BaseDataCompare implements DataCheck {
      */
     List<Map<String, Object>> getCurrentPartitionInfo(String fileName, String type) {
         List<Map<String, Object>> partitionInfo = null;
-        String sql = "select db_instance,database_name,table_name,file_partitions,count(file_name) as file_cnt,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,file_name as files " +
+        String sql = "select db_instance,database_name,table_name,file_partitions,type,count(file_name) as file_cnt,sum(insert_cnt+delete_cnt+update_cnt) as sum_cnt,file_name as files " +
                 "from (select * from " + processLogTable + " where type=" + "'" + type + "'" + " and file_name=" + "'" + fileName + "'" + ") as temp group by db_instance,database_name,table_name,file_partitions having file_cnt>" + fileNum + " and sum_cnt>" + recordNum;
         try {
             partitionInfo = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql);
