@@ -22,4 +22,6 @@ public class CheckTable {
     public static final String ID_LIST="id_list";
     public static final String DATA_COUNT="data_count";
     public static final String STATUS="repair_status";
+    public static final String CREATE_DATE="create_date";
+    public static final String TIME_FORMAT="yyyy-MM-dd HH:mm:ss";
 }

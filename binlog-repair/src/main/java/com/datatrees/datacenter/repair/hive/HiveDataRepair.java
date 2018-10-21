@@ -103,7 +103,7 @@ public class HiveDataRepair implements BaseDataRepair {
     public void repairByIdList(CheckResult checkResult, String checkTable) {
 
         dataBase = checkResult.getDataBase();
-        dataBase =DataBaseNameHandler.dataBaseNameChange(dataBase);
+        dataBase = DataBaseNameHandler.dataBaseNameChange(dataBase);
         dbInstance = checkResult.getDbInstance().replaceAll("_", ".");
         tableName = checkResult.getTableName();
         partition = checkResult.getFilePartition();
@@ -119,14 +119,14 @@ public class HiveDataRepair implements BaseDataRepair {
             Map<String, List<String>> opIdMap = BinlogDBHandler.getOpreateIdList(checkResult, checkTable);
 
             if (opIdMap != null && opIdMap.size() > 0) {
-                InputStream inputStream ;
+                InputStream inputStream;
                 for (Object o : opIdMap.entrySet()) {
                     Map.Entry entry = (Map.Entry) o;
                     String operate = String.valueOf(entry.getKey());
                     List<String> idList = (List<String>) entry.getValue();
                     if (idList != null && idList.size() > 0) {
                         if (idList.size() < Integer.parseInt(ID_LIST_MAX)) {
-                            inputStream=FileOperate.getHdfsFileInputStream(filePath);
+                            inputStream = FileOperate.getHdfsFileInputStream(filePath);
                             Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, idList, operate);
                             if (genericRecordListMap != null) {
                                 Schema schema = (Schema) genericRecordListMap.get("schema");
@@ -138,7 +138,7 @@ public class HiveDataRepair implements BaseDataRepair {
                                 LOG.info("no data record read from the avro file");
                             }
                         } else {
-                            inputStream=FileOperate.getHdfsFileInputStream(filePath);
+                            inputStream = FileOperate.getHdfsFileInputStream(filePath);
                             Map<String, Object> genericRecordListMap = AvroDataBuilder.avroSchemaDataBuilder(inputStream, null, null);
                             if (genericRecordListMap != null) {
                                 Schema schema = (Schema) genericRecordListMap.get("schema");
@@ -156,14 +156,14 @@ public class HiveDataRepair implements BaseDataRepair {
                             }
                         }
                     } else {
-                        LOG.info("no id list find from database ");
+                        LOG.info("no id list find from database of operate:" + operate);
                     }
                 }
             } else {
-                LOG.info("can't get the avro file inputStream from HDFS");
+                LOG.info("no id list find from database ");
             }
         } else {
-            LOG.info("no id list find from the database");
+            LOG.info("the partition is null");
         }
     }
 }

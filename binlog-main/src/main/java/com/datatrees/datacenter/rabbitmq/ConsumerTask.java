@@ -3,6 +3,7 @@ package com.datatrees.datacenter.rabbitmq;
 import com.datatrees.datacenter.compare.HiveCompareByFile;
 import com.datatrees.datacenter.repair.hive.HiveDataRepair;
 import com.datatrees.datacenter.table.CheckResult;
+import com.datatrees.datacenter.table.CheckTable;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.Envelope;
@@ -68,7 +69,7 @@ public class ConsumerTask extends RabbitMqTask implements Runnable, Consumer {
             checkResult.setPartitionType(partitionType);
             checkResult.setFilePartition(partition);
             checkResult.setFileName(fileName);
-            //hiveDataRepair.repairByIdList(checkResult,"t_binlog_check_hive_copy");
+            hiveDataRepair.repairByIdList(checkResult,CheckTable.BINLOG_CHECK_HIVE_TABLE);
         } catch (IOException e) {
             e.printStackTrace();
         }

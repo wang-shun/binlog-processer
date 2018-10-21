@@ -81,52 +81,54 @@ public class AvroDataReader extends BaseDataReader {
             LOG.info("the id field name is :" + recordId);
             recordLastUpdateTime = FieldNameOp.getFieldName(fieldSet, LAST_UPDATE_COLUMN_LIST);
             LOG.info("the lastUpdateTime field is :" + recordLastUpdateTime);
-            try {
-                while (iterator.hasNext()) {
-                    Object o = iterator.next();
-                    GenericRecord r = (GenericRecord) o;
-                    String operator = r.get(2).toString();
-                    JSONObject jsonObject;
-                    if (null != r.get(1)) {
-                        jsonObject = JSONObject.parseObject(r.get(1).toString());
-                    } else {
-                        jsonObject = JSONObject.parseObject(r.get(0).toString());
-                    }
-                    if (jsonObject != null) {
-                        String id = String.valueOf(jsonObject.get(recordId));
-                        String lastUpdateTime = String.valueOf(jsonObject.getLong(recordLastUpdateTime));
-                        if (id != null && lastUpdateTime != null) {
-                            if (!"null".equals(id) && !"null".equals(lastUpdateTime)) {
-                                long timeStamp = Long.parseLong(lastUpdateTime);
-                                switch (operator) {
-                                    case "Create":
-                                        createMap.put(id, timeStamp);
-                                        break;
-                                    case "Update":
-                                        updateMap.put(id, timeStamp);
-                                        break;
-                                    case "Delete":
-                                        deleteMap.put(id, timeStamp);
-                                        break;
-                                    default:
-                                        break;
+            if (recordId != null && recordLastUpdateTime != null) {
+                try {
+                    while (iterator.hasNext()) {
+                        Object o = iterator.next();
+                        GenericRecord r = (GenericRecord) o;
+                        String operator = r.get(2).toString();
+                        JSONObject jsonObject;
+                        if (null != r.get(1)) {
+                            jsonObject = JSONObject.parseObject(r.get(1).toString());
+                        } else {
+                            jsonObject = JSONObject.parseObject(r.get(0).toString());
+                        }
+                        if (jsonObject != null) {
+                            String id = String.valueOf(jsonObject.get(recordId));
+                            String lastUpdateTime = String.valueOf(jsonObject.getLong(recordLastUpdateTime));
+                            if (id != null && lastUpdateTime != null) {
+                                if (!"null".equals(id) && !"null".equals(lastUpdateTime)) {
+                                    long timeStamp = Long.parseLong(lastUpdateTime);
+                                    switch (operator) {
+                                        case "Create":
+                                            createMap.put(id, timeStamp);
+                                            break;
+                                        case "Update":
+                                            updateMap.put(id, timeStamp);
+                                            break;
+                                        case "Delete":
+                                            deleteMap.put(id, timeStamp);
+                                            break;
+                                        default:
+                                            break;
+                                    }
                                 }
                             }
                         }
                     }
+                    createMap = BaseDataCompare.diffCompare(createMap, updateMap);
+                    if (createMap != null) {
+                        createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
+                    }
+                    updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
+                    recordMap.put(OperateType.Delete.toString(), deleteMap);
+                    recordMap.put(OperateType.Create.toString(), createMap);
+                    recordMap.put(OperateType.Update.toString(), updateMap);
+                    return recordMap;
+                } catch (AvroRuntimeException e1) {
+                    LOG.info(e1.toString());
+                    return null;
                 }
-                createMap = BaseDataCompare.diffCompare(createMap, updateMap);
-                if (createMap != null) {
-                    createMap = BaseDataCompare.diffCompare(createMap, deleteMap);
-                }
-                updateMap = BaseDataCompare.diffCompare(updateMap, deleteMap);
-                recordMap.put(OperateType.Delete.toString(), deleteMap);
-                recordMap.put(OperateType.Create.toString(), createMap);
-                recordMap.put(OperateType.Update.toString(), updateMap);
-                return recordMap;
-            } catch (AvroRuntimeException e1) {
-                LOG.info(e1.toString());
-                return null;
             }
         } catch (IOException e) {
             LOG.info(e.getMessage());
@@ -141,7 +143,7 @@ public class AvroDataReader extends BaseDataReader {
                 LOG.info("close reader or inputStream failed");
             }
         }
-
+        return null;
     }
 
     /**

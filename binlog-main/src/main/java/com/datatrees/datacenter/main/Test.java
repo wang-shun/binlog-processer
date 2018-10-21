@@ -1,11 +1,22 @@
 package com.datatrees.datacenter.main;
 
+import com.datatrees.datacenter.core.utility.DBServer;
+import com.datatrees.datacenter.core.utility.DBUtil;
 import com.datatrees.datacenter.rabbitmq.ConsumerTask;
+import com.datatrees.datacenter.repair.hive.HiveDataRepair;
+import com.datatrees.datacenter.table.CheckResult;
+import com.datatrees.datacenter.transfer.process.LocalDataCenterTransfer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 public class Test {
     private static Logger LOG = LoggerFactory.getLogger(Test.class);
+    private static HiveDataRepair dataRepair = new HiveDataRepair();
 
     public static void main(String[] args) {
         // TODO: 2018/8/27 新版本发布前需要检查配置文件是否需要更新
@@ -120,41 +131,7 @@ public class Test {
         System.out.println(flag);*/
 
         //hive repair test
-       /*HiveDataRepair dataRepair = new HiveDataRepair();
-        try {
-            List<Map<String, Object>> dataMapList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", "select db_instance,file_partitions operate_type,file_name from t_binlog_check_hive where database_name='" + "point" + "' and table_name='" + "t_point_channel" + "'");
-            if (dataMapList != null && dataMapList.size() > 0) {
-                for (Map<String, Object> map : dataMapList) {
-
-                    CheckResult checkResult = new CheckResult();
-                    String dbInstance = (String) map.get("db_instance");
-                    dbInstance = dbInstance.replaceAll("_", ".");
-                    String dataBase = "point";
-                    String partition = (String) map.get("file_partitions");
-                    String partitionType = "create";
-                    String tableName = "t_point_channel";
-                    String fileName = (String) map.get("file_name");
-
-                    checkResult.setDbInstance(dbInstance);
-                    checkResult.setDataBase(dataBase);
-                    checkResult.setFilePartition(partition);
-                    checkResult.setPartitionType(partitionType);
-                    checkResult.setTableName(tableName);
-                    checkResult.setFileName(fileName);
-
-                    dataRepair.repairByIdList(checkResult, "t_binlog_check_hive");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }*/
-
         //dataRepair.repairByFile(fileName, "create");
 
-        for(int i=0;i<4;i++) {
-            ConsumerTask consumer = new ConsumerTask("hive_check_test");
-            Thread thread = new Thread(consumer);
-            thread.start();
-        }
     }
 }

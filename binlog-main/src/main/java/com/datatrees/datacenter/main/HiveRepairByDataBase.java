@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
  */
 public class HiveRepairByDataBase {
 
-
     public static void main(String[] args) throws Exception {
         try {
             Map<String, Object> whereMap = new HashMap<>(3);

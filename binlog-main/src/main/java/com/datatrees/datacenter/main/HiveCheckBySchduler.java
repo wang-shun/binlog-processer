@@ -22,17 +22,23 @@ public class HiveCheckBySchduler {
     private static Logger LOG = LoggerFactory.getLogger(HiveCheckBySchduler.class);
     private static final String HBASE_ROKEY_FIELD = "hbase_rowkey";
     static ProducerTask producer = new ProducerTask("hive_check_test");
-    private static  String databases=PropertiesUtility.defaultProperties().getProperty("databases.need.check");
+    private static Properties properties = PropertiesUtility.defaultProperties();
+    private static String databases = properties.getProperty("databases.need.check");
+    private static String hbaseLastUpdateTable = properties.getProperty("streaming_warehouse_system_conf");
+    private static String columnFamily = properties.getProperty("f");
+    private static String column = properties.getProperty("stream_update_time");
+    private static int timeBehind = 1000;
+    private static int timeBefore = 1500;
 
 
     public static void main(String[] args) {
         Runnable runnable = () -> {
             //往前推一段时间
-            String sql = "select db_instance,database_name,table_name,file_partitions,file_name,create_date,type from t_binlog_process_log where create_date<now()-interval 1000 minute and create_date>now()-interval 1500 minute and repair_status=0 and file_partitions<> 'null' and type='create'";
-            String dataBaseAssemble = assembleDatabase(databases);
-            sql+=dataBaseAssemble;
+            String sql = "select db_instance,database_name,table_name,file_partitions,file_name,create_date,type from t_binlog_process_log where create_date<now()-interval " + timeBehind + " minute and create_date>now()-interval " + timeBefore + " minute and repair_status=0 and file_partitions<> 'null' and type='create'";
+            String dataBaseAssemble = assembleDatabaseTableExpress(databases);
+            sql += dataBaseAssemble;
             try {
-                List<Map<String, Object>> partitionInfos = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", sql);
+                List<Map<String, Object>> partitionInfos = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, sql);
                 if (partitionInfos != null && partitionInfos.size() > 0) {
                     List<String> rowKeyList = new ArrayList<>(partitionInfos.size());
                     for (Map<String, Object> tableMap : partitionInfos) {
@@ -43,7 +49,7 @@ public class HiveCheckBySchduler {
                         tableMap.put(HBASE_ROKEY_FIELD, hiveTableLastUpdate);
                     }
                     List<String> rowKeyListFilter = rowKeyList.stream().distinct().collect(Collectors.toList());
-                    Map<String, byte[]> recordLastUpdateTime = BatchGetFromHBase.getBatchDataFromHBase(rowKeyListFilter, "streaming_warehouse_system_conf", "f", "stream_update_time");
+                    Map<String, byte[]> recordLastUpdateTime = BatchGetFromHBase.getBatchDataFromHBase(rowKeyListFilter, hbaseLastUpdateTable, columnFamily, column);
                     System.out.println("recordLastUpdateTime:" + recordLastUpdateTime.size());
                     Map<String, Long> recordLastUpdateTimeLong = new HashMap<>(recordLastUpdateTime.size());
                     for (Map.Entry<String, byte[]> recordTimeMap : recordLastUpdateTime.entrySet()) {
@@ -54,13 +60,15 @@ public class HiveCheckBySchduler {
                     List<Map<String, Object>> tableInfoLast = tableInfofilter
                             .stream()
                             .filter(x -> (null != recordLastUpdateTimeLong.get(x.get(HBASE_ROKEY_FIELD)) && (recordLastUpdateTimeLong.get(x.get(HBASE_ROKEY_FIELD))
-                                    - TimeUtil.strToDate(x.get("create_date").toString(), "yyyy-MM-dd HH:mm:ss").getTime() > 0))).collect(Collectors.toList());
+                                    - TimeUtil.strToDate(x.get(CheckTable.CREATE_DATE).toString(), CheckTable.TIME_FORMAT).getTime() > 0))).collect(Collectors.toList());
 
                     System.out.println("tableInfoLast size:" + tableInfoLast.size());
                     if (tableInfoLast.size() > 0) {
                         for (Map<String, Object> map : tableInfoLast) {
                             queueAndDbProcess(map);
                         }
+                    } else {
+                        LOG.info("no partition is newer than avro data record");
                     }
                 }
             } catch (SQLException e) {
@@ -71,25 +79,51 @@ public class HiveCheckBySchduler {
         service.scheduleAtFixedRate(runnable, 0, 2, TimeUnit.MINUTES);
     }
 
-    private static String assembleDatabase(String databases) {
-        if(null!=databases){
-            String[] dataBaseArr=databases.split(",");
-            StringBuilder dataBaseStr=new StringBuilder();
-            dataBaseStr.append(" and database_name in").append("(");
-            for (int i=0;i<dataBaseArr.length;i++) {
-                if(i!=dataBaseArr.length-1) {
-                    dataBaseStr.append("'")
-                            .append(dataBaseArr[i])
+    private static String assembleDatabaseTableExpress(String databases) {
+        if (null != databases) {
+            String[] dataBaseArr = databases.split(",");
+            StringBuilder dataBaseStr = new StringBuilder();
+            dataBaseStr.append(" and ").append("(");
+            for (int i = 0; i < dataBaseArr.length; i++) {
+
+                String[] dataBaseTable = dataBaseArr[i].split("\\.");
+                if (dataBaseTable.length == 2) {
+                    String dataBase = dataBaseTable[0];
+                    String table = dataBaseTable[1];
+                    if ("*".equals(table)) {
+                        dataBaseStr.append("(")
+                                .append("database_name=")
+                                .append("'")
+                                .append(dataBase)
+                                .append("'")
+                                .append(")");
+                    } else {
+                        dataBaseStr.append("(")
+                                .append("database_name=")
+                                .append("'")
+                                .append(dataBase)
+                                .append("'")
+                                .append(" and ")
+                                .append(" table_name= ")
+                                .append("'")
+                                .append(table)
+                                .append("'")
+                                .append(")");
+                    }
+                } else {
+                    String dataBase = dataBaseTable[0];
+                    dataBaseStr.append("(")
+                            .append("database_name=")
                             .append("'")
-                            .append(",");
-                }else{
-                    dataBaseStr.append("'")
-                            .append(dataBaseArr[i])
+                            .append(dataBase)
                             .append("'")
-                    .append(")");
+                            .append(")");
+                }
+                if (i != dataBaseArr.length - 1) {
+                    dataBaseStr.append(" or ");
                 }
             }
-            return dataBaseStr.toString();
+            return dataBaseStr.append(")").toString();
         }
         return "";
     }
@@ -124,7 +158,7 @@ public class HiveCheckBySchduler {
         try {
             DBUtil.update(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, "t_binlog_process_log", valueMap, map);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.info("update t_binlog_process_log failed");
         }
     }
 }

@@ -8,15 +8,15 @@ import com.datatrees.datacenter.transfer.bean.DownloadStatus;
 import com.datatrees.datacenter.transfer.bean.LocalBinlogInfo;
 import com.datatrees.datacenter.transfer.bean.LocalCenterInfo;
 import com.datatrees.datacenter.transfer.bean.TableInfo;
+import com.datatrees.datacenter.transfer.utility.SFTPUtil;
 import com.datatrees.datacenter.transfer.utility.SshUtil;
+import com.jcraft.jsch.ChannelSftp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -56,6 +56,11 @@ public class RemoteBinlogOperate implements Runnable {
         try {
             TransferTimerTask.processingMap.put(hostIp, 1);
             Connection connection = new Connection(hostIp, LocalCenterInfo.PORT);
+           /* ChannelSftp channelSftp = SFTPUtil.getConnect(hostIp);
+            LOG.info("SFTP is connect:" + channelSftp.isConnected());
+            Vector<ChannelSftp.LsEntry> lsEntryVector = SFTPUtil.listFiles(LocalCenterInfo.SERVER_BASEDIR);
+            List<String> fileList = new ArrayList<>();
+            lsEntryVector.parallelStream().filter(x -> !x.getAttrs().isDir()).forEachOrdered(x -> fileList.add(x.getFilename()));*/
             List<String> fileList = SshUtil.getFileList(LocalCenterInfo.SERVER_BASEDIR, connection);
             if (null != fileList && fileList.size() > 1) {
                 List<String> subFileList = null;
@@ -65,7 +70,7 @@ public class RemoteBinlogOperate implements Runnable {
                     String lastFileName = hostFileMap.get(hostIp);
                     if (lastFileName != null) {
                         LOG.info("The last download binlog file of :" + hostIp + " is :" + lastFileName);
-                        int lastIndex = fileList.indexOf(lastFileName.substring(lastFileName.indexOf("-")+1,lastFileName.length()));
+                        int lastIndex = fileList.indexOf(lastFileName.substring(lastFileName.indexOf("-") + 1, lastFileName.length()));
                         if (fileList.size() - 1 > lastIndex) {
                             subFileList = fileList.subList(lastIndex + 1, fileList.size() - 1);
                             recordExist = true;
@@ -109,9 +114,11 @@ public class RemoteBinlogOperate implements Runnable {
                         String remoteFilePath = LocalCenterInfo.SERVER_BASEDIR + File.separator + fileName;
                         long requestStart = System.currentTimeMillis();
                         LOG.info("Start download file: " + fileNameWithTime);
+                        // TODO: 2018/10/19
+                        //SFTPUtil.downloadFile(fileName, LocalCenterInfo.SERVER_BASEDIR, LocalCenterInfo.CLIENT_BASEDIR + File.separator + fileName);
                         SshUtil.getFile(remoteFilePath, LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp, connection);
-                        File oldFile=new File(LocalCenterInfo.CLIENT_BASEDIR+File.separator+hostIp+File.separator+fileName);
-                        File fileNew=new File(LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp+File.separator+fileNameWithTime);
+                        File oldFile = new File(LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileName);
+                        File fileNew = new File(LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileNameWithTime);
                         oldFile.renameTo(fileNew);
                         valueMap.put(TableInfo.REQUEST_START, TimeUtil.stampToDate(requestStart));
                         String localFilePath = LocalCenterInfo.CLIENT_BASEDIR + File.separator + hostIp + File.separator + fileNameWithTime;
@@ -151,6 +158,7 @@ public class RemoteBinlogOperate implements Runnable {
                             LOG.info("File:" + localFile + " does not exist!");
                         }
                     }
+                    //SFTPUtil.closeChannel();
                 }
             } else {
                 LOG.info("No binlog find in the host : " + hostIp);

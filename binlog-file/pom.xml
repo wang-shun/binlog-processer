@@ -45,6 +45,12 @@
             <artifactId>ganymed-ssh2</artifactId>
             <version>build210</version>
         </dependency>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.54</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <!--<build>-->
