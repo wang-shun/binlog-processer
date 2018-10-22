@@ -12,6 +12,8 @@ import com.datatrees.datacenter.table.CheckResult;
 import com.datatrees.datacenter.table.CheckTable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
+import org.apache.hive.com.esotericsoftware.minlog.Log;
+import org.apache.hive.hcatalog.streaming.mutate.client.TransactionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,6 +136,7 @@ public class HiveDataRepair implements BaseDataRepair {
                                 TransactionOperate.repairTransaction(dataBase, tableName, hivePartition, hivePartitions, operate, schema, genericRecordList);
                                 LOG.info("operate type:[" + operate + "] ," + "record number:[" + genericRecordList.size() + "]");
                                 BinlogDBHandler.updateCheckedFile(checkTable, fileName, dataBase, tableName, partition, operate, partitionType);
+
                             } else {
                                 LOG.info("no data record read from the avro file");
                             }

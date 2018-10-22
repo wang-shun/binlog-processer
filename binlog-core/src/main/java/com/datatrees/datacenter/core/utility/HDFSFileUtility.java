@@ -178,4 +178,15 @@ public class HDFSFileUtility {
         }
         return fs;
     }
+    public static boolean moveFile(String src,String dest) {
+
+        try {
+            FileSystem fs = FileSystem.get(URI.create(src), conf);
+            boolean moveFlag=fs.rename(new Path(src),new Path(dest));
+            return moveFlag;
+        } catch (IOException e) {
+            Log.info(e.getMessage());
+        }
+        return false;
+    }
 }

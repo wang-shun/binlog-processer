@@ -3,7 +3,7 @@ package com.datatrees.datacenter.main;
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.TiDBCompareByDate;
 
-public class CheckByDate {
+public class TiDBCheckByDate {
     public static void main(String[] args) {
         if (args.length != 4) {
             if (args.length == 3) {

@@ -53,23 +53,25 @@ public class ConsumerTask extends RabbitMqTask implements Runnable, Consumer {
         try {
             String fileInfo = new String(body, "UTF-8");
             String[] info = fileInfo.split(":");
-            String dbInstance=info[0];
-            String dataBase=info[1];
-            String tableName=info[2];
-            String partition=info[3];
-            String partitionType=info[4];
-            String fileName=info[5];
-            hiveCompareByFile.compareOnePartition(dbInstance, dataBase, tableName, partition, partitionType, fileName);
-            channel.basicAck(env.getDeliveryTag(), false);
-            LOG.info("Message:" + fileInfo + " received.");
-            CheckResult checkResult=new CheckResult();
-            checkResult.setDbInstance(dbInstance);
-            checkResult.setTableName(tableName);
-            checkResult.setDataBase(dataBase);
-            checkResult.setPartitionType(partitionType);
-            checkResult.setFilePartition(partition);
-            checkResult.setFileName(fileName);
-            hiveDataRepair.repairByIdList(checkResult,CheckTable.BINLOG_CHECK_HIVE_TABLE);
+            String dbInstance = info[0];
+            String dataBase = info[1];
+            String tableName = info[2];
+            String partition = info[3];
+            String partitionType = info[4];
+            String fileName = info[5];
+            int dataError = hiveCompareByFile.compareOnePartition(dbInstance, dataBase, tableName, partition, partitionType, fileName);
+            if (dataError == 1) {
+                CheckResult checkResult = new CheckResult();
+                checkResult.setDbInstance(dbInstance);
+                checkResult.setTableName(tableName);
+                checkResult.setDataBase(dataBase);
+                checkResult.setPartitionType(partitionType);
+                checkResult.setFilePartition(partition);
+                checkResult.setFileName(fileName);
+                hiveDataRepair.repairByIdList(checkResult, CheckTable.BINLOG_CHECK_HIVE_TABLE);
+                channel.basicAck(env.getDeliveryTag(), false);
+            }
+            LOG.info("Message:" + fileInfo + " processed.");
         } catch (IOException e) {
             e.printStackTrace();
         }

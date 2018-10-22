@@ -98,7 +98,7 @@ public abstract class BinlogFileTransfer implements TaskRunner {
                     } else {
                         path = HDFS_PATH + File.separator + dbInstance + File.separator + fileName;
                     }
-                    boolean status = HDFSFileUtility.checkAndDel(path);
+                    boolean status = HDFSFileUtility.moveFile(path,path+".bak");
                     boolean fileExists = HDFSFileUtility.getFileSystem(path).exists(new Path(path));
                     if (status || fileExists) {
                         LOG.info("delete file: " + fileName + " from HDFS success");

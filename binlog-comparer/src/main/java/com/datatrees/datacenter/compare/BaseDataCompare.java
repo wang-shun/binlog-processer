@@ -81,6 +81,8 @@ public abstract class BaseDataCompare implements DataCheck {
         whereMap.put(CheckTable.TABLE_NAME, tableName);
         whereMap.put(CheckTable.FILE_PARTITION, partitions);
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
+        // FIXME: 2018/10/22 
+        whereMap.put("status",0);
         StringBuilder whereExpress = StringBuilderUtil.getStringBuilder(whereMap);
         try {
             String sql = "select db_instance,database_name,table_name,file_name ,file_partitions from " + processLogTable + " " + whereExpress.toString();

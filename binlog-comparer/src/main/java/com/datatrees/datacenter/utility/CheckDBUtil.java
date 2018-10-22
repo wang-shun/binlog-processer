@@ -36,12 +36,12 @@ public class CheckDBUtil {
             dataMap.put(CheckTable.FILES_PATH, result.getFilesPath());
             dataMap.put(CheckTable.DATA_COUNT, dataSize);
             int max_size = Integer.parseInt(ID_LIST_MAX);
-            if (dataSize < Integer.parseInt(ID_LIST_MAX)) {
+            if (dataSize < max_size) {
                 dataMap.put(CheckTable.ID_LIST, afterComp.keySet().toString());
             } else {
                 List<String> idList = new ArrayList<>(afterComp.keySet());
                 LOG.info("the record size is :" + dataSize);
-                dataMap.put(CheckTable.ID_LIST, idList.subList(0, max_size + 1).toString());
+                dataMap.put(CheckTable.ID_LIST, idList.subList(0, max_size).toString());
                 LOG.info("insert size of database is :" + max_size);
             }
             long currentTime = System.currentTimeMillis();

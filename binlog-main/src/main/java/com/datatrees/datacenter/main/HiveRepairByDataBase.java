@@ -18,9 +18,10 @@ public class HiveRepairByDataBase {
     public static void main(String[] args) throws Exception {
         try {
             Map<String, Object> whereMap = new HashMap<>(3);
-            whereMap.put("database_name", "loandb");
-            whereMap.put("table_name", "t_order_original");
+            whereMap.put("database_name", "credit_audit");
+            whereMap.put("table_name", "t_audit_job");
             whereMap.put("repair_status", 0);
+            whereMap.put("type","create");
             whereMap.values().remove(null);
             List<Map<String, Object>> dataMapList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_check_hive", whereMap);
             dataMapList.sort((o1, o2) -> {
@@ -34,12 +35,11 @@ public class HiveRepairByDataBase {
             List<Map<String, Object>> updateList = dataMapList.stream().filter(x -> "Update".equals(x.get("operate_type").toString())).collect(Collectors.toList());
             List<Map<String, Object>> deleteList = dataMapList.stream().filter(x -> "Delete".equals(x.get("operate_type").toString())).collect(Collectors.toList());
             System.out.println(dataMapList);
-            // TODO: 2018/10/12 同一类操作不同文件写不同分区有问题,不同表可以并行
             if (createList != null && createList.size() > 0) {
-                createList.parallelStream().forEach(HiveRepairByDataBase::repairPrepare);
+                createList.forEach(HiveRepairByDataBase::repairPrepare);
             }
             if (updateList != null && updateList.size() > 0) {
-                updateList.parallelStream().forEach(HiveRepairByDataBase::repairPrepare);
+                updateList.forEach(HiveRepairByDataBase::repairPrepare);
             }
             if (deleteList != null && deleteList.size() > 0) {
                 deleteList.forEach(HiveRepairByDataBase::repairPrepare);

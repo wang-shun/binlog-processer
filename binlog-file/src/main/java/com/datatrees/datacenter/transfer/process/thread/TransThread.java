@@ -160,7 +160,7 @@ public class TransThread implements Serializable, Runnable {
     }
 
     private void delErrorFile() {
-        HDFSFileUtility.checkAndDel(dest + File.separator + fileName);
+        HDFSFileUtility.moveFile(dest + File.separator + fileName, dest + File.separator + fileName + ".bak");
         Map<String, Object> whereMap = new HashMap<>(2);
         whereMap.put(TableInfo.FILE_NAME, fileName);
         whereMap.put(TableInfo.DB_INSTANCE, instanceId);

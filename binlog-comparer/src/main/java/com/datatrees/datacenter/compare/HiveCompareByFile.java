@@ -43,22 +43,24 @@ public class HiveCompareByFile extends BaseDataCompare {
         }
     }
 
-    private void compareOnePartition(Map<String, Object> partitionInfo) {
+    private int compareOnePartition(Map<String, Object> partitionInfo) {
         String dataBase = String.valueOf(partitionInfo.get(CheckTable.DATA_BASE));
         String tableName = String.valueOf(partitionInfo.get(CheckTable.TABLE_NAME));
         String fileName = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
         String partition = String.valueOf(partitionInfo.get(CheckTable.FILE_PARTITION));
         String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
-        compareProcess(partitionType, dataBase, tableName, fileName, partition, dbInstance);
+        int dataError=compareProcess(partitionType, dataBase, tableName, fileName, partition, dbInstance);
         updateCheckedFile(fileName, partitionType, dataBase, tableName, partition);
+        return dataError;
     }
 
-    public void compareOnePartition(String dbInstance, String dataBase, String tableName, String partition, String partitionType, String fileName) {
-        compareProcess(partitionType, dataBase, tableName, fileName, partition, dbInstance);
+    public int compareOnePartition(String dbInstance, String dataBase, String tableName, String partition, String partitionType, String fileName) {
+        int dataError=compareProcess(partitionType, dataBase, tableName, fileName, partition, dbInstance);
         updateCheckedFile(fileName, partitionType, dataBase, tableName, partition);
+        return dataError;
     }
 
-    private void compareProcess(String type, String dataBase, String tableName, String fileName, String partition, String dbInstance) {
+    private int compareProcess(String type, String dataBase, String tableName, String fileName, String partition, String dbInstance) {
         if (partition != null && !"null".equals(partition)) {
             String avroPath = FilePathUtil.assembleFilePath(dataBase, tableName, fileName, partition, dbInstance, type);
             LOG.info("read avro from: " + avroPath);
@@ -67,24 +69,30 @@ public class HiveCompareByFile extends BaseDataCompare {
                 Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
                 Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
                 Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
+                if((createRecord==null||createRecord.size()==0)&&(updateRecord==null||updateRecord.size()==0)&&(deleteRecord==null||deleteRecord.size()==0)){
+                    return 0;
+                }
+                else {
+                    CheckResult result = new CheckResult();
+                    result.setTableName(tableName);
+                    result.setPartitionType(type);
+                    result.setFilePartition(partition);
+                    result.setDataBase(dataBase);
+                    result.setFileName(fileName);
+                    result.setSaveTable(CheckTable.BINLOG_CHECK_HIVE_TABLE);
+                    result.setFilesPath(avroPath);
+                    result.setDbInstance(dbInstance);
 
-                CheckResult result = new CheckResult();
-                result.setTableName(tableName);
-                result.setPartitionType(type);
-                result.setFilePartition(partition);
-                result.setDataBase(dataBase);
-                result.setFileName(fileName);
-                result.setSaveTable(CheckTable.BINLOG_CHECK_HIVE_TABLE);
-                result.setFilesPath(avroPath);
-                result.setDbInstance(dbInstance);
-
-                createRecordProcess(dataBase, tableName, createRecord, result);
-                updateRecordProcess(dataBase, tableName, updateRecord, result);
-                deleteRecordProcess(dataBase, tableName, deleteRecord, result);
+                    createRecordProcess(dataBase, tableName, createRecord, result);
+                    updateRecordProcess(dataBase, tableName, updateRecord, result);
+                    deleteRecordProcess(dataBase, tableName, deleteRecord, result);
+                    return 1;
+                }
             }else{
                 LOG.info("no record read from avro");
             }
         }
+        return 0;
     }
 
     private void updateCheckedFile(String file, String type, String dataBase, String tableName, String partition) {

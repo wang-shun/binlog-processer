@@ -3,7 +3,7 @@ package com.datatrees.datacenter.main;
 import com.datatrees.datacenter.compare.BaseDataCompare;
 import com.datatrees.datacenter.compare.TiDBCompareByFile;
 
-public class CheckByFile {
+public class TiDBCheckByFile {
     public static void main(String[] args) {
         if (args.length == 2) {
             BaseDataCompare compare = new TiDBCompareByFile();

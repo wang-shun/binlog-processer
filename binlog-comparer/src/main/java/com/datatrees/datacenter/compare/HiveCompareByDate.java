@@ -62,7 +62,7 @@ public class HiveCompareByDate extends HiveCompareByFile {
         whereMap.put(CheckTable.TABLE_NAME, table);
         whereMap.put(CheckTable.FILE_PARTITION, partition);
         whereMap.put(CheckTable.PARTITION_TYPE, partitionType);
-        whereMap.values().remove(null);
+        whereMap.values().remove("");
         Map<String, Object> valueMap = new HashMap<>(1);
         valueMap.put(CheckTable.PROCESS_LOG_STATUS, 1);
         try {

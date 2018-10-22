@@ -24,17 +24,18 @@ public class HiveCheckBySchduler {
     static ProducerTask producer = new ProducerTask("hive_check_test");
     private static Properties properties = PropertiesUtility.defaultProperties();
     private static String databases = properties.getProperty("databases.need.check");
-    private static String hbaseLastUpdateTable = properties.getProperty("streaming_warehouse_system_conf");
-    private static String columnFamily = properties.getProperty("f");
-    private static String column = properties.getProperty("stream_update_time");
-    private static int timeBehind = 1000;
-    private static int timeBefore = 1500;
+    private static String hbaseLastUpdateTable = properties.getProperty("hive.lastupdate.hbase.table");
+    private static String columnFamily = properties.getProperty("hive.lastupdate.hbase.cf");
+    private static String column = properties.getProperty("hive.lastupdate.hbase.column");
+    private static int timeBehind = 30;
+    private static int timeBefore = 350;
 
 
     public static void main(String[] args) {
         Runnable runnable = () -> {
             //往前推一段时间
-            String sql = "select db_instance,database_name,table_name,file_partitions,file_name,create_date,type from t_binlog_process_log where create_date<now()-interval " + timeBehind + " minute and create_date>now()-interval " + timeBefore + " minute and repair_status=0 and file_partitions<> 'null' and type='create'";
+            //minute and create_date>now()-interval " + timeBefore + " minute
+            String sql = "select db_instance,database_name,table_name,file_partitions,file_name,create_date,type from t_binlog_process_log where create_date<now()-interval " + timeBehind + " minute and status=0 and file_partitions<> 'null' and type='create'";
             String dataBaseAssemble = assembleDatabaseTableExpress(databases);
             sql += dataBaseAssemble;
             try {
@@ -76,7 +77,7 @@ public class HiveCheckBySchduler {
             }
         };
         ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-        service.scheduleAtFixedRate(runnable, 0, 2, TimeUnit.MINUTES);
+        service.scheduleAtFixedRate(runnable, 0, 600, TimeUnit.MINUTES);
     }
 
     private static String assembleDatabaseTableExpress(String databases) {

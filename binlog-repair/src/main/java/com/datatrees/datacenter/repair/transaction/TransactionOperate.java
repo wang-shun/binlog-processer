@@ -10,6 +10,7 @@ import org.apache.avro.generic.GenericData;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hive.hcatalog.streaming.mutate.client.TransactionException;
 
 import java.util.List;
 import java.util.Properties;
@@ -39,10 +40,9 @@ public class TransactionOperate {
                     mutation.commitTransaction();
                 }
             } catch (Exception e) {
-                if (mutation != null) {
+                if (mutation != null&&e instanceof TransactionException) {
                     mutation.abortTxn();
                 }
-                e.printStackTrace();
             }
         } else {
             UpdateMutation mutation = null;
@@ -56,7 +56,7 @@ public class TransactionOperate {
                     mutation.commitTransaction();
                 }
             } catch (Exception e) {
-                if (mutation != null) {
+                if (mutation != null && e instanceof TransactionException) {
                     mutation.abortTxn();
                 }
                 e.printStackTrace();
