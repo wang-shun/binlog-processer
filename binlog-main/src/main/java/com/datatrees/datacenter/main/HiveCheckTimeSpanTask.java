@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public class HiveCheckTimeSpanTask {
     public static void main(String[] args) {
-        String sql = "select file_name from t_binlog_process where process_end>'" + args[0] + "' and process_end<'" + args[1] + "' and status=1";
+        String sql = "select file_name from t_binlog_process where process_end>'" + args[0] + "' and process_end<'" + args[1] + "' and status=0 and type='create'";
         try {
             System.out.println(sql);
             List<Map<String, Object>> fileList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", sql);

@@ -34,7 +34,7 @@ public class HiveCheckBySchduler {
     public static void main(String[] args) {
         Runnable runnable = () -> {
             //往前推一段时间
-            String sql = "select db_instance,database_name,table_name,file_partitions,file_name,create_date,type from t_binlog_process_log where create_date<now()-interval " + timeBehind + " minute and create_date>now()-interval " + timeBefore + " minute and repair_status=0 and file_partitions<> 'null' and type='create'";
+            String sql = "select db_instance,database_name,table_name,file_partitions,file_name,create_date,type from t_binlog_process_log where repair_status=0 and file_partitions<> 'null' and type='create'";
             String dataBaseAssemble = assembleDatabaseTableExpress(databases);
             sql += dataBaseAssemble;
             try {

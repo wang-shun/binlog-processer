@@ -21,6 +21,7 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -41,19 +42,27 @@ public class AvroDataReader extends BaseDataReader {
 
     @Override
     public Map<String, Map<String, Long>> readSrcData(String filePath) {
-        InputStream is;
+        InputStream is = null;
         Map<String, Map<String, Long>> recordMap;
         FileSystem fs = HDFSFileUtility.getFileSystem(AVRO_PATH);
-        try {
-            if (null != fs) {
+        if (null != fs) {
+            try {
                 is = fs.open(new Path(filePath));
-                if (null != is) {
-                    recordMap = readFromAvro(is);
-                    return recordMap;
+            } catch (IOException e) {
+                Map<String,Object> valueMap=new HashMap<>(2);
+                valueMap.put("file_name",filePath.substring(filePath.lastIndexOf(File.separator,filePath.length())));
+                valueMap.put("file_partition",filePath.replace(AVRO_PATH,""));
+                try {
+                    LOG.info("can't read the avro file because of :" + e.getMessage());
+                    DBUtil.insert(DBServer.DBServerType.MYSQL.toString(),CheckTable.BINLOG_DATABASE,"t_binlog_corrupt_file", valueMap);
+                } catch (SQLException e1) {
+                    LOG.error("insert the error avro record to t_binlog_corrupt_file failed",e1.getMessage());
                 }
             }
-        } catch (IOException e) {
-            LOG.info("File :" + filePath + " doesn't exist or read file failed");
+            if (null != is) {
+                recordMap = readFromAvro(is);
+                return recordMap;
+            }
         }
         return null;
     }

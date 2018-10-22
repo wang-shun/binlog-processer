@@ -34,8 +34,7 @@ public class HiveCompareByDate extends HiveCompareByFile {
                     for (String fileName : files) {
                         String filePath = FilePathUtil.assembleFilePath(database, tableName, fileName, partition, dbInstance,partitionType);
                         LOG.info("read avro from: " + filePath);
-                        String avroPath = super.AVRO_HDFS_PATH + File.separator + partitionType + File.separator + filePath;
-                        Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(avroPath);
+                        Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
                         if (null != avroData && avroData.size() > 0) {
                             Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
                             Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());

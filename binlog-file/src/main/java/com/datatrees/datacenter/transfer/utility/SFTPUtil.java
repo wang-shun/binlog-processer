@@ -5,6 +5,8 @@ import com.jcraft.jsch.*;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -93,7 +95,7 @@ public class SFTPUtil {
         try {
             File file = new File(localFile);
             File fileParent = file.getParentFile();
-            if(!fileParent.exists()) {
+            if (!fileParent.exists()) {
                 fileParent.mkdirs();
             }
             file.createNewFile();
@@ -133,6 +135,22 @@ public class SFTPUtil {
         return file.exists();
     }
 
+    private static List<String> getFileList(Vector<ChannelSftp.LsEntry> vectors) {
+        List<String> fileList = null;
+        if (null != vectors && vectors.size() > 0) {
+            fileList = new ArrayList<>();
+            for (ChannelSftp.LsEntry lsEntry : vectors) {
+                String fileName = lsEntry.getFilename();
+                if (!fileName.equals(".") && !fileName.equals("..")) {
+                    if (!lsEntry.getAttrs().isDir()) {
+                        logger.info("download :" + lsEntry.getFilename());
+                        fileList.add(fileName);
+                    }
+                }
+            }
+        }
+        return fileList;
+    }
    /* public static void main(String[] args) throws Exception {
         SFTPUtil ftpUtil = new SFTPUtil();
         ChannelSftp channeltest = getConnect();
@@ -140,7 +158,6 @@ public class SFTPUtil {
         System.out.println(System.currentTimeMillis());
         Vector<ChannelSftp.LsEntry> directoryEntries = listFiles("/app/mysql/log/binlog/");
         if (null != directoryEntries && directoryEntries.size() > 0) {
-
             for (ChannelSftp.LsEntry lsEntry : directoryEntries) {
                 if (!lsEntry.getAttrs().isDir()) {
                     System.out.println(lsEntry.getAttrs().isFifo());
