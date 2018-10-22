@@ -50,7 +50,7 @@ public class AvroDataReader extends BaseDataReader {
                 is = fs.open(new Path(filePath));
             } catch (IOException e) {
                 Map<String,Object> valueMap=new HashMap<>(2);
-                valueMap.put("file_name",filePath.substring(filePath.lastIndexOf(File.separator,filePath.length())));
+                valueMap.put("file_name",filePath.substring(filePath.lastIndexOf(File.separator)+1,filePath.length()));
                 valueMap.put("file_partition",filePath.replace(AVRO_PATH,""));
                 try {
                     LOG.info("can't read the avro file because of :" + e.getMessage());

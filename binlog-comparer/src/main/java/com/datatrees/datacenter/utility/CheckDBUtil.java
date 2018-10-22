@@ -47,8 +47,7 @@ public class CheckDBUtil {
             long currentTime = System.currentTimeMillis();
             dataMap.put(CheckTable.LAST_UPDATE_TIME, TimeUtil.stampToDate(currentTime));
             try {
-                // TODO: 2018/10/18
-                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, "t_binlog_check_hive_copy", dataMap);
+                DBUtil.insert(DBServer.DBServerType.MYSQL.toString(), CheckTable.BINLOG_DATABASE, "t_binlog_check_hive", dataMap);
             } catch (SQLException e) {
                 e.printStackTrace();
             }

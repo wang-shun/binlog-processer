@@ -19,7 +19,7 @@ public class HiveRepairByDataBase {
         try {
             Map<String, Object> whereMap = new HashMap<>(3);
             whereMap.put("database_name", "loandb");
-            whereMap.put("table_name", "t_loan_order");
+            whereMap.put("table_name", "t_order_original");
             whereMap.put("repair_status", 0);
             whereMap.values().remove(null);
             List<Map<String, Object>> dataMapList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), "binlog", "t_binlog_check_hive", whereMap);

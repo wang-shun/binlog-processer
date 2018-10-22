@@ -56,6 +56,7 @@ public class TiDBCompareByDate extends TiDBCompareByFile {
                 String tableName = String.valueOf(recordMap.get(CheckTable.TABLE_NAME));
                 String partition = String.valueOf(recordMap.get(CheckTable.FILE_PARTITION));
                 String dbInstance = String.valueOf(recordMap.get(CheckTable.DB_INSTANCE));
+                // TODO: 2018/10/22 此处不存在files字段了，后续需要时需要修改
                 String[] filePaths = String.valueOf(recordMap.get("files")).split(",");
                 if (filePaths.length > 0) {
                     List<String> fileList = Arrays.asList(filePaths);

@@ -41,7 +41,7 @@ public class LocalDataCenterTransfer extends BinlogFileTransfer {
         processErrorFile(resolveError);
         List<String> ipList = Arrays.asList(LocalCenterInfo.Ips);
         String ipStr = DBInstanceUtil.getInstancesString(ipList);
-        List<Map<String, Object>> unCompleteList = getUnCompleteTrans(ipStr);
+        List<Map<String, Object>> unCompleteList = this.getUnCompleteTrans(ipStr);
         if (null != unCompleteList && unCompleteList.size() > 0) {
             for (Map<String, Object> record : unCompleteList) {
                 processRetry(record);
@@ -117,6 +117,42 @@ public class LocalDataCenterTransfer extends BinlogFileTransfer {
                 LOG.info("File: " + fileName + " upload to HDFS failed!");
             }
         }
+    }
+
+    /**
+     * 返回传输未完成的binlog文件信息
+     */
+    @Override
+    public List<Map<String, Object>> getUnCompleteTrans(String instanceStr) {
+        List<Map<String, Object>> resultList = null;
+        try {
+            StringBuilder sql = new StringBuilder();
+            sql.append("select *")
+                    .append(" ")
+                    .append("from")
+                    .append(" ")
+                    .append(TableInfo.BINLOG_TRANS_TABLE)
+                    .append(" ")
+                    .append("where")
+                    .append(" ")
+                    .append(TableInfo.DOWN_STATUS)
+                    .append("=")
+                    .append(DownloadStatus.UNCOMPLETED.getValue())
+                    .append(" ")
+                    .append("and")
+                    .append(" ")
+                    .append(TableInfo.DB_INSTANCE)
+                    .append(" ")
+                    .append("in")
+                    .append(" ")
+                    .append("(")
+                    .append(instanceStr)
+                    .append(")");
+            resultList = DBUtil.query(DBServer.DBServerType.MYSQL.toString(), dataBase, sql.toString());
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+        }
+        return resultList;
     }
 
 }

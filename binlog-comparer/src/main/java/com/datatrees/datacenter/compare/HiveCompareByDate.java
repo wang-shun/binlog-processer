@@ -18,8 +18,6 @@ import java.util.Map;
 
 public class HiveCompareByDate extends HiveCompareByFile {
     private static Logger LOG = LoggerFactory.getLogger(HiveCompareByFile.class);
-    private static final String FILE_SEP=",";
-    private static final String FILES_FIELD_NAME="files";
 
     @Override
     public void binLogCompare(String database, String table, String partition, String partitionType) {
@@ -29,35 +27,32 @@ public class HiveCompareByDate extends HiveCompareByFile {
             for (Map<String, Object> partitionInfo : partitionInfos) {
                 String dbInstance = String.valueOf(partitionInfo.get(CheckTable.DB_INSTANCE));
                 String tableName = String.valueOf(partitionInfo.get(CheckTable.TABLE_NAME));
-                String[] files = String.valueOf(partitionInfo.get(FILES_FIELD_NAME)).split(FILE_SEP);
-                if (files.length > 0) {
-                    for (String fileName : files) {
-                        String filePath = FilePathUtil.assembleFilePath(database, tableName, fileName, partition, dbInstance,partitionType);
-                        LOG.info("read avro from: " + filePath);
-                        Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
-                        if (null != avroData && avroData.size() > 0) {
-                            Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
-                            Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
-                            Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
+                String file = String.valueOf(partitionInfo.get(CheckTable.FILE_NAME));
+                String filePath = FilePathUtil.assembleFilePath(database, tableName, file, partition, dbInstance, partitionType);
+                LOG.info("read avro from: " + filePath);
+                Map<String, Map<String, Long>> avroData = avroDataReader.readSrcData(filePath);
+                if (null != avroData && avroData.size() > 0) {
+                    Map<String, Long> createRecord = avroData.get(OperateType.Create.toString());
+                    Map<String, Long> updateRecord = avroData.get(OperateType.Update.toString());
+                    Map<String, Long> deleteRecord = avroData.get(OperateType.Delete.toString());
 
-                            CheckResult result = new CheckResult();
-                            result.setTableName(tableName);
-                            result.setPartitionType(partitionType);
-                            result.setFilePartition(partition);
-                            result.setDataBase(database);
-                            result.setFileName(fileName);
-                            result.setSaveTable(CheckTable.BINLOG_CHECK_DATE_TABLE);
-                            result.setFilesPath(filePath);
-                            result.setDbInstance(dbInstance);
+                    CheckResult result = new CheckResult();
+                    result.setTableName(tableName);
+                    result.setPartitionType(partitionType);
+                    result.setFilePartition(partition);
+                    result.setDataBase(database);
+                    result.setFileName(file);
+                    result.setSaveTable(CheckTable.BINLOG_CHECK_DATE_TABLE);
+                    result.setFilesPath(filePath);
+                    result.setDbInstance(dbInstance);
 
-                            createRecordProcess(database, tableName, createRecord, result);
-                            updateRecordProcess(database, tableName, updateRecord, result);
-                            deleteRecordProcess(database, tableName, deleteRecord, result);
-                        }
-                    }
-                    this.updateCheckedFile(database, table, partition, partitionType);
+                    createRecordProcess(database, tableName, createRecord, result);
+                    updateRecordProcess(database, tableName, updateRecord, result);
+                    deleteRecordProcess(database, tableName, deleteRecord, result);
                 }
             }
+            // TODO: 2018/10/22 可以修改为每个文件更新一次
+            this.updateCheckedFile(database, table, partition, partitionType);
         }
     }
 
